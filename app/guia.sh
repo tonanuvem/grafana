@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Sobe a pagina do LAB 2 num nginx.
+# Sobe a pagina do LAB GRAFANA num nginx.
 #   bash guia.sh              porta 8031
 #   bash guia.sh --porta 8041
 #   bash guia.sh --parar
 set -euo pipefail
 cd "$(dirname "$0")"
-IMAGEM=fiap-lab2-guia; CONTAINER=fiap-lab2-guia; PORTA="${PORTA:-8031}"; ACAO=subir
+IMAGEM=fiap-lab-guia; CONTAINER=fiap-lab-guia; PORTA="${PORTA:-8031}"; ACAO=subir
 while [ $# -gt 0 ]; do
   case "$1" in
     --porta) PORTA="$2"; shift 2 ;;
@@ -26,5 +26,5 @@ docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 docker run -d --name "$CONTAINER" --restart unless-stopped -p "0.0.0.0:${PORTA}:80" "$IMAGEM" >/dev/null
 IP=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
 echo
-echo "  Guia do LAB 2:  http://${IP:-localhost}:${PORTA}"
+echo "  Guia do LAB GRAFANA:  http://${IP:-localhost}:${PORTA}"
 echo

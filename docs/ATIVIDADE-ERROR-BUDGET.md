@@ -1,6 +1,6 @@
-# LAB 2 — Error Budget, impacto e comunicação
+# LAB GRAFANA — Error Budget, impacto e comunicação
 
-Atividade prática do Encontro 2, sobre o FIAP OTEL Bank com stack aberto
+Atividade prática do este encontro, sobre o FIAP OTEL Bank com stack aberto
 (Grafana · Prometheus · Loki · Tempo). Duração sugerida: **90 a 110 minutos**.
 
 > "Degradação parcial não gera dilema quando é óbvia. O exercício só existe
@@ -26,13 +26,13 @@ bash app/guia.sh
 O `run-stack.sh` valida sozinho e avisa se faltar tráfego. Confira nos painéis
 que há dado nos **últimos 5 minutos** — não basta a série existir.
 
-**Como o LAB 2 muda a aplicação:** por um arquivo de variáveis
+**Como o LAB GRAFANA muda a aplicação:** por um arquivo de variáveis
 (`env/grafana.env`), não por override de compose. O `run-stack.sh` funde esse
 arquivo com o `.env` que já existir no `bank-demo` e passa o resultado com
 `--env-file`. Para reproduzir o `SyntaxError` do Encontro 1 ao vivo, basta
 `ERROS_AMIGAVEIS=false` e recriar o `dashboard`.
 
-**Por que a variante bridge e não host:** o collector do LAB 2 entra na rede do
+**Por que a variante bridge e não host:** o collector do LAB GRAFANA entra na rede do
 bank-demo e não publica 4317/4318 no host, então o `splunk-otel-collector` do
 Encontro 1 pode continuar rodando. Não é preciso parar nada.
 
@@ -40,7 +40,7 @@ Encontro 1 pode continuar rodando. Não é preciso parar nada.
 
 ## O que muda em relação ao LAB 1
 
-| | LAB 1 | LAB 2 |
+| | LAB 1 | LAB GRAFANA |
 |---|---|---|
 | Falha | serviço **morto** (`docker stop`) | **degradação parcial** de um deploy |
 | Pergunta | o SLI capturou? | o orçamento justifica **seguir ou reverter**? |
@@ -74,6 +74,13 @@ Três atos, no dashboard **1 · Saúde do Negócio**:
 **AIOps (3 min):** `Drilldown → Logs → Patterns`. O Loki agrupa as linhas em
 padrões sozinho. Precisa de volume — com poucas linhas ele acha zero.
 
+**RUM (5 min):** a linha de painéis no fim do dashboard 1 mede no navegador.
+Peça ao aluno que erre a senha na tela e observe: o evento aparece no RUM, o
+trace do navegador costura com o backend no Tempo, e nenhum SLI de servidor
+registrou falha. É a resposta ao "observabilidade baseada em cliente" da
+ementa, e o complemento do probe sintético — o probe roda às 3h da manhã sem
+ninguém; o RUM só existe quando há gente.
+
 ### Fase 3 — O incidente (45 min)
 
 ```bash
@@ -88,6 +95,17 @@ O instrutor pode piorar o quadro **depois** que o aluno decidiu:
 ```bash
 bash deploy.sh piorar          # 2,5s de atraso + 25% de falha
 ```
+
+### Fase 3b — Ruído de alerta (5 min)
+
+Com o incidente em curso, compare três números no dashboard 2: **alertas
+disparando** no Prometheus, **alertas ativos** no Alertmanager e
+**silenciados**. Depois abra a tela do Alertmanager (porta 9093) e conte os
+GRUPOS — é o que chegaria a uma pessoa.
+
+A regra que faz isso é `group_by: [jornada_negocio]` mais um `inhibit_rules`
+que suprime a queima lenta enquanto a rápida está ativa. Nenhum modelo,
+nenhum aprendizado de máquina: um arquivo YAML.
 
 ### Fase 4 — Comunicação (25 min)
 
@@ -228,3 +246,6 @@ investimento.
 | Contador em 0 logo após o deploy | primeira exposição da série | some sozinho no scrape seguinte |
 | Nó virtual demora a aparecer | `store.ttl` de 30 s no `service_graph` | é esperado; vale como atraso de detecção |
 | Porta 5000 ocupada | AirPlay, no macOS | o `run-stack.sh` remapeia sozinho para 5050 |
+| RUM mudo, sem erro no collector | CORS sem `allowed_headers` | o preflight responde 204 (parece sucesso) sem `Access-Control-Allow-Origin`, e o navegador descarta o POST |
+| Alerta de queima rápida nunca dispara | `burn_rate:30m` vazio | `sum()` devolve vetor sem labels; dividir por `jornada:slo_objetivo` não casa. A taxa de 30 min precisa sair numa regra própria, **com** o label |
+| Alerta de ausência nunca dispara | `absent()` sobre série com `or vector(0)` | a série sempre existe; o teste certo é `== 0` |

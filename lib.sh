@@ -1,7 +1,7 @@
-# Funcoes comuns aos scripts do LAB 2. Sempre com `source`.
+# Funcoes comuns aos scripts do LAB GRAFANA. Sempre com `source`.
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STACK="$AQUI/stack"
-PROJETO="fiapbank-lab2"
+PROJETO="fiapbank-obs"
 BASE_APP="${BASE_APP:-$HOME/bank-demo-docker}"
 COMPOSE_APP="docker-compose-network-docker-internal.yml"
 PROM="${PROM:-http://localhost:9090}"
@@ -12,7 +12,7 @@ aviso() { echo "  [!]  $1"; }
 erro()  { echo "  [ERRO] $1"; }
 titulo(){ echo; echo "=================================================="; echo " $1"; echo "=================================================="; }
 
-ENV_LAB2="$AQUI/env/grafana.env"
+ENV_LAB="$AQUI/env/grafana.env"
 ENV_EFETIVO="$AQUI/env/.env-efetivo"
 
 # Tudo o que o lab PRODUZ (historico de deploys, decisoes, rascunhos de
@@ -21,7 +21,7 @@ ENV_EFETIVO="$AQUI/env/.env-efetivo"
 ESTADO="$AQUI/estado"
 mkdir -p "$ESTADO"
 
-# Funde o .env que ja existir no bank-demo com o do LAB 2 (o nosso por cima).
+# Funde o .env que ja existir no bank-demo com o do LAB GRAFANA (o nosso por cima).
 #
 # Por que fundir e nao so' apontar: `--env-file` SUBSTITUI o .env padrao, nao
 # soma. Na EC2 do Encontro 1 existe um .env com realm e token do Splunk --
@@ -31,7 +31,7 @@ gerar_env() {
         echo "# ARQUIVO GERADO por run-stack.sh -- nao edite, nao versione."
         echo "# Fonte: $BASE_APP/.env (se existir) + env/grafana.env por cima."
         [ -f "$BASE_APP/.env" ] && grep -vE '^\s*(#|$)' "$BASE_APP/.env"
-        grep -vE '^\s*(#|$)' "$ENV_LAB2"
+        grep -vE '^\s*(#|$)' "$ENV_LAB"
     } > "$ENV_EFETIVO"
 }
 
@@ -48,8 +48,8 @@ compose_app() {
 # Reescreve uma variavel no env/grafana.env e regenera o efetivo.
 definir_env() {
     local chave="$1" valor="$2"
-    if grep -qE "^${chave}=" "$ENV_LAB2"; then
-        python3 - "$ENV_LAB2" "$chave" "$valor" <<'PYEOF'
+    if grep -qE "^${chave}=" "$ENV_LAB"; then
+        python3 - "$ENV_LAB" "$chave" "$valor" <<'PYEOF'
 import sys, re
 arq, chave, valor = sys.argv[1], sys.argv[2], sys.argv[3]
 linhas = open(arq, encoding="utf-8").read().splitlines(keepends=True)
@@ -58,7 +58,7 @@ saida = [re.sub(rf"^{re.escape(chave)}=.*$", f"{chave}={valor}", l.rstrip("\n"))
 open(arq, "w", encoding="utf-8").writelines(saida)
 PYEOF
     else
-        printf '%s=%s\n' "$chave" "$valor" >> "$ENV_LAB2"
+        printf '%s=%s\n' "$chave" "$valor" >> "$ENV_LAB"
     fi
     gerar_env
 }
@@ -78,7 +78,7 @@ except Exception:
 
 exige_stack() {
     curl -sf "$PROM/-/ready" >/dev/null 2>&1 || {
-        erro "o stack do LAB 2 nao esta no ar."
+        erro "o stack do LAB GRAFANA nao esta no ar."
         echo "       Suba antes:  bash $AQUI/run-stack.sh"
         exit 1
     }

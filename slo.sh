@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LAB 2 -- o alvo do SLO e o valor de negocio, por script
+# LAB GRAFANA -- o alvo do SLO e o valor de negocio, por script
 # =============================================================================
 #   ./slo.sh                 mostra os valores em vigor e o orcamento
 #   ./slo.sh alvo 99.5       muda o alvo do SLO da transferencia
@@ -54,7 +54,7 @@ recarregar() {
     codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$PROM/-/reload")
     if [ "$codigo" != "200" ]; then
         erro "o Prometheus recusou a recarga (HTTP $codigo)."
-        echo "       Veja o motivo:  docker logs lab2-prometheus --tail 20"
+        echo "       Veja o motivo:  docker logs obs-prometheus --tail 20"
         return 1
     fi
     sleep 2
@@ -113,7 +113,7 @@ print('sim' if 50 <= v < 100 else 'nao')")
       escrever "$OBJ" "${TKT:-125}" && recarregar || exit 1
       ok "alvo agora e' $NOVO% (orcamento: $(orcamento_minutos "$OBJ") min em ${JANELA_H}h)"
       echo
-      echo "  Confira o efeito:  Grafana > LAB 2 > Error Budget"
+      echo "  Confira o efeito:  Grafana > LAB GRAFANA > Error Budget"
       echo "  O alerta tambem mudou -- e' ele que decide se alguem e' acordado."
       exit 0 ;;
 

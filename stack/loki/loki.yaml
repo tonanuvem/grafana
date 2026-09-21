@@ -1,4 +1,4 @@
-# Loki -- LAB 2
+# Loki -- LAB GRAFANA
 auth_enabled: false
 server: { http_listen_port: 3100, log_level: warn }
 

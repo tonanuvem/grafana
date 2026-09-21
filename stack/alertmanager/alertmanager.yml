@@ -1,0 +1,56 @@
+# =============================================================================
+# Alertmanager -- LAB GRAFANA
+# =============================================================================
+# Este arquivo e' o exercicio de reducao de ruido. Durante o incidente varios
+# alertas disparam ao mesmo tempo; o que chega a uma pessoa deveria ser UM.
+#
+# Nao ha destino configurado de proposito: um receptor sem `*_configs` e'
+# valido e nao envia nada para lugar nenhum. O que se mede aqui nao e' se a
+# mensagem chegou, e' QUANTAS mensagens teriam sido enviadas --
+# `alertmanager_notifications_total`, que o Prometheus raspa.
+# =============================================================================
+
+global:
+  resolve_timeout: 2m
+
+route:
+  receiver: plantao
+
+  # AGRUPAMENTO -- a primeira e mais util camada de "AIOps".
+  # Sem group_by, cada alerta vira uma notificacao. Agrupando por jornada de
+  # negocio, tudo o que se refere a mesma jornada chega junto: uma mensagem
+  # com N alertas dentro, em vez de N mensagens.
+  group_by: [jornada_negocio]
+
+  # Espera 30s antes da primeira notificacao do grupo. E' o tempo de deixar os
+  # alertas relacionados chegarem e serem agrupados -- num incidente eles nao
+  # disparam todos no mesmo segundo.
+  group_wait: 30s
+  # Novidades no MESMO grupo so' geram nova notificacao a cada 2 min.
+  group_interval: 2m
+  # Um alerta que continua firing so' e' repetido a cada 4h.
+  repeat_interval: 4h
+
+  routes:
+    # Quem paga plantao recebe so' o que justifica acordar alguem.
+    - matchers: [severity="pagina"]
+      receiver: plantao
+      group_wait: 10s
+    - matchers: [severity="ticket"]
+      receiver: fila
+
+# SUPRESSAO -- a segunda camada.
+# Quando o orcamento esta queimando rapido (pagina), o alerta de queima lenta
+# (ticket) da MESMA jornada e' redundante: ele nao acrescenta informacao nem
+# muda a decisao. Suprimi-lo nao esconde nada -- evita que a pessoa gaste
+# atencao lendo duas vezes a mesma coisa.
+inhibit_rules:
+  - source_matchers: [severity="pagina"]
+    target_matchers: [severity="ticket"]
+    equal: [jornada_negocio]
+
+receivers:
+  # Sem destino: o lab mede notificacoes, nao entrega.
+  # Para experimentar com destino de verdade, acrescente webhook_configs.
+  - name: plantao
+  - name: fila

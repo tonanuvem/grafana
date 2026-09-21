@@ -1,5 +1,5 @@
 # =============================================================================
-# OpenTelemetry Collector -- LAB 2 (Grafana / Prometheus / Loki / Tempo)
+# OpenTelemetry Collector -- LAB GRAFANA (Grafana / Prometheus / Loki / Tempo)
 # =============================================================================
 # Este collector NAO disputa porta com o splunk-otel-collector do systemd:
 # ele nao publica 4317/4318 no host. As aplicacoes falam com ele pelo DNS
@@ -21,6 +21,22 @@ receivers:
   # exportam por OTLP. Chegam pelo log driver `fluentd` do proprio Docker.
   fluent_forward:
     endpoint: 0.0.0.0:8006
+
+  # RUM -- Grafana Faro. Quem envia aqui e' o NAVEGADOR do aluno, entao esta
+  # e' a unica porta do collector que precisa estar publicada para fora, e a
+  # unica que precisa de CORS: a pagina vem de :3000 e posta em :8027.
+  #
+  # Traz duas coisas: eventos e erros de JavaScript (viram log) e spans do
+  # navegador (viram trace, que costura com o backend pelo traceparent).
+  faro:
+    endpoint: 0.0.0.0:8027
+    cors:
+      allowed_origins: ["*"]
+      # allowed_headers e' obrigatorio, e a falha sem ele e' confusa: o
+      # preflight responde 204 (parece sucesso) mas sem
+      # Access-Control-Allow-Origin, e o navegador descarta o POST. No
+      # console aparece "Delivery retries exhausted" e no collector, nada.
+      allowed_headers: ["*"]
 
 processors:
   # -------------------------------------------------------------------------
@@ -144,13 +160,16 @@ service:
       processors: [transform/normaliza_http, transform/peer_service, filter/so_bordas, batch]
       exporters: [span_metrics, service_graph]
     traces/tempo:
-      receivers: [otlp]
+      # O Faro entra SO' aqui, e nao no caminho de metrica: span de navegador
+      # tem cardinalidade alta (uma serie por rota de frontend) e responderia
+      # outra pergunta. O RUM existe para dizer o que o CLIENTE viveu.
+      receivers: [otlp, faro]
       processors: [transform/normaliza_http, transform/peer_service, batch]
       exporters: [otlp_grpc/tempo]
     metrics/derivadas:
       receivers: [span_metrics, service_graph]
       exporters: [prometheus]
     logs:
-      receivers: [otlp, fluent_forward]
+      receivers: [otlp, fluent_forward, faro]
       processors: [transform/nome_do_log, batch]
       exporters: [otlp_http/loki]

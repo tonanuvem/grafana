@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LAB 2 -- sobe o stack de observabilidade e liga o bank-demo nele
+# LAB GRAFANA -- sobe o stack de observabilidade e liga o bank-demo nele
 # =============================================================================
 #   bash run-stack.sh             sobe tudo e valida
 #   bash run-stack.sh --parar     derruba o stack (preserva dados)
@@ -31,7 +31,7 @@ done
 
 # ------------------------------------------------------------------ parar
 if [ "$ACAO" = "parar" ]; then
-    titulo "PARANDO O STACK DO LAB 2"
+    titulo "PARANDO O STACK DO LAB GRAFANA"
     docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" down 2>/dev/null
     ok "stack parado (volumes preservados)"
     echo
@@ -42,7 +42,7 @@ fi
 
 
 # ----------------------------------------------------------------- checagens
-titulo "LAB 2 -- OBSERVABILIDADE COM GRAFANA"
+titulo "LAB GRAFANA -- OBSERVABILIDADE COM GRAFANA"
 
 echo
 echo "1. PRE-REQUISITOS"
@@ -58,7 +58,7 @@ REDE=$(docker network ls --format '{{.Name}}' | grep -E '(fiapbank|martianbank)-
 
 if [ -z "$REDE" ]; then
     erro "A rede do bank-demo (variante bridge) nao existe."
-    echo "       O LAB 2 usa a variante BRIDGE, nao a host."
+    echo "       O LAB GRAFANA usa a variante BRIDGE, nao a host."
     echo
     echo "       Suba a aplicacao antes:"
     echo "         cd $BASE_APP"
@@ -70,7 +70,7 @@ ok "rede do bank-demo: $REDE"
 # Portas que o stack publica. A 4317/4318 NAO estao aqui de proposito.
 for P in 9090 3100 3200 3001 8007; do
     DONO=$(docker ps --format '{{.Names}} {{.Ports}}' | grep ":$P->" | awk '{print $1}' | head -1)
-    if [ -n "$DONO" ] && [[ "$DONO" != lab2-* ]]; then
+    if [ -n "$DONO" ] && [[ "$DONO" != obs-* ]]; then
         erro "porta $P ocupada por '$DONO'."
         echo "       Libere antes de subir: docker stop $DONO"
         exit 1
@@ -81,7 +81,7 @@ ok "portas livres (9090, 3100, 3200, 3001, 8007)"
 if command -v systemctl >/dev/null 2>&1; then
     if systemctl is-active --quiet splunk-otel-collector 2>/dev/null; then
         ok "splunk-otel-collector segue ativo -- e nao ha conflito: o collector"
-        echo "       do LAB 2 nao publica 4317/4318 no host."
+        echo "       do LAB GRAFANA nao publica 4317/4318 no host."
     fi
 fi
 
@@ -95,12 +95,25 @@ echo "--------------------------------------------------"
 
 docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" up -d --remove-orphans >/dev/null 2>&1
 
-# Um container que falha ao publicar porta fica CRIADO sem rede, e um `up`
-# seguinte apenas o inicia, quebrado e em silencio. Por isso conferimos.
-for C in lab2-otelcol lab2-prometheus lab2-loki lab2-tempo lab2-grafana; do
+# Um container que falha ao publicar porta fica CRIADO sem rede -- e um `up`
+# seguinte apenas o INICIA, quebrado e em silencio: ele aparece "Up" no
+# docker ps, mas sem porta e sem DNS. Ja aconteceu duas vezes aqui, entao
+# nao basta conferir se esta rodando: conferimos se tem porta publicada.
+#
+# obs-otelcol e' a excecao legitima -- ele so' publica a 8007 do fluent_forward.
+declare_porta() { case "$1" in
+    obs-prometheus) echo 9090 ;; obs-loki) echo 3100 ;; obs-tempo) echo 3200 ;;
+    obs-grafana) echo 3000 ;; obs-alertmanager) echo 9093 ;;
+    obs-pushgateway) echo 9091 ;; obs-otelcol) echo 8006 ;; esac; }
+
+for C in obs-otelcol obs-prometheus obs-loki obs-tempo obs-grafana obs-alertmanager obs-pushgateway; do
+    P=$(declare_porta "$C")
     if ! docker ps --format '{{.Names}}' | grep -qx "$C"; then
         aviso "$C nao subiu -- recriando"
-        docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" up -d --force-recreate "${C#lab2-}" >/dev/null 2>&1
+        docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" up -d --force-recreate "${C#obs-}" >/dev/null 2>&1
+    elif ! docker port "$C" 2>/dev/null | grep -q "^${P}/"; then
+        aviso "$C esta no ar sem publicar a porta $P -- recriando"
+        docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" up -d --force-recreate "${C#obs-}" >/dev/null 2>&1
     fi
 done
 
@@ -115,7 +128,7 @@ esperar "prometheus" "http://localhost:9090/-/ready"
 esperar "loki"       "http://localhost:3100/ready"
 esperar "tempo"      "http://localhost:3200/status"
 esperar "grafana"    "http://localhost:3001/api/health"
-docker ps --format '{{.Names}}' | grep -qx lab2-otelcol && ok "otelcol"
+docker ps --format '{{.Names}}' | grep -qx obs-otelcol && ok "otelcol"
 
 
 # ------------------------------------------- religar a aplicacao no collector
@@ -139,6 +152,16 @@ if [ "$RELIGAR_APP" = "true" ]; then
             aviso "porta 5000 ocupada por outro processo -- usando ${PORTA_DASHBOARD:-5050}"
             definir_env PORTA_DASHBOARD "${PORTA_DASHBOARD:-5050}"
         fi
+    fi
+
+    # O RUM roda no navegador do aluno: o endereco do coletor precisa ser o
+    # que ELE alcanca. Em EC2 isso e' o IP publico; numa maquina local,
+    # localhost mesmo. Sem esse ajuste a pagina tenta postar num endereco que
+    # so' existe dentro do Docker e o RUM fica mudo, sem erro visivel.
+    IP_PUB=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
+    if [ -n "$IP_PUB" ] && grep -q '^FARO_COLLECTOR_URL=http://localhost' "$ENV_LAB"; then
+        definir_env FARO_COLLECTOR_URL "http://${IP_PUB}:8027/collect"
+        ok "RUM (Faro) apontando para http://${IP_PUB}:8027/collect"
     fi
 
     gerar_env

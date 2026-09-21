@@ -1,9 +1,9 @@
 {
- "uid": "lab2-negocio",
+ "uid": "lab-negocio",
  "title": "1 · Saúde do Negócio",
  "description": "Fase 2 e Fase 3 — a falha vista pelo cliente, não pelo servidor.",
  "tags": [
-  "lab2",
+  "lab",
   "negocio"
  ],
  "timezone": "browser",
@@ -398,6 +398,150 @@
      "mode": "single"
     }
    }
+  },
+  {
+   "type": "text",
+   "title": "",
+   "gridPos": {
+    "x": 0,
+    "y": 23,
+    "w": 24,
+    "h": 4
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "### RUM — o que o navegador do cliente viveu\n\nOs painéis acima medem no **servidor**. Estes medem no **cliente**, e é a única\nfonte que responde \"ele conseguiu?\". Um erro de JavaScript derruba a jornada\nsem produzir um único erro no backend — e nenhum SLI de servidor o enxerga."
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Páginas abertas por minuto",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "description": "Sinal que só existe quando há gente usando. O probe sintético roda às 3h da manhã sem ninguém; o RUM, não. As duas visões respondem perguntas diferentes.",
+   "gridPos": {
+    "x": 0,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     },
+     "queryType": "range",
+     "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))",
+     "legendFormat": "navegações/min"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10,
+      "showPoints": "never"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "single"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Erros de JavaScript por minuto",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "description": "O TypeError que o Encontro anterior encontrou no RUM da Splunk aparece aqui. Falha de jornada com backend impecável.",
+   "gridPos": {
+    "x": 8,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     },
+     "queryType": "range",
+     "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))",
+     "legendFormat": "erros/min"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10,
+      "showPoints": "never"
+     },
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "red"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "single"
+    }
+   }
+  },
+  {
+   "type": "logs",
+   "title": "Eventos do navegador (RUM)",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "description": "kind=event são marcos de navegação e interação; kind=measurement traz os Web Vitals; kind=exception, os erros. Clique num evento para seguir até o trace.",
+   "gridPos": {
+    "x": 16,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     },
+     "queryType": "range",
+     "expr": "{service_name=\"fiap-bank-ui\"}"
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "sortOrder": "Descending",
+    "enableLogDetails": true
+   }
   }
  ],
  "annotations": {
@@ -422,7 +566,7 @@
     "enable": true,
     "iconColor": "purple",
     "name": "Deploys",
-    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
     "titleFormat": "deploy / rollback",
     "step": "30s"
    }

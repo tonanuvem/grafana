@@ -1,5 +1,5 @@
 # =============================================================================
-# SLIs, Error Budget e Burn Rate -- LAB 2
+# SLIs, Error Budget e Burn Rate -- LAB GRAFANA
 # =============================================================================
 # Duas jornadas tem roteiro proprio:
 #   AUTENTICACAO  (Fase 2) -- a falha de negocio devolve HTTP 400
@@ -127,17 +127,28 @@ groups:
         expr: |
           (jornada:errors:rate5m / jornada:requests:rate5m) / (1 - jornada:slo_objetivo)
 
-      - record: jornada:burn_rate:30m
+      # A taxa de erro de 30 min sai numa regra propria, COM o label `jornada`.
+      #
+      # ATENCAO -- por que nao numa expressao so'. `sum(...)` devolve um vetor
+      # SEM labels; dividir isso por jornada:slo_objetivo, que tem
+      # jornada="transferencia", nao casa com nada e o resultado e' vazio. O
+      # label so' seria aplicado DEPOIS, pelo `labels:`, e aí ja' e' tarde.
+      #
+      # A consequencia era o pior tipo de defeito: o alerta de queima rapida
+      # exige as duas janelas (`5m AND 30m`), entao com a de 30m vazia ele
+      # NUNCA dispararia -- sem erro, sem aviso, sem nada no log.
+      - record: jornada:taxa_erro:ratio30m
         expr: |
-          (
-            (sum(rate(traces_span_metrics_calls_total{
-               service_name=~"dashboard|transactions",
-               span_name=~"POST /transaction/|POST /transfer",
-               status_code="STATUS_CODE_ERROR"}[30m])) or vector(0))
-            / sum(rate(traces_span_metrics_calls_total{
-               service_name="dashboard", span_name="POST /transaction/"}[30m]))
-          ) / (1 - jornada:slo_objetivo)
+          (sum(rate(traces_span_metrics_calls_total{
+             service_name=~"dashboard|transactions",
+             span_name=~"POST /transaction/|POST /transfer",
+             status_code="STATUS_CODE_ERROR"}[30m])) or vector(0))
+          / sum(rate(traces_span_metrics_calls_total{
+             service_name="dashboard", span_name="POST /transaction/"}[30m]))
         labels: { jornada: transferencia }
+
+      - record: jornada:burn_rate:30m
+        expr: jornada:taxa_erro:ratio30m / (1 - jornada:slo_objetivo)
 
   - name: error_budget.alertas
     rules:
@@ -169,9 +180,14 @@ groups:
           resumo: "Consumo acima do sustentavel ha 10 minutos"
 
       # O alerta que o SLI de erro NAO da': jornada sem nenhum transito.
-      # E' a resposta ao ponto cego do Encontro 1 (servico morto, erro 0%).
+      # E' a resposta ao ponto cego do LAB anterior (servico morto, erro 0%).
+      #
+      # ATENCAO -- aqui e' `== 0`, nao `absent()`. A regra que alimenta esta
+      # serie termina em `or vector(0)`, entao a serie SEMPRE existe, mesmo
+      # sem transito nenhum. Com absent() este alerta nunca dispararia: o
+      # exato tipo de defeito silencioso que o laboratorio inteiro discute.
       - alert: TransferenciaSemTransito
-        expr: absent(jornada:requests:rate5m{jornada="transferencia"}) == 1
+        expr: jornada:requests:rate5m{jornada="transferencia"} == 0
         for: 5m
         labels:
           severity: pagina

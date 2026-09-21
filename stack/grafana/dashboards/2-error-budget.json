@@ -1,9 +1,9 @@
 {
- "uid": "lab2-budget",
+ "uid": "lab-budget",
  "title": "2 · Error Budget",
  "description": "Fase 3 — o orçamento como instrumento de decisão.",
  "tags": [
-  "lab2",
+  "lab",
   "slo"
  ],
  "timezone": "browser",
@@ -618,6 +618,257 @@
      "sort": "desc"
     }
    }
+  },
+  {
+   "type": "text",
+   "title": "",
+   "gridPos": {
+    "x": 0,
+    "y": 27,
+    "w": 24,
+    "h": 4
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "### Ruído de alerta — a camada mais útil de AIOps, e a menos glamourosa\n\nDurante o incidente vários alertas disparam. O que deveria chegar a uma pessoa é **um**.\nCompare o número à esquerda com a tela do **Alertmanager** (porta 9093): lá eles aparecem\nagrupados por jornada de negócio, e a queima lenta é **suprimida** enquanto a rápida está ativa.\n\nNada disso é modelo nem aprendizado de máquina — é `group_by` e `inhibit_rules` em um arquivo YAML."
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Alertas disparando",
+   "description": "Quantas regras estão em firing agora, no Prometheus. É o número ANTES de qualquer correlação.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 31,
+    "w": 5,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(ALERTS{alertstate=\"firing\"})",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "noValue": "0",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 1
+       },
+       {
+        "color": "red",
+        "value": 3
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "No Alertmanager",
+   "description": "Quantos chegaram ao Alertmanager. A diferença para o painel ao lado é o que a supressão tirou do caminho.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 5,
+    "y": 31,
+    "w": 5,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(alertmanager_alerts{state=\"active\"})",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "noValue": "0",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 1
+       },
+       {
+        "color": "red",
+        "value": 3
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Silenciados",
+   "description": "Alertas suprimidos por inhibit_rules: a queima lenta some enquanto a rápida está ativa. Não some informação — some repetição.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 10,
+    "y": 31,
+    "w": 5,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(alertmanager_alerts{state=\"suppressed\"})",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "noValue": "0",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Alertas ao longo do incidente",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "description": "Vale olhar a ordem: a janela curta dispara primeiro, a longa confirma. O alerta exige as duas.",
+   "gridPos": {
+    "x": 15,
+    "y": 31,
+    "w": 9,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "ALERTS{alertstate=\"firing\"}",
+     "legendFormat": "{{alertname}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 20,
+      "showPoints": "never"
+     },
+     "max": 1.2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
   }
  ],
  "annotations": {
@@ -642,7 +893,7 @@
     "enable": true,
     "iconColor": "purple",
     "name": "Deploys",
-    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
     "titleFormat": "deploy / rollback",
     "step": "30s"
    }

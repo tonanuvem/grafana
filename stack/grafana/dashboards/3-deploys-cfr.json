@@ -1,9 +1,9 @@
 {
- "uid": "lab2-cfr",
+ "uid": "lab-cfr",
  "title": "3 · Deploys e CFR",
  "description": "Fase 3 — a mudança como causa, medida ao longo do tempo.",
  "tags": [
-  "lab2",
+  "lab",
   "dora"
  ],
  "timezone": "browser",
@@ -49,7 +49,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "(lab2_rollbacks_total / clamp_min(lab2_deploys_total, 1)) * 100",
+     "expr": "(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100",
      "datasource": {
       "type": "prometheus",
       "uid": "prom"
@@ -114,7 +114,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "lab2_deploys_total",
+     "expr": "lab_deploys_total",
      "datasource": {
       "type": "prometheus",
       "uid": "prom"
@@ -171,7 +171,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "lab2_rollbacks_total",
+     "expr": "lab_rollbacks_total",
      "datasource": {
       "type": "prometheus",
       "uid": "prom"
@@ -393,7 +393,7 @@
     "enable": true,
     "iconColor": "purple",
     "name": "Deploys",
-    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
     "titleFormat": "deploy / rollback",
     "step": "30s"
    }

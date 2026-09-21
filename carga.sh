@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LAB 2 -- gerador de carga (locust)
+# LAB GRAFANA -- gerador de carga (locust)
 # =============================================================================
 #   ./carga.sh                                todos os cenarios, 5 usuarios, 60s cada
 #   ./carga.sh --cenario transaction          so' a jornada de transferencia

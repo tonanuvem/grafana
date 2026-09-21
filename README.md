@@ -1,7 +1,7 @@
-# LAB 2 — Observabilidade Baseada em Impacto e Governança
+# LAB GRAFANA — Observabilidade Baseada em Impacto e Governança
 
 Stack aberto (Grafana · Prometheus · Loki · Tempo · OpenTelemetry Collector)
-sobre o **FIAP OTEL Bank**, para o Encontro 2: correlação entre alerta técnico
+sobre o **FIAP OTEL Bank**, para o este encontro: correlação entre alerta técnico
 e impacto de negócio, Error Budget como instrumento de decisão, e comunicação
 de impacto para diferentes audiências.
 
@@ -15,7 +15,7 @@ altera o código dela**: tudo é variável de ambiente e configuração de colle
 ## Começando
 
 ```bash
-# 1. a aplicação, na variante BRIDGE (o LAB 2 não usa network_mode: host)
+# 1. a aplicação, na variante BRIDGE (o LAB GRAFANA não usa network_mode: host)
 cd ~/bank-demo-docker
 docker compose -f docker-compose-network-docker-internal.yml up -d
 
@@ -33,6 +33,7 @@ bash carga.sh --cenario transaction --usuarios 10
 | Prometheus | http://localhost:9090 |
 | Service Map | Explore → Tempo → **Service Graph** |
 | Logs | Drilldown → **Logs** |
+| Alertas | http://localhost:9093 (Alertmanager) |
 | Guia do aluno | http://localhost:8031 (`bash app/guia.sh`) |
 
 ---
@@ -67,11 +68,12 @@ app/                        o guia do aluno (nginx) -- bash app/guia.sh
 docs/                       roteiro e gabarito
 stack/
   docker-compose.yml        versões pinadas de propósito
+  alertmanager/             agrupamento e supressão — o exercício de ruído
   otelcol/config.yaml       spanmetrics, service_graph, normalização, peer.service
   prometheus/rules/         SLIs, error budget, burn rate  (alvos.yml é gerado)
   loki/ tempo/ grafana/     configs e provisionamento
 env/
-  grafana.env               o que o LAB 2 muda no bank-demo -- só variáveis
+  grafana.env               o que o LAB GRAFANA muda no bank-demo -- só variáveis
 ```
 
 ---
@@ -100,8 +102,24 @@ configuração daqui ficam 3 labels; o resto vira metadata estruturada.
 Prometheus grava `le="1500.0"`. Uma regra com `le="1500"` não casa com nada e
 deixa o painel de latência vazio, sem erro nenhum.
 
+**RUM sem tocar na aplicação.** O `bank-demo` já injetava o agente da Splunk no
+`index.html` em tempo de execução; o mesmo script ganhou um ramo para o
+**Grafana Faro**, ligado por `FARO_COLLECTOR_URL`. Quem posta no coletor é o
+navegador do aluno, então esse endereço precisa ser alcançável de fora — o
+`run-stack.sh` troca `localhost` pelo IP público quando detecta um.
+
+O receiver `faro` é a única porta do collector publicada para fora, e a única
+que precisa de CORS. E precisa de `allowed_headers` além de `allowed_origins`:
+sem ele o preflight responde 204, que parece sucesso, mas sem
+`Access-Control-Allow-Origin` — o navegador descarta o POST em silêncio.
+
+**Alertas não entregam em lugar nenhum, de propósito.** Os receptores do
+Alertmanager não têm destino: o exercício é de `group_by` e `inhibit_rules`,
+e o que se compara é quantos alertas disparam contra quantos chegariam a uma
+pessoa.
+
 **Nenhum override de compose.** O compose do `bank-demo` declara as variáveis
-com `${VAR:-default}`, então o LAB 2 é um arquivo `.env` — inclusive o deploy,
+com `${VAR:-default}`, então o LAB GRAFANA é um arquivo `.env` — inclusive o deploy,
 que reescreve quatro linhas em vez de gerar YAML. O `run-stack.sh` **funde**
 `env/grafana.env` com o `.env` que já existir no `bank-demo`, porque
 `--env-file` substitui o `.env` padrão em vez de somar, e na EC2 do Encontro 1

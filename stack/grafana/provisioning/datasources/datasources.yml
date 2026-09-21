@@ -41,3 +41,12 @@ datasources:
           url: '$${__value.raw}'
           urlDisplayLabel: 'Ver trace no Tempo'
           datasourceUid: tempo
+
+  - name: Alertmanager
+    uid: alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    jsonData:
+      implementation: prometheus
+      handleGrafanaManagedAlerts: false

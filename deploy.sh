@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LAB 2 -- publica versoes do servico `transactions`
+# LAB GRAFANA -- publica versoes do servico `transactions`
 # =============================================================================
 #   ./deploy.sh                 mostra a versao no ar e o historico
 #   ./deploy.sh nova-versao     publica a proxima versao da sequencia
@@ -87,12 +87,12 @@ publicar_metricas() {
     rollbacks=$(grep -c ',rollback,' "$HIST" 2>/dev/null); rollbacks=${rollbacks:-0}
 
     corpo=$(printf '%s\n' \
-        "# TYPE lab2_deploys_total gauge" \
-        "lab2_deploys_total $deploys" \
-        "# TYPE lab2_rollbacks_total gauge" \
-        "lab2_rollbacks_total $rollbacks" \
-        "# TYPE lab2_deploy_timestamp_seconds gauge" \
-        "lab2_deploy_timestamp_seconds $(date +%s)")
+        "# TYPE lab_deploys_total gauge" \
+        "lab_deploys_total $deploys" \
+        "# TYPE lab_rollbacks_total gauge" \
+        "lab_rollbacks_total $rollbacks" \
+        "# TYPE lab_deploy_timestamp_seconds gauge" \
+        "lab_deploy_timestamp_seconds $(date +%s)")
 
     codigo=$(printf '%s\n' "$corpo" | curl -s -o /dev/null -w '%{http_code}' \
              --data-binary @- "$PUSH/metrics/job/deploys/servico/transactions")
@@ -156,7 +156,7 @@ case "$ACAO" in
       echo
       echo "  O que fazer agora:"
       echo "    1. NAO olhe o codigo. Olhe o painel."
-      echo "    2. Grafana > LAB 2 > Error Budget"
+      echo "    2. Grafana > LAB GRAFANA > Error Budget"
       echo "    3. Se algo piorar, decida:  ./decisao.sh"
       echo
       echo "  Leva ~60s ate o sinal aparecer: as janelas de rate sao de 5 min."

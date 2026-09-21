@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LAB 2 -- registra a decisao do incidente, com os numeros do momento
+# LAB GRAFANA -- registra a decisao do incidente, com os numeros do momento
 # =============================================================================
 #   ./decisao.sh                         mostra o quadro atual e o historico
 #   ./decisao.sh rollback "justificativa"

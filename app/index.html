@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LAB 2 — Error Budget e Impacto</title>
+<title>LAB GRAFANA — Error Budget e Impacto</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -93,7 +93,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 </style>
 
 <div class="bar"><div class="bar-in">
-  <span class="bar-id">Encontro 2 · Lab 2</span>
+  <span class="bar-id">LAB GRAFANA</span>
   <span class="bar-sp"></span>
   <span class="prog"><span id="pcount">0 de 0</span><span class="prog-t"><span class="prog-f" id="pfill"></span></span></span>
   <button class="btn" onclick="limpar()">Limpar</button>
@@ -132,7 +132,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
   <section>
     <div class="sec-h"><span class="sec-n">2</span><h2>Saúde do negócio: a falha que não é erro</h2></div>
-    <p class="sec-sub">Abra <b>LAB 2 → 1 · Saúde do Negócio</b> e deixe aberto.</p>
+    <p class="sec-sub">Abra <b>LAB GRAFANA → 1 · Saúde do Negócio</b> e deixe aberto.</p>
 
     <h3 style="font-size:16px;margin:18px 0 4px">a) A jornada feliz tem forma</h3>
     <div class="cmd"><code>bash carga.sh --cenario auth --usuarios 10 --tempo 60s</code><button onclick="cp(this)">copiar</button></div>
@@ -161,7 +161,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
   <section>
     <div class="sec-h"><span class="sec-n">3</span><h2>O incidente</h2></div>
-    <p class="sec-sub">Abra <b>LAB 2 → 2 · Error Budget</b>. Confira o ponto de partida:
+    <p class="sec-sub">Abra <b>LAB GRAFANA → 2 · Error Budget</b>. Confira o ponto de partida:
     orçamento, burn rate e latência. Depois publique — <b>sem saber</b> se a versão é boa.</p>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
     <div class="nota"><b>Espere.</b> O sinal leva cerca de um minuto para aparecer: as janelas
@@ -248,7 +248,7 @@ const CAMPOS = ["integrantes","f_servicemap","f_400","f_metrica_log","f_patterns
  "f_t_alerta","f_t_entendeu","f_orcamento","f_burn","f_lat","f_custo","f_decisao",
  "f_checkpoint","f_justificativa","f_pos_rollback","f_pol_50","f_pol_25","f_pol_0",
  "f_autoridade","f_com_tec","f_com_gestao","f_com_exec","f_postmortem","f_cfr"];
-const CHAVE = "lab2-error-budget";
+const CHAVE = "lab-grafana-error-budget";
 
 function el(id){return document.getElementById(id)}
 function dados(){const d={};CAMPOS.forEach(c=>d[c]=(el(c)?.value||"").trim());return d}
@@ -303,7 +303,7 @@ function planilha(d){
 function nomeArquivo(d){
   const g=(d.integrantes||"grupo").split(",")[0].trim().split(/\s+/)[0]
     .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"") || "grupo";
-  return "LAB2_ErrorBudget_"+g+".xlsx";
+  return "LAB_Grafana_ErrorBudget_"+g+".xlsx";
 }
 async function gerar(){
   const d=dados();
