@@ -26,6 +26,12 @@ bash app/guia.sh
 O `run-stack.sh` valida sozinho e avisa se faltar tráfego. Confira nos painéis
 que há dado nos **últimos 5 minutos** — não basta a série existir.
 
+**Como o LAB 2 muda a aplicação:** por um arquivo de variáveis
+(`lab2/lab2.env`), não por override de compose. O `run-stack.sh` funde esse
+arquivo com o `.env` que já existir no `bank-demo` e passa o resultado com
+`--env-file`. Para reproduzir o `SyntaxError` do Encontro 1 ao vivo, basta
+`ERROS_AMIGAVEIS=false` e recriar o `dashboard`.
+
 **Por que a variante bridge e não host:** o collector do LAB 2 entra na rede do
 bank-demo e não publica 4317/4318 no host, então o `splunk-otel-collector` do
 Encontro 1 pode continuar rodando. Não é preciso parar nada.

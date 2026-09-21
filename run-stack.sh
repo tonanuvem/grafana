@@ -12,14 +12,7 @@
 # =============================================================================
 
 set -uo pipefail
-
-AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STACK="$AQUI/stack"
-PROJETO="fiapbank-lab2"
-
-BASE_APP="${BASE_APP:-$HOME/bank-demo-docker}"
-COMPOSE_APP="docker-compose-network-docker-internal.yml"
-OVERRIDE="$AQUI/lab2/docker-compose-lab2.yml"
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ACAO="subir"
 RELIGAR_APP=true
@@ -34,10 +27,6 @@ for ARG in "$@"; do
     esac
 done
 
-titulo() { echo; echo "=================================================="; echo " $1"; echo "=================================================="; }
-ok()     { echo "  [OK] $1"; }
-aviso()  { echo "  [!]  $1"; }
-erro()   { echo "  [ERRO] $1"; }
 
 
 # ------------------------------------------------------------------ parar
@@ -141,27 +130,25 @@ if [ "$RELIGAR_APP" = "true" ]; then
         exit 1
     fi
 
-    # A porta 5000 do dashboard e' disputada em algumas maquinas (no macOS o
-    # AirPlay Receiver fica com ela). Em vez de falhar com "address already
-    # in use" no meio da aula, remapeamos e avisamos.
-    EXTRA=""
+    # A porta 5000 e' disputada em algumas maquinas (no macOS, pelo AirPlay
+    # Receiver). Em vez de falhar com "address already in use" no meio da
+    # aula, remapeamos -- e como o compose ja parametriza a porta, isso e'
+    # uma linha no .env, nao um override.
     if ss -lnt 2>/dev/null | grep -q ":5000 " || lsof -nP -iTCP:5000 -sTCP:LISTEN >/dev/null 2>&1; then
         if ! docker ps --format '{{.Names}} {{.Ports}}' | grep -q ":5000->"; then
-            aviso "porta 5000 ocupada por outro processo -- usando 5050"
-            cat > "$AQUI/lab2/.porta-dashboard.yml" <<YML
-# Gerado pelo run-stack.sh. Nao versionar.
-services:
-  dashboard:
-    ports: !override ["${PORTA_DASHBOARD:-5050}:5000"]
-YML
-            EXTRA="-f $AQUI/lab2/.porta-dashboard.yml"
+            aviso "porta 5000 ocupada por outro processo -- usando ${PORTA_DASHBOARD:-5050}"
+            definir_env PORTA_DASHBOARD "${PORTA_DASHBOARD:-5050}"
         fi
     fi
 
-    SAIDA=$( (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" -f "$OVERRIDE" $EXTRA up -d) 2>&1 )
+    gerar_env
+    FS=(); while IFS= read -r linha; do FS+=("$linha"); done < <(compose_app)
+
+    SAIDA=$( (cd "$BASE_APP" && docker compose "${FS[@]}" up -d) 2>&1 )
     if [ $? -eq 0 ]; then
         ok "servicos recriados apontando para otelcol:4317"
-        [ -n "$EXTRA" ] && echo "       dashboard em http://localhost:${PORTA_DASHBOARD:-5050}"
+        PORTA_DASH=$(grep -E '^PORTA_DASHBOARD=' "$ENV_EFETIVO" | tail -1 | cut -d= -f2)
+        [ -n "$PORTA_DASH" ] && echo "       dashboard em http://localhost:$PORTA_DASH"
     else
         erro "falha ao recriar os servicos"
         echo "$SAIDA" | tail -3 | sed 's/^/       /'

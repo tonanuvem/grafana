@@ -18,7 +18,6 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 HIST="$AQUI/lab2/deploys.csv"
-OVR="$AQUI/lab2/.versao-atual.yml"
 
 # ---- a sequencia. Duas saudaveis e uma degradada, nesta ordem. -------------
 #   versao   | cpus  | descricao (nao aparece para o aluno antes da hora)
@@ -51,20 +50,18 @@ indice_de() {
 campo() { echo "${VERSOES[$1]}" | cut -d'|' -f"$2"; }
 
 # ---- aplica uma versao ao container -------------------------------------------
+# Sem gerar YAML: o compose do bank-demo declara estas variaveis com
+# ${VAR:-default}, entao publicar uma versao e' reescrever quatro linhas do
+# lab2.env e recriar UM container.
 aplicar() {
     local versao="$1" atraso="$2" falha="$3"
+    local jitter=0
+    [ "$atraso" != "0" ] && jitter=400
 
-    {
-      echo "# ARQUIVO GERADO por deploy.sh -- nao versionar, nao editar."
-      echo "services:"
-      echo "  transactions:"
-      echo "    environment:"
-      echo "      APP_VERSION: \"${versao#v}\""
-      echo "      OTEL_RESOURCE_ATTRIBUTES: \"deployment.environment=lab-fiap,service.namespace=fiap-bank,service.version=${versao#v}\""
-      echo "      ATRASO_ARTIFICIAL_MS: \"$atraso\""
-      echo "      ATRASO_JITTER_MS: \"$([ "$atraso" != "0" ] && echo 400 || echo 0)\""
-      echo "      FALHA_ARTIFICIAL_PCT: \"$falha\""
-    } > "$OVR"
+    definir_env APP_VERSION          "${versao#v}"
+    definir_env ATRASO_ARTIFICIAL_MS "$atraso"
+    definir_env ATRASO_JITTER_MS     "$jitter"
+    definir_env FALHA_ARTIFICIAL_PCT "$falha"
 
     # while/read em vez de mapfile: o bash 3.2 (padrao do macOS) nao tem mapfile.
     local FS=(); local linha
@@ -136,7 +133,7 @@ case "$ACAO" in
 
   --reset)
       exige_stack
-      rm -f "$HIST" "$OVR"
+      rm -f "$HIST"
       aplicar "v1.0.0" "0" "0"
       publicar_metricas
       ok "voltou para v1.0.0 e limpou o historico"

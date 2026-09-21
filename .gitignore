@@ -1,5 +1,4 @@
-lab2/.porta-dashboard.yml
-lab2/.versao-atual.yml
+lab2/.env-efetivo
 lab2/.carga.log
 lab2/.carga.pid
 lab2/deploys.csv

@@ -71,7 +71,7 @@ stack/
   prometheus/rules/         SLIs, error budget, burn rate  (alvos.yml é gerado)
   loki/ tempo/ grafana/     configs e provisionamento
 lab2/
-  docker-compose-lab2.yml   override do bank-demo (env apenas)
+  lab2.env                  o que o LAB 2 muda no bank-demo -- só variáveis
 ```
 
 ---
@@ -99,6 +99,19 @@ configuração daqui ficam 3 labels; o resto vira metadata estruturada.
 **`le` é normalizado pelo Prometheus.** O collector expõe `le="1500"` e o
 Prometheus grava `le="1500.0"`. Uma regra com `le="1500"` não casa com nada e
 deixa o painel de latência vazio, sem erro nenhum.
+
+**Nenhum override de compose.** O compose do `bank-demo` declara as variáveis
+com `${VAR:-default}`, então o LAB 2 é um arquivo `.env` — inclusive o deploy,
+que reescreve quatro linhas em vez de gerar YAML. O `run-stack.sh` **funde**
+`lab2/lab2.env` com o `.env` que já existir no `bank-demo`, porque
+`--env-file` substitui o `.env` padrão em vez de somar, e na EC2 do Encontro 1
+há um com realm e token do Splunk.
+
+A única exceção é o log driver do Node: `logging.options` muda de *chave*
+conforme o driver, e interpolação não torna chave condicional — com
+`json-file`, `fluentd-address` é opção inválida. Esse continua sendo o
+`docker-compose-logs-fluentd.yml` que o `bank-demo` já tinha, agora com a
+porta parametrizada.
 
 **A degradação é por variável de ambiente, não por limite de CPU.** Medido: o
 teto de CPU degrada de forma imprevisível — sob concorrência o gargalo se

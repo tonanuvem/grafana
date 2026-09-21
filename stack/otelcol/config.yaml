@@ -78,15 +78,24 @@ processors:
       span:
         - 'kind.string != "Server" and kind.string != "Client"'
 
-  # Da nome de servico aos logs que chegam pelo Docker (tag fiapbank.<nome>).
+  # Da nome de servico aos logs que chegam pelo log driver do Docker.
+  #
+  # A tag traz o nome do CONTAINER (fiapbank-otel-hg-customer-auth-1); o label
+  # com.docker.compose.service traz o nome limpo (customer-auth). Preferimos o
+  # label e caimos na tag so' se ele nao vier -- assim o nome do servico no
+  # Loki bate com o dos traces, e as duas telas falam a mesma lingua.
   transform/nome_do_log:
     error_mode: ignore
     log_statements:
       - context: log
         statements:
           - set(resource.attributes["service.name"],
+                attributes["com.docker.compose.service"])
+            where attributes["com.docker.compose.service"] != nil
+          - set(resource.attributes["service.name"],
                 ExtractPatterns(attributes["fluent.tag"], "^fiapbank\\.(?P<n>.+)$")["n"])
-            where attributes["fluent.tag"] != nil
+            where resource.attributes["service.name"] == nil
+              and attributes["fluent.tag"] != nil
 
   batch: {}
 
