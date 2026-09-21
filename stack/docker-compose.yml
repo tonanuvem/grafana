@@ -1,0 +1,106 @@
+# =============================================================================
+# Stack de observabilidade do LAB 2
+# =============================================================================
+#   bash run-stack.sh          sobe e valida
+#   bash run-stack.sh --parar  derruba (preserva dados)
+#
+# CONVIVENCIA COM O COLLECTOR DA SPLUNK:
+# Este stack NAO publica 4317/4318 no host. O collector daqui fica acessivel
+# so' pela rede interna do Docker (otelcol:4317), entao o splunk-otel-collector
+# do systemd continua sozinho em 127.0.0.1:4317, sem disputa.
+#
+# A excecao e' a 8007 -> 8006 (fluent_forward): quem abre essa conexao e' o
+# daemon do Docker, que roda no host. A 8006 fica com a Splunk.
+#
+# Versoes PINADAS de proposito. Um lab que quebra sozinho em fevereiro porque
+# a tag `latest` andou e' o pior defeito possivel: some sem ninguem ter tocado.
+# =============================================================================
+
+name: fiapbank-lab2
+
+services:
+
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    container_name: lab2-otelcol
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otelcol/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "8007:8006"     # fluent_forward (logs do Node/nginx/UI via log driver)
+    restart: unless-stopped
+    depends_on: [tempo, loki]
+
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    container_name: lab2-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle          # necessario para o ./slo.sh recarregar
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports: ["9090:9090"]
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.5.7
+    container_name: lab2-loki
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    ports: ["3100:3100"]
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.9.0
+    container_name: lab2-tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    user: "0:0"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports: ["3200:3200"]
+    restart: unless-stopped
+
+  # Recebe os eventos de deploy e rollback do ./deploy.sh. E' o que permite
+  # marcar o deploy no painel e calcular o CFR.
+  pushgateway:
+    image: prom/pushgateway:v1.11.1
+    container_name: lab2-pushgateway
+    ports: ["9091:9091"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: lab2-grafana
+    environment:
+      # Lab: sem login. Cada aluno tem o proprio ambiente.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_DEFAULT_THEME: dark
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    # 3001 porque a 3000 e' da UI do banco.
+    ports: ["3001:3000"]
+    restart: unless-stopped
+    depends_on: [prometheus, loki, tempo]
+
+volumes:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:
+
+# A rede e' a MESMA do bank-demo: e' assim que as aplicacoes alcancam
+# `otelcol:4317` sem nenhuma porta publicada no host. O run-stack.sh
+# descobre o nome real e gera o .env com REDE_BANK.
+networks:
+  default:
+    name: ${REDE_BANK:-fiapbank-otel-hg_bankapp-network}
+    external: true

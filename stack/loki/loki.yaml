@@ -1,0 +1,44 @@
+# Loki -- LAB 2
+auth_enabled: false
+server: { http_listen_port: 3100, log_level: warn }
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem: { chunks_directory: /loki/chunks, rules_directory: /loki/rules }
+  replication_factor: 1
+  ring: { kvstore: { store: inmemory } }
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index: { prefix: index_, period: 24h }
+
+limits_config:
+  allow_structured_metadata: true
+  volume_enabled: true
+  # -------------------------------------------------------------------------
+  # SEM ISTO O LAB CAI. Na configuracao padrao o Loki promove quase todo
+  # atributo a label de stream -- MEDIDO: 34 labels, incluindo `trace_id`.
+  # Cada trace vira um stream novo e o Loki morre de cardinalidade sob a
+  # carga de uma aula.
+  #
+  # Com o bloco abaixo ficam 3 labels de indice; `trace_id`, `span_id` e o
+  # resto viram metadata estruturada -- continuam pesquisaveis e continuam
+  # servindo ao clique Loki -> Tempo.
+  # -------------------------------------------------------------------------
+  otlp_config:
+    resource_attributes:
+      ignore_defaults: true
+      attributes_config:
+        - action: index_label
+          attributes: [service.name, service.namespace, deployment.environment]
+
+# Deteccao automatica de padroes de log (o exercicio de AIOps).
+# Precisa de VOLUME: com ~50 linhas detecta zero; com ~950 detectou 3.
+# Ou seja, so' funciona com a carga rodando.
+pattern_ingester: { enabled: true }

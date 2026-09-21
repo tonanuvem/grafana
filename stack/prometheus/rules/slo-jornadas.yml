@@ -1,0 +1,181 @@
+# =============================================================================
+# SLIs, Error Budget e Burn Rate -- LAB 2
+# =============================================================================
+# Duas jornadas tem roteiro proprio:
+#   AUTENTICACAO  (Fase 2) -- a falha de negocio devolve HTTP 400
+#   TRANSFERENCIA (Fase 3) -- a falha de negocio devolve HTTP 200
+#
+# O alvo do SLO NAO se edita aqui. Use o script:  ./slo.sh alvo 99.5
+# Ele reescreve alvos.yml, valida e recarrega o Prometheus.
+# =============================================================================
+
+groups:
+
+  # ---------------------------------------------------------------- FASE 2
+  # Saude do negocio da AUTENTICACAO.
+  #
+  # A licao esta' na distancia entre as tres series abaixo: as duas primeiras
+  # (negocio) se movem quando o cliente erra a senha; a terceira (tecnica)
+  # fica em zero. MEDIDO: 8 logins OK e 5 recusados produziram
+  # status_code="STATUS_CODE_UNSET" nos dois casos.
+  - name: negocio.autenticacao
+    interval: 15s
+    rules:
+      - record: negocio:logins_sucesso:rate5m
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="customer-auth", span_name="POST /api/users/auth",
+            http_status_code="200"}[5m])) or vector(0)
+
+      - record: negocio:logins_recusados:rate5m
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="customer-auth", span_name="POST /api/users/auth",
+            http_status_code="400"}[5m])) or vector(0)
+
+      # O que um SLI tecnico classico enxergaria. Fica ~0 mesmo com recusa.
+      - record: tecnico:auth_erros:rate5m
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="customer-auth", span_name="POST /api/users/auth",
+            status_code="STATUS_CODE_ERROR"}[5m])) or vector(0)
+
+      - record: negocio:taxa_recusa_login:ratio5m
+        expr: |
+          negocio:logins_recusados:rate5m
+          / (negocio:logins_sucesso:rate5m + negocio:logins_recusados:rate5m)
+
+  # ---------------------------------------------------------------- FASE 3
+  - name: sli.transferencia
+    interval: 15s
+    rules:
+      - record: jornada:requests:rate5m
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="dashboard", span_name="POST /transaction/"}[5m])) or vector(0)
+        labels: { jornada: transferencia }
+
+      # ATENCAO -- a jornada falha em QUALQUER servico da cadeia, e o erro do
+      # servico de dominio NAO chega na borda como erro.
+      #
+      # MEDIDO: com o `transactions` devolvendo 500, o `dashboard` faz
+      # `response.json()` (que funciona, porque o corpo do erro e' JSON) e
+      # devolve 200 para o cliente. O span do dashboard fica UNSET.
+      #
+      # Se o SLI olhasse so' a borda, uma versao falhando 25% das
+      # transferencias apareceria com 100% de disponibilidade. Por isso
+      # contamos o erro onde ele acontece.
+      - record: jornada:errors:rate5m
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name=~"dashboard|transactions",
+            span_name=~"POST /transaction/|POST /transfer",
+            status_code="STATUS_CODE_ERROR"}[5m])) or vector(0)
+        labels: { jornada: transferencia }
+
+      # Sem transito, isto fica SEM AMOSTRA (divisao por zero) -- e' de
+      # proposito. Um painel que some nao e' um painel saudavel, e essa
+      # diferenca e' exercicio da Fase 2.
+      - record: jornada:sli_disponibilidade:ratio5m
+        expr: 1 - (jornada:errors:rate5m / jornada:requests:rate5m)
+
+      # % de transferencias abaixo de 1,5s -- o alvo definido no Encontro 1.
+      # O bucket de 1500ms so' existe porque o SLO pediu.
+      #
+      # ATENCAO ao `le`: o collector expoe le="1500", mas o Prometheus
+      # NORMALIZA para le="1500.0" ao ingerir. Com le="1500" a regra nao casa
+      # com nada e o painel de latencia fica permanentemente vazio -- sem
+      # nenhum erro. Por isso o regex aceita as duas formas.
+      - record: jornada:sli_latencia:ratio5m
+        expr: |
+          sum(rate(traces_span_metrics_duration_milliseconds_bucket{
+            service_name="dashboard", span_name="POST /transaction/",
+            le=~"1500(\\.0+)?"}[5m]))
+          /
+          sum(rate(traces_span_metrics_duration_milliseconds_count{
+            service_name="dashboard", span_name="POST /transaction/"}[5m]))
+        labels: { jornada: transferencia }
+
+      # Volume de negocio: transferencias concluidas por minuto.
+      # E' esta a serie que despenca na degradacao -- sem nenhum erro tecnico.
+      - record: negocio:transferencias_por_min
+        expr: jornada:requests:rate5m{jornada="transferencia"} * 60
+
+  - name: error_budget
+    interval: 30s
+    rules:
+      - record: jornada:sli_disponibilidade:ratio_janela
+        expr: |
+          1 - (
+            sum(rate(traces_span_metrics_calls_total{
+              service_name=~"dashboard|transactions",
+              span_name=~"POST /transaction/|POST /transfer",
+              status_code="STATUS_CODE_ERROR"}[6h])) or vector(0)
+          ) / sum(rate(traces_span_metrics_calls_total{
+              service_name="dashboard", span_name="POST /transaction/"}[6h]))
+        labels: { jornada: transferencia }
+
+      - record: jornada:error_budget_consumido:ratio
+        expr: (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - jornada:slo_objetivo)
+
+      - record: jornada:error_budget_restante:ratio
+        expr: clamp(1 - jornada:error_budget_consumido:ratio, 0, 1)
+
+      # Velocidade de consumo. 1 = gasta o orcamento exatamente no fim da
+      # janela. 7,2 = esgota em ~50 min de uma janela de 6h.
+      - record: jornada:burn_rate:5m
+        expr: |
+          (jornada:errors:rate5m / jornada:requests:rate5m) / (1 - jornada:slo_objetivo)
+
+      - record: jornada:burn_rate:30m
+        expr: |
+          (
+            (sum(rate(traces_span_metrics_calls_total{
+               service_name=~"dashboard|transactions",
+               span_name=~"POST /transaction/|POST /transfer",
+               status_code="STATUS_CODE_ERROR"}[30m])) or vector(0))
+            / sum(rate(traces_span_metrics_calls_total{
+               service_name="dashboard", span_name="POST /transaction/"}[30m]))
+          ) / (1 - jornada:slo_objetivo)
+        labels: { jornada: transferencia }
+
+  - name: error_budget.alertas
+    rules:
+      # Duas janelas no mesmo alerta: a curta detecta rapido, a longa evita
+      # que um solucao de 40 segundos acorde alguem de madrugada.
+      - alert: TransferenciaQueimandoOrcamentoRapido
+        expr: |
+          jornada:burn_rate:5m{jornada="transferencia"}  > 7.2
+          and
+          jornada:burn_rate:30m{jornada="transferencia"} > 7.2
+        for: 2m
+        labels:
+          severity: pagina
+          jornada_negocio: "Transferencia entre contas"
+          impacto: "movimentacao financeira do cliente"
+        annotations:
+          resumo: "Queimando {{ $value | printf \"%.1f\" }}x o sustentavel"
+          decisao: "Avaliar rollback. Ver o orcamento restante antes de decidir."
+
+      - alert: TransferenciaQueimandoOrcamentoLento
+        expr: |
+          jornada:burn_rate:30m{jornada="transferencia"} > 3.6
+        for: 10m
+        labels:
+          severity: ticket
+          jornada_negocio: "Transferencia entre contas"
+          impacto: "degradacao sustentada, sem urgencia de plantao"
+        annotations:
+          resumo: "Consumo acima do sustentavel ha 10 minutos"
+
+      # O alerta que o SLI de erro NAO da': jornada sem nenhum transito.
+      # E' a resposta ao ponto cego do Encontro 1 (servico morto, erro 0%).
+      - alert: TransferenciaSemTransito
+        expr: absent(jornada:requests:rate5m{jornada="transferencia"}) == 1
+        for: 5m
+        labels:
+          severity: pagina
+          jornada_negocio: "Transferencia entre contas"
+          impacto: "ninguem esta conseguindo transferir -- ou a carga parou"
+        annotations:
+          resumo: "Nenhuma transferencia registrada nos ultimos 5 minutos"

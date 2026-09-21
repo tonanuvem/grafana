@@ -1,0 +1,147 @@
+# =============================================================================
+# OpenTelemetry Collector -- LAB 2 (Grafana / Prometheus / Loki / Tempo)
+# =============================================================================
+# Este collector NAO disputa porta com o splunk-otel-collector do systemd:
+# ele nao publica 4317/4318 no host. As aplicacoes falam com ele pelo DNS
+# interno do Docker (otelcol:4317), porque o stack entra na MESMA rede do
+# bank-demo. O collector da Splunk continua intacto em 127.0.0.1:4317.
+#
+# A unica porta publicada no host e' a 8007 (fluent_forward), porque quem
+# abre essa conexao e' o DAEMON do Docker, que roda no host e nao no
+# container. A 8006 fica com a Splunk; usamos 8007 para conviver.
+# =============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+  # Logs dos servicos Node (customer-auth, atm-locator), nginx e UI, que nao
+  # exportam por OTLP. Chegam pelo log driver `fluentd` do proprio Docker.
+  fluent_forward:
+    endpoint: 0.0.0.0:8006
+
+processors:
+  # -------------------------------------------------------------------------
+  # 1. Normaliza o status HTTP entre as duas convencoes semanticas.
+  #
+  # MEDIDO neste ambiente: os servicos Python (dashboard, accounts,
+  # transactions, loan) emitem `http.status_code` (semconv antiga) e os Node
+  # (customer-auth, atm-locator) emitem `http.response.status_code` (nova).
+  # Sem isto, TODA query do lab precisaria de um `or`.
+  # -------------------------------------------------------------------------
+  transform/normaliza_http:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(attributes["http.status_code"], attributes["http.response.status_code"])
+            where attributes["http.status_code"] == nil
+              and attributes["http.response.status_code"] != nil
+
+  # -------------------------------------------------------------------------
+  # 2. Declara quem e' o destino da chamada (peer.service).
+  #
+  # A instrumentacao do `requests` so' grava `http.url` no span de cliente.
+  # Sem peer.service, um servico MORTO some do Service Map: nao ha span de
+  # servidor para parear e o conector nao tem como nomear o destino.
+  # MEDIDO: com esta regra, `accounts` derrubado aparece como virtual_node
+  # com failed="true"; sem ela, nao aparece nada.
+  #
+  # Funciona porque na rede bridge o host da URL E' o nome do servico
+  # (http://accounts:50051/...). Em network_mode: host seria "localhost" --
+  # que e' exatamente a origem do no' `localhost:50051` do Encontro 1.
+  # -------------------------------------------------------------------------
+  transform/peer_service:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(attributes["peer.service"],
+                ExtractPatterns(attributes["http.url"], "^https?://(?P<peer>[^:/]+)")["peer"])
+            where attributes["peer.service"] == nil
+              and attributes["http.url"] != nil
+              and kind.string == "Client"
+
+  # -------------------------------------------------------------------------
+  # 3. So' as bordas viram metrica.
+  #
+  # A instrumentacao do Express cria um span por middleware (cookieParser,
+  # jsonParser, router...). Otimos no trace, lixo na metrica: MEDIDO, iam de
+  # 9 para 26 series sem responder nenhuma pergunta de negocio.
+  # O Tempo continua recebendo TUDO -- o filtro e' so' do caminho de metrica.
+  # -------------------------------------------------------------------------
+  filter/so_bordas:
+    error_mode: ignore
+    traces:
+      span:
+        - 'kind.string != "Server" and kind.string != "Client"'
+
+  # Da nome de servico aos logs que chegam pelo Docker (tag fiapbank.<nome>).
+  transform/nome_do_log:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["service.name"],
+                ExtractPatterns(attributes["fluent.tag"], "^fiapbank\\.(?P<n>.+)$")["n"])
+            where attributes["fluent.tag"] != nil
+
+  batch: {}
+
+connectors:
+  # RED por rota, derivado dos traces. Nenhuma metrica nova na aplicacao.
+  span_metrics:
+    namespace: traces.span.metrics
+    histogram:
+      explicit:
+        # Os buckets SAO os alvos de SLO do Encontro 1. Sem o bucket certo,
+        # o SLI de latencia nao e' calculavel -- e nenhuma query conserta
+        # depois. O SLO decide a instrumentacao, nao o contrario.
+        buckets: [100ms, 250ms, 500ms, 800ms, 1s, 1500ms, 2s, 3s]
+    dimensions:
+      - name: http.status_code
+      - name: http.route
+      - name: service.version
+    metrics_flush_interval: 5s
+
+  # Service Map. O equivalente ao Service Map do Splunk.
+  service_graph:
+    latency_histogram_buckets: [100ms, 250ms, 500ms, 1s, 2s]
+    # ttl de 2s (o padrao de exemplo) perdia pares cliente/servidor;
+    # e o flush padrao e' 60s, tempo demais para uma aula.
+    store: { ttl: 30s, max_items: 5000 }
+    metrics_flush_interval: 10s
+    virtual_node_peer_attributes: [peer.service, db.name, db.namespace, server.address]
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  otlp_grpc/tempo:
+    endpoint: tempo:4317
+    tls: { insecure: true }
+  otlp_http/loki:
+    # O exporter `loki` foi REMOVIDO do contrib. O caminho atual e' o
+    # endpoint OTLP nativo do proprio Loki.
+    endpoint: http://loki:3100/otlp
+    tls: { insecure: true }
+
+service:
+  telemetry: { logs: { level: warn } }
+  pipelines:
+    traces/metricas:
+      receivers: [otlp]
+      processors: [transform/normaliza_http, transform/peer_service, filter/so_bordas, batch]
+      exporters: [span_metrics, service_graph]
+    traces/tempo:
+      receivers: [otlp]
+      processors: [transform/normaliza_http, transform/peer_service, batch]
+      exporters: [otlp_grpc/tempo]
+    metrics/derivadas:
+      receivers: [span_metrics, service_graph]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp, fluent_forward]
+      processors: [transform/nome_do_log, batch]
+      exporters: [otlp_http/loki]

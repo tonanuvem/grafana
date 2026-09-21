@@ -1,0 +1,402 @@
+{
+ "uid": "lab2-cfr",
+ "title": "3 · Deploys e CFR",
+ "description": "Fase 3 — a mudança como causa, medida ao longo do tempo.",
+ "tags": [
+  "lab2",
+  "dora"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 41,
+ "version": 1,
+ "refresh": "30s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "templating": {
+  "list": []
+ },
+ "panels": [
+  {
+   "type": "text",
+   "title": "",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 5
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "### Deploys e Change Failure Rate\n\n**CFR = deploys revertidos ÷ deploys totais.** É a definição do DORA: falhou o\nque exigiu rollback ou hotfix.\n\nCom 3 deploys numa aula o número é ridículo — e isso também é conteúdo. CFR é\nmétrica de **tendência**, não de incidente. Ela não diz o que houve hoje; diz\nse a sua cadência de entrega é sustentável ao longo de meses."
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Change Failure Rate",
+   "description": "Acima de 15% a literatura do DORA considera baixo desempenho. Com N pequeno, não conclua nada.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 6,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "(lab2_rollbacks_total / clamp_min(lab2_deploys_total, 1)) * 100",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 15
+       },
+       {
+        "color": "red",
+        "value": 30
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Deploys",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 6,
+    "y": 5,
+    "w": 4,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab2_deploys_total",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Revertidos",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 10,
+    "y": 5,
+    "w": 4,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab2_rollbacks_total",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 1
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Versão em produção",
+   "description": "Qual versão está de fato atendendo. Vem do atributo service.version dos traces — a aplicação declara quem ela é.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 14,
+    "y": 5,
+    "w": 10,
+    "h": 6
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "topk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 2,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Volume por versão — a troca acontecendo",
+   "description": "A versão antiga decai e a nova assume. O cruzamento é o deploy.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 11,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])) * 60",
+     "legendFormat": "v{{service_version}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Erro por versão",
+   "description": "Atribuir a falha à mudança é o que separa CFR de 'taxa de erro'.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 11,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\", status_code=\"STATUS_CODE_ERROR\"}[5m])) * 60",
+     "legendFormat": "v{{service_version}} — erros/min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": true,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prom"
+    },
+    "enable": true,
+    "iconColor": "purple",
+    "name": "Deploys",
+    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "titleFormat": "deploy / rollback",
+    "step": "30s"
+   }
+  ]
+ }
+}

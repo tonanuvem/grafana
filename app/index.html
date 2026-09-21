@@ -1,0 +1,324 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAB 2 — Error Budget e Impacto</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ground:#EFF2F8; --surface:#FFFFFF; --surface-2:#F5F7FC;
+  --ink:#101A36; --ink-soft:#4E5A82; --ink-faint:#7B86A8;
+  --line:#D6DCEA; --line-strong:#B9C3DB;
+  --accent:#2E4BD6; --accent-soft:#E3E8FB;
+  --gold:#9A6E1C; --gold-soft:#F7EEDA;
+  --ok:#136D54; --warn:#8C5A0C; --crit:#A81F18;
+  --on-accent:#FFFFFF;
+  --shadow:0 1px 2px rgba(16,26,54,.06), 0 8px 24px rgba(16,26,54,.06);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ground:#070D20; --surface:#0E1733; --surface-2:#131D3E;
+  --ink:#E8ECF9; --ink-soft:#A3AECF; --ink-faint:#74809F;
+  --line:#26325A; --line-strong:#3A4877;
+  --accent:#88A0FF; --accent-soft:#1B2650;
+  --gold:#E0A94A; --gold-soft:#2A2213;
+  --ok:#4FC39C; --warn:#E0A94A; --crit:#FF8177;
+  --on-accent:#0A1230;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;text-wrap:balance;margin:0}
+input,textarea,select,button{font:inherit;color:inherit}
+code,kbd{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em}
+
+.bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:940px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.bar-id{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.bar-sp{flex:1 1 40px}
+.prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-faint)}
+.prog-t{width:110px;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog-f{height:100%;background:var(--accent);width:0;transition:width .3s}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;
+  padding:7px 13px;cursor:pointer;font-size:13px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn-1{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+main{max-width:940px;margin:0 auto;padding:32px 20px 80px}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px}
+h1{font-size:34px;line-height:1.15;margin-bottom:14px}
+.lede{color:var(--ink-soft);font-size:16px;max-width:64ch}
+
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:22px 24px;margin-top:22px;box-shadow:var(--shadow)}
+.sec-h{display:flex;gap:12px;align-items:baseline;margin-bottom:6px}
+.sec-n{flex:none;width:26px;height:26px;border-radius:7px;background:var(--accent-soft);
+  color:var(--accent);font-size:13px;font-weight:600;display:grid;place-items:center;
+  font-family:"IBM Plex Mono",monospace}
+h2{font-size:21px}
+.sec-sub{color:var(--ink-soft);font-size:14px;margin:8px 0 18px;max-width:70ch}
+
+.cmd{position:relative;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:9px;padding:12px 44px 12px 14px;margin:12px 0;overflow-x:auto}
+.cmd code{white-space:pre;display:block;color:var(--ink)}
+.cmd button{position:absolute;top:8px;right:8px;border:1px solid var(--line-strong);
+  background:var(--surface);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer}
+.cmd button:hover{border-color:var(--accent);color:var(--accent)}
+
+label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:600;margin:16px 0 6px}
+input[type=text],textarea,select{width:100%;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:9px;padding:10px 12px;outline:none}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--surface)}
+textarea{min-height:82px;resize:vertical}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.grid3{display:grid;gap:14px;grid-template-columns:1fr 1fr 1fr}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.nota{border-left:3px solid var(--gold);background:var(--gold-soft);color:var(--ink);
+  padding:12px 16px;border-radius:0 9px 9px 0;margin:16px 0;font-size:14px}
+.nota b{color:var(--gold)}
+.olhe{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:12px 16px;border-radius:0 9px 9px 0;margin:14px 0;font-size:14px}
+.ia{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);
+  padding:12px 16px;border-radius:0 9px 9px 0;margin:14px 0;font-size:14px}
+.ia b{color:var(--ok)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint)}
+td select{padding:6px 8px}
+footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);font-size:13px}
+</style>
+
+<div class="bar"><div class="bar-in">
+  <span class="bar-id">Encontro 2 · Lab 2</span>
+  <span class="bar-sp"></span>
+  <span class="prog"><span id="pcount">0 de 0</span><span class="prog-t"><span class="prog-f" id="pfill"></span></span></span>
+  <button class="btn" onclick="limpar()">Limpar</button>
+  <button class="btn btn-1" onclick="gerar()">Gerar planilha</button>
+</div></div>
+
+<main>
+  <div class="eyebrow">Observabilidade baseada em impacto e governança</div>
+  <h1>Decidir com orçamento de erro</h1>
+  <p class="lede">Você vai publicar versões de um serviço crítico sem saber se são boas,
+  detectar a degradação pelo painel, decidir entre reverter e seguir, e comunicar
+  a mesma falha para três audiências. Tudo no seu próprio ambiente — o que você
+  quebrar não afeta ninguém.</p>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">0</span><h2>Antes de começar</h2></div>
+    <p class="sec-sub">Sem tráfego os painéis ficam vazios: as métricas deste lab nascem
+    dos traces. Deixe a carga rodando o encontro inteiro.</p>
+    <div class="cmd"><code>bash run-stack.sh</code><button onclick="cp(this)">copiar</button></div>
+    <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 90m</code><button onclick="cp(this)">copiar</button></div>
+    <label>Integrantes do grupo</label>
+    <input type="text" id="integrantes" placeholder="Nomes separados por vírgula">
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">1</span><h2>A mesma instrumentação, outro backend</h2></div>
+    <p class="sec-sub">A aplicação não mudou uma linha. Só o destino da telemetria.</p>
+    <div class="cmd"><code>docker ps --format '{{.Names}}\t{{.Status}}' | grep fiapbank</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Olhe:</b> o <i>uptime</i> dos containers da aplicação. Eles não foram
+    recriados — e mesmo assim a telemetria agora chega no Grafana.</div>
+    <p class="sec-sub">Abra <b>Explore → Tempo → Service Graph</b>. É o Service Map do
+    Encontro 1, montado a partir das mesmas informações.</p>
+    <label>O que existe no Service Graph do Grafana que não existia no Splunk — e o contrário?</label>
+    <textarea id="f_servicemap" placeholder="Compare os dois mapas. Repare em quem aparece como nó e de onde vem o nome de cada um."></textarea>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">2</span><h2>Saúde do negócio: a falha que não é erro</h2></div>
+    <p class="sec-sub">Abra <b>LAB 2 → 1 · Saúde do Negócio</b> e deixe aberto.</p>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">a) A jornada feliz tem forma</h3>
+    <div class="cmd"><code>bash carga.sh --cenario auth --usuarios 10 --tempo 60s</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Olhe:</b> “Clientes autenticados por minuto”. Dobre os usuários e a
+    linha dobra. É volume de <i>negócio</i>, não de requisição.</div>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">b) A jornada infeliz, disparada por você</h3>
+    <p class="sec-sub">Abra a tela de login do banco e <b>erre a senha cinco vezes</b>. Anote o horário.</p>
+    <div class="olhe"><b>Olhe os três painéis juntos:</b> “Autenticações recusadas por minuto”
+    sobe · “Taxa de erro TÉCNICA” fica em <b>zero</b> · “% de logins recusados” acompanha o negócio.</div>
+    <label>Cinco clientes não entraram no banco. Por que o indicador técnico continua impecável?</label>
+    <textarea id="f_400" placeholder="O que o customer-auth respondeu? Por que a instrumentação não considera isso um erro?"></textarea>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">c) O mesmo número por outro caminho</h3>
+    <div class="olhe"><b>Olhe:</b> o painel “Recusas de login vistas no LOG”. Os mesmos picos,
+    contados a partir da linha de log.</div>
+    <label>Métrica e log deram o mesmo número. Quando você escolheria cada um?</label>
+    <textarea id="f_metrica_log" placeholder="Um é barato e impreciso; o outro é preciso e mais caro. O que HTTP 400 também significa, além de senha errada?"></textarea>
+
+    <div class="ia"><b>AIOps —</b> em <b>Drilldown → Logs</b>, escolha o serviço e abra a aba
+    <b>Patterns</b>. O Loki agrupa milhares de linhas em um punhado de padrões, sozinho.
+    (Só funciona com volume: com poucas linhas ele acha zero padrões.)</div>
+    <label>Quantos padrões o Loki encontrou, e o que isso substituiria no seu trabalho?</label>
+    <textarea id="f_patterns" placeholder="Agrupar log por padrão é uma técnica de AIOps que não exige modelo nenhum."></textarea>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">3</span><h2>O incidente</h2></div>
+    <p class="sec-sub">Abra <b>LAB 2 → 2 · Error Budget</b>. Confira o ponto de partida:
+    orçamento, burn rate e latência. Depois publique — <b>sem saber</b> se a versão é boa.</p>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+    <div class="nota"><b>Espere.</b> O sinal leva cerca de um minuto para aparecer: as janelas
+    de taxa são de 5 minutos. Esse atraso entre <i>quebrou</i> e <i>soubemos</i> é conteúdo,
+    não defeito.</div>
+    <p class="sec-sub">Publique de novo. Uma das versões tem uma regressão.</p>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+
+    <div class="olhe"><b>Percorra, nesta ordem:</b><br>
+    1. “p90 por VERSÃO” — foi a mudança?<br>
+    2. <b>Explore → Tempo</b>, abra um trace lento — <i>onde</i> o tempo é gasto?<br>
+    3. No span, clique em <b>Ver trace no Tempo</b> a partir do log, ou vá do trace ao log.<br>
+    4. “Transferências por minuto” — o negócio caiu antes de qualquer erro aparecer.<br>
+    5. A tela <code>/transfer</code> do banco — o que o cliente vive?</div>
+
+    <div class="grid3">
+      <div><label>Horário do alerta</label><input type="text" id="f_t_alerta" placeholder="14:32"></div>
+      <div><label>Horário em que você entendeu</label><input type="text" id="f_t_entendeu" placeholder="14:36"></div>
+      <div><label>% de orçamento restante</label><input type="text" id="f_orcamento" placeholder="63%"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Burn rate observado</label><input type="text" id="f_burn" placeholder="7,2x"></div>
+      <div><label>% abaixo de 1,5s</label><input type="text" id="f_lat" placeholder="54%"></div>
+      <div><label>R$ por minuto não transacionado</label><input type="text" id="f_custo" placeholder="R$ 4.200"></div>
+    </div>
+
+    <label>Decisão — e ela precisa citar os números acima</label>
+    <div class="grid2">
+      <select id="f_decisao">
+        <option value="">escolha…</option>
+        <option>rollback</option>
+        <option>seguir com monitoramento intensificado</option>
+      </select>
+      <input type="text" id="f_checkpoint" placeholder="Checkpoint: se em X min o burn rate não cair, revertemos">
+    </div>
+    <textarea id="f_justificativa" placeholder="Ex.: orçamento em 63%, burn 7,2x — esgota em ~40 min. Reverter agora custa menos que descobrir daqui a meia hora."></textarea>
+    <div class="cmd"><code>bash decisao.sh rollback "sua justificativa com números"</code><button onclick="cp(this)">copiar</button></div>
+    <div class="nota"><b>Depois do rollback, olhe o gauge.</b> A latência volta em dois minutos.
+    O orçamento restante <b>não volta</b>. Rollback estanca; só o tempo repõe.</div>
+    <label>O que você esperava que acontecesse com o orçamento após o rollback — e o que aconteceu?</label>
+    <textarea id="f_pos_rollback"></textarea>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">4</span><h2>Política de error budget</h2></div>
+    <p class="sec-sub">O orçamento só é instrumento de decisão quando existe uma regra escrita
+    <i>antes</i> do incidente. Preencha as três linhas em branco.</p>
+    <table>
+      <tr><th>Orçamento restante</th><th>O que acontece</th></tr>
+      <tr><td>&gt; 50%</td><td>deploys normais</td></tr>
+      <tr><td>25 – 50%</td><td><input type="text" id="f_pol_50" placeholder="..."></td></tr>
+      <tr><td>&lt; 25%</td><td><input type="text" id="f_pol_25" placeholder="..."></td></tr>
+      <tr><td>0%</td><td><input type="text" id="f_pol_0" placeholder="..."></td></tr>
+    </table>
+    <label>Quem tem autoridade para suspender a congelação de deploys — e com base em quê?</label>
+    <textarea id="f_autoridade" placeholder="A pergunta é política, não técnica. E é a que decide se a política vale alguma coisa."></textarea>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="sec-n">5</span><h2>A mesma falha, três audiências</h2></div>
+    <p class="sec-sub">O <code>decisao.sh</code> já gerou um rascunho com os seus números em
+    <code>lab2/comunicacao-*.md</code>. Escreva o texto.</p>
+    <label>Time técnico — o que fazer agora</label>
+    <textarea id="f_com_tec"></textarea>
+    <label>Gestão — o que está em risco, e até quando</label>
+    <textarea id="f_com_gestao"></textarea>
+    <label>Executivo — uma frase</label>
+    <textarea id="f_com_exec" placeholder="Sem nome de serviço, sem percentil, sem nome de ferramenta."></textarea>
+    <div class="nota"><b>Teste do texto executivo:</b> se ele provoca uma pergunta de
+    esclarecimento, falhou.</div>
+    <label>Postmortem — o que muda estruturalmente</label>
+    <textarea id="f_postmortem" placeholder="Não vale 'ter mais cuidado'. O que na arquitetura ou no processo impediria a repetição? Veja o CFR no dashboard 3."></textarea>
+    <div class="cmd"><code>bash deploy.sh</code><button onclick="cp(this)">copiar</button></div>
+    <label>Qual o seu CFR — e por que ele ainda não significa nada?</label>
+    <textarea id="f_cfr"></textarea>
+  </section>
+</main>
+
+<footer>Preenchimento salvo neste navegador enquanto você trabalha.
+A planilha sai com duas abas: entrega e comunicação.</footer>
+
+<script>
+const CAMPOS = ["integrantes","f_servicemap","f_400","f_metrica_log","f_patterns",
+ "f_t_alerta","f_t_entendeu","f_orcamento","f_burn","f_lat","f_custo","f_decisao",
+ "f_checkpoint","f_justificativa","f_pos_rollback","f_pol_50","f_pol_25","f_pol_0",
+ "f_autoridade","f_com_tec","f_com_gestao","f_com_exec","f_postmortem","f_cfr"];
+const CHAVE = "lab2-error-budget";
+
+function el(id){return document.getElementById(id)}
+function dados(){const d={};CAMPOS.forEach(c=>d[c]=(el(c)?.value||"").trim());return d}
+
+function salvar(){
+  try{localStorage.setItem(CHAVE, JSON.stringify(dados()))}catch(e){}
+  const d=dados(), n=CAMPOS.filter(c=>d[c]).length;
+  el("pcount").textContent = n+" de "+CAMPOS.length;
+  el("pfill").style.width = (n/CAMPOS.length*100)+"%";
+}
+function carregar(){
+  try{
+    const d=JSON.parse(localStorage.getItem(CHAVE)||"{}");
+    CAMPOS.forEach(c=>{if(el(c)&&d[c])el(c).value=d[c]});
+  }catch(e){}
+  salvar();
+}
+function limpar(){
+  if(!confirm("Apagar tudo o que você preencheu?"))return;
+  CAMPOS.forEach(c=>{if(el(c))el(c).value=""});
+  try{localStorage.removeItem(CHAVE)}catch(e){}
+  salvar();
+}
+function cp(b){
+  const t=b.parentElement.querySelector("code").textContent;
+  navigator.clipboard.writeText(t).then(()=>{b.textContent="copiado";setTimeout(()=>b.textContent="copiar",1200)});
+}
+CAMPOS.forEach(c=>{const e=el(c); if(e)e.addEventListener("input",salvar)});
+carregar();
+
+const R = [
+ ["Integrantes","integrantes"],["Service Graph x Service Map","f_servicemap"],
+ ["Por que o erro tecnico fica em zero","f_400"],["Metrica ou log","f_metrica_log"],
+ ["Padroes de log (AIOps)","f_patterns"],["Horario do alerta","f_t_alerta"],
+ ["Horario em que entendeu","f_t_entendeu"],["Orcamento restante","f_orcamento"],
+ ["Burn rate","f_burn"],["% abaixo de 1,5s","f_lat"],["R$/min nao transacionado","f_custo"],
+ ["Decisao","f_decisao"],["Checkpoint","f_checkpoint"],["Justificativa","f_justificativa"],
+ ["Orcamento apos o rollback","f_pos_rollback"],["Politica 25-50%","f_pol_50"],
+ ["Politica <25%","f_pol_25"],["Politica 0%","f_pol_0"],
+ ["Quem suspende a congelacao","f_autoridade"],["CFR","f_cfr"]];
+const C = [["Time tecnico","f_com_tec"],["Gestao","f_com_gestao"],
+ ["Executivo","f_com_exec"],["Postmortem - o que muda","f_postmortem"]];
+
+function planilha(d){
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.aoa_to_sheet([["Item","Resposta"]].concat(R.map(([t,k])=>[t,d[k]||""]))),"Entrega");
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.aoa_to_sheet([["Audiencia","Texto"]].concat(C.map(([t,k])=>[t,d[k]||""]))),"Comunicacao");
+  return wb;
+}
+function nomeArquivo(d){
+  const g=(d.integrantes||"grupo").split(",")[0].trim().split(/\s+/)[0]
+    .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"") || "grupo";
+  return "LAB2_ErrorBudget_"+g+".xlsx";
+}
+async function gerar(){
+  const d=dados();
+  if(!d.integrantes && !confirm("Gerar sem os nomes do grupo?"))return;
+  const wb=planilha(d), nome=nomeArquivo(d);
+  // A pagina roda servida pelo nginx do lab ou como artifact no claude.ai.
+  // No artifact quem salva e' a capability; servida, e' o download do navegador.
+  if(typeof window.claude?.use === "function"){
+    try{
+      const downloads = await window.claude.use("downloads");
+      const bin = XLSX.write(wb,{bookType:"xlsx",type:"array"});
+      await downloads.create({filename:nome, data:new Uint8Array(bin)});
+      return;
+    }catch(e){}
+  }
+  XLSX.writeFile(wb,nome);
+}
+</script>

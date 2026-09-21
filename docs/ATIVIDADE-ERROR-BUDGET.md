@@ -1,0 +1,224 @@
+# LAB 2 — Error Budget, impacto e comunicação
+
+Atividade prática do Encontro 2, sobre o FIAP OTEL Bank com stack aberto
+(Grafana · Prometheus · Loki · Tempo). Duração sugerida: **90 a 110 minutos**.
+
+> "Degradação parcial não gera dilema quando é óbvia. O exercício só existe
+> porque a decisão é de verdade."
+
+**Cada aluno tem o próprio ambiente.** O que ele quebrar não afeta ninguém, e
+ele pode repetir quantas vezes quiser. Não há coreografia central: quem dispara
+o incidente é o próprio aluno.
+
+Guia para o aluno (nginx local): `bash app/guia.sh` → porta 8031.
+
+---
+
+## Antes da aula — preparo do instrutor
+
+```bash
+cd ~/bank-demo-docker && docker compose -f docker-compose-network-docker-internal.yml up -d
+cd ~/grafana && bash run-stack.sh
+bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m
+bash app/guia.sh
+```
+
+O `run-stack.sh` valida sozinho e avisa se faltar tráfego. Confira nos painéis
+que há dado nos **últimos 5 minutos** — não basta a série existir.
+
+**Por que a variante bridge e não host:** o collector do LAB 2 entra na rede do
+bank-demo e não publica 4317/4318 no host, então o `splunk-otel-collector` do
+Encontro 1 pode continuar rodando. Não é preciso parar nada.
+
+---
+
+## O que muda em relação ao LAB 1
+
+| | LAB 1 | LAB 2 |
+|---|---|---|
+| Falha | serviço **morto** (`docker stop`) | **degradação parcial** de um deploy |
+| Pergunta | o SLI capturou? | o orçamento justifica **seguir ou reverter**? |
+| Saída | SLIs e SLOs definidos | **decisão registrada + comunicação** |
+| Backend | Splunk O11y | Prometheus · Loki · Tempo · Grafana |
+
+---
+
+## Roteiro
+
+### Fase 1 — A mesma instrumentação, outro backend (10 min)
+
+A aplicação não muda uma linha; só o destino da telemetria. `docker ps` mostra
+os mesmos containers com o mesmo uptime.
+
+**Service Graph** (`Explore → Tempo → Service Graph`) é o análogo do Service Map.
+O MongoDB aparece como nó `bank`, inferido — igual ao `mongodb:bank` tracejado
+do Encontro 1, pela mesma razão.
+
+### Fase 2 — Business Health (25 min)
+
+Três atos, no dashboard **1 · Saúde do Negócio**:
+
+1. **Jornada feliz.** `carga.sh --cenario auth --usuarios 10`; dobre os usuários
+   e a linha "Clientes autenticados por minuto" dobra.
+2. **Jornada infeliz, disparada pelo aluno.** Errar a senha 5× na tela de login.
+   Recusas sobem; **a taxa de erro técnica fica em zero**.
+3. **O mesmo número por outro caminho.** O painel via Loki conta as mesmas
+   recusas a partir do log do morgan.
+
+**AIOps (3 min):** `Drilldown → Logs → Patterns`. O Loki agrupa as linhas em
+padrões sozinho. Precisa de volume — com poucas linhas ele acha zero.
+
+### Fase 3 — O incidente (45 min)
+
+```bash
+bash deploy.sh nova-versao     # v1.1.0 — saudável, nada muda
+bash deploy.sh nova-versao     # v1.2.0 — a regressão
+bash decisao.sh rollback "..." # registra com os números do momento
+bash deploy.sh rollback
+```
+
+O instrutor pode piorar o quadro **depois** que o aluno decidiu:
+
+```bash
+bash deploy.sh piorar          # 2,5s de atraso + 25% de falha
+```
+
+### Fase 4 — Comunicação (25 min)
+
+O `decisao.sh` gera `lab2/comunicacao-*.md` já com os números. O aluno escreve
+os três textos e o postmortem.
+
+---
+---
+
+# GABARITO
+
+Os números abaixo foram **medidos** no ambiente de referência.
+
+## Fase 1 — o que precisa aparecer
+
+O Service Graph do Grafana e o Service Map do Splunk mostram a mesma topologia,
+mas por caminhos diferentes: lá o backend infere, aqui as métricas são
+derivadas **no seu collector** — e você paga a cardinalidade.
+
+**Ponto extra:** notar que o nó do MongoDB se chama `bank` (o nome do banco de
+dados), não `mongodb`. A identidade de um serviço não instrumentado é sempre o
+que o *chamador* conseguiu registrar.
+
+## Fase 2 — o achado central
+
+| Sinal | Valor medido | O que significa |
+|---|---|---|
+| `negocio:logins_sucesso:rate5m` | 0,104/s | clientes que entraram |
+| `negocio:logins_recusados:rate5m` | 0,021/s | clientes que **não** entraram |
+| `tecnico:auth_erros:rate5m` | **0,0** | o SLI clássico não vê nada |
+| taxa de recusa | **16,7%** | um em cada seis |
+
+**Por que zero:** o `customer-auth` responde **HTTP 400** para senha errada
+(`userController.js`, `Invalid email or password`), e a instrumentação
+automática não marca 4xx como erro de span. Do ponto de vista técnico nada
+falhou; do ponto de vista do cliente, ele não entrou no banco.
+
+**Vale ponto:** o aluno perceber que 400 também cobre "campo em branco", e que
+por isso o log (que traz a mensagem) é mais preciso que a métrica.
+
+**Ponto extra:** notar que o mesmo painel serve à segurança — 5 senhas erradas
+de uma pessoa é normal; 500 por minuto é *credential stuffing*.
+
+## Fase 3 — a degradação, número a número
+
+| Versão | p90 de `POST /transfer` | % abaixo de 1,5s | erros |
+|---|---|---|---|
+| v1.0.0 / v1.1.0 | **90 ms** | ~99,7% | ~0 |
+| v1.2.0 | **1886 ms** | cai para ~55% | ~0 |
+| v1.2.0 + `piorar` | ~2900 ms | **0%** | 4,5% |
+
+**O que o aluno tem de perceber, em ordem:**
+
+1. **O deploy saudável não move nada.** Sem essa linha de base, qualquer
+   variação parece incidente.
+2. **A degradação aparece com ~60 s de atraso**, porque as janelas de taxa são
+   de 5 min. É a distância entre *quebrou* e *soubemos*.
+3. **O negócio cai sem erro nenhum.** Requisições mais lentas concluem menos no
+   mesmo minuto: "Transferências por minuto" despenca com a taxa de erro em zero.
+4. **A quebra por versão** é o que transforma "está lento" em "foi o deploy".
+
+### O erro do serviço de domínio não chega ao cliente como erro
+
+Com `piorar`, o `transactions` devolve 500. O `dashboard` faz `response.json()`
+— que funciona, porque o corpo do erro é JSON — e devolve **HTTP 200** com
+`{"response":{"message":"Internal error"}}`.
+
+**Medido:** `transactions POST /transfer` com `STATUS_CODE_ERROR`, e o span do
+`dashboard` em `UNSET`. Um SLI ancorado só na borda mostraria **100% de
+disponibilidade** com 25% das transferências falhando.
+
+É por isso que a regra deste lab conta o erro na **cadeia inteira**
+(`service_name=~"dashboard|transactions"`), e não só no ponto de entrada. É o
+terceiro rosto do mesmo tema do Encontro 1.
+
+### Depois do rollback
+
+Latência e erro voltam em 1–2 min. **O orçamento restante não volta.** Ele só
+se recupera conforme os minutos ruins saem da janela de 6h — o que, numa aula,
+o aluno **não** vai ver acontecer. Não ver é a lição.
+
+## O que vale ponto na decisão
+
+Não existe resposta certa entre reverter e seguir. Avalia-se:
+
+**Obrigatório:**
+- a decisão **cita percentual de orçamento e burn rate** — número, não adjetivo;
+- existe **checkpoint com prazo** ("se em 10 min não cair, revertemos");
+- o texto do executivo não contém percentil, nome de serviço nem de ferramenta;
+- o aluno percebeu que rollback estanca mas não repõe orçamento.
+
+**Erro clássico a corrigir:** reverter "porque tem erro". Se toda degradação
+vira rollback, o orçamento não serve para nada — e a organização volta a ter
+medo de entregar, que é o problema que SLO existe para resolver.
+
+**Ponto extra:** perceber que a jornada *Extrato* também degradou (mesma
+`transactions`), com impacto muito menor — duas jornadas, um incidente,
+decisões possivelmente diferentes, e uma pausa de deploy que é global.
+
+## Política de error budget — respostas defensáveis
+
+| Restante | Resposta esperada |
+|---|---|
+| 25–50% | revisão obrigatória de risco antes de cada deploy; nada de sexta-feira |
+| < 25% | só correção e trabalho de confiabilidade; funcionalidade nova espera |
+| 0% | congelamento de deploys até o orçamento se recompor |
+
+A pergunta que separa quem entendeu: **quem pode suspender a congelação?**
+Se a resposta for "qualquer gerente que precise entregar", a política é
+decorativa.
+
+## CFR
+
+Com 3 deploys o número é ridículo — e isso é conteúdo. CFR é métrica de
+**tendência**. O que ela aponta não é "fomos descuidados hoje", é "esta
+cadência de entrega é sustentável?". A ação estrutural que ela sugere aqui é
+*canary* para o `transactions`, e o painel de R$/min é o que justifica o
+investimento.
+
+## Fechamento — as três ideias que devem sobrar
+
+1. **Falha de negócio não tem assinatura técnica única.** Na autenticação ela é
+   HTTP 400; na transferência é HTTP 200. Em nenhuma das duas o serviço "deu erro".
+2. **Orçamento consumido não volta com rollback.** É o que diferencia error
+   budget de um alerta comum, e o que o torna instrumento de decisão.
+3. **AIOps herda o ponto cego do sinal que recebe.** Um detector de anomalia
+   treinado na taxa de erro técnica não veria nada na Fase 2 — o sinal fica em
+   zero o tempo todo. Sem SLI de negócio, o algoritmo aprende ruído.
+
+---
+
+## Armadilhas conhecidas (para o instrutor)
+
+| Sintoma | Causa | Correção |
+|---|---|---|
+| Painéis vazios | sem carga | `carga.sh` — as métricas nascem dos traces |
+| `Patterns` mostra zero | pouco volume de log | subir usuários; com ~950 linhas apareceram 3 padrões |
+| Contador em 0 logo após o deploy | primeira exposição da série | some sozinho no scrape seguinte |
+| Nó virtual demora a aparecer | `store.ttl` de 30 s no `service_graph` | é esperado; vale como atraso de detecção |
+| Porta 5000 ocupada | AirPlay, no macOS | o `run-stack.sh` remapeia sozinho para 5050 |

@@ -1,0 +1,17 @@
+global: { scrape_interval: 15s, evaluation_interval: 15s }
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # As metricas RED e o Service Map, derivados dos traces pelo collector.
+  - job_name: otel-derivadas
+    static_configs: [ { targets: ['otelcol:8889'] } ]
+
+  # Eventos de deploy/rollback. honor_labels para preservar servico/versao.
+  - job_name: deploys
+    honor_labels: true
+    static_configs: [ { targets: ['pushgateway:9091'] } ]
+
+  - job_name: prometheus
+    static_configs: [ { targets: ['localhost:9090'] } ]

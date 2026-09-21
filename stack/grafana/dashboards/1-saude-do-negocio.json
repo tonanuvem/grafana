@@ -1,0 +1,431 @@
+{
+ "uid": "lab2-negocio",
+ "title": "1 · Saúde do Negócio",
+ "description": "Fase 2 e Fase 3 — a falha vista pelo cliente, não pelo servidor.",
+ "tags": [
+  "lab2",
+  "negocio"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 41,
+ "version": 1,
+ "refresh": "30s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "type": "text",
+   "title": "",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 4
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "### Saúde do Negócio — o que o cliente conseguiu fazer\n\nNenhum painel aqui mostra CPU, memória ou latência de serviço. Todos respondem\nà mesma pergunta: **quantas pessoas conseguiram concluir o que vieram fazer?**\n\nCompare a linha vermelha de recusas com a taxa de erro técnica ao lado.\nAs duas discordam — e a de negócio é a que está certa."
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Clientes autenticados por minuto",
+   "description": "Jornada feliz. Suba os usuários da carga e esta linha sobe junto — é volume de negócio, não de requisição.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "negocio:logins_sucesso:rate5m * 60",
+     "legendFormat": "entraram",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Autenticações recusadas por minuto",
+   "description": "Erre a senha na tela de login e observe. Cada pico é um cliente que não entrou no banco.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 4,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "negocio:logins_recusados:rate5m * 60",
+     "legendFormat": "recusadas (HTTP 400)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Taxa de erro TÉCNICA do customer-auth",
+   "description": "O SLI clássico. Fica em ZERO enquanto os clientes são recusados: HTTP 400 não marca o span como erro. Repare que ele mostra 0,00 mesmo sem tráfego nenhum: a regra tem `or vector(0)`. Zero confortável e zero por ausência de dado são indistinguíveis aqui.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 11,
+    "w": 6,
+    "h": 5
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "tecnico:auth_erros:rate5m * 60",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true,
+     "legendFormat": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 2,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 0.01
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "% de logins recusados",
+   "description": "A mesma falha, medida pelo negócio. Fica em branco quando NÃO HÁ tentativas de login: sem denominador não há indicador. Em branco não é 'saudável' — é 'não sei', e a diferença entre as duas coisas é metade deste laboratório.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 6,
+    "y": 11,
+    "w": 6,
+    "h": 5
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "negocio:taxa_recusa_login:ratio5m * 100",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true,
+     "legendFormat": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 5
+       },
+       {
+        "color": "red",
+        "value": 15
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "sem tráfego de login"
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Recusas de login vistas no LOG (Loki)",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "description": "O mesmo número por outro caminho: a linha do morgan. Métrica é barata e imprecisa (400 também é campo em branco); log é preciso e mais caro.",
+   "gridPos": {
+    "x": 12,
+    "y": 11,
+    "w": 12,
+    "h": 5
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     },
+     "queryType": "range",
+     "expr": "sum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))",
+     "legendFormat": "recusas/min"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10,
+      "showPoints": "never"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "single"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Transferências concluídas por minuto",
+   "description": "A linha de negócio da Fase 3. Ela DESPENCA na degradação — sem nenhum erro técnico, só porque cada transferência passou a demorar mais.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 16,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "negocio:transferencias_por_min",
+     "legendFormat": "transferências/min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Transferências recusadas por saldo (só o LOG vê)",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "description": "'Insufficient Balance' devolve HTTP 200 e fica invisível na métrica. Só existe no log — por isso o Loki não é acessório neste lab.",
+   "gridPos": {
+    "x": 12,
+    "y": 16,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     },
+     "queryType": "range",
+     "expr": "sum(count_over_time({service_name=\"dashboard\"} |= \"Insufficient Balance\" [1m]))",
+     "legendFormat": "recusadas/min"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10,
+      "showPoints": "never"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "single"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": true,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prom"
+    },
+    "enable": true,
+    "iconColor": "purple",
+    "name": "Deploys",
+    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "titleFormat": "deploy / rollback",
+    "step": "30s"
+   }
+  ]
+ }
+}

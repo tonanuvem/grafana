@@ -1,0 +1,43 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prom
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # Service Map -- aba "Service Graph" do Explore, alimentada pelas
+      # metricas que o connector service_graph publica no Prometheus.
+      serviceMap: { datasourceUid: prom }
+      nodeGraph: { enabled: true }
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -2m
+        spanEndTimeShift: 2m
+        filterByTraceID: true
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        # ATENCAO ao matcherType. Com logs via OTLP o trace_id NAO esta no
+        # texto da linha: vem como metadata estruturada. Com `regex` (que
+        # procura dentro da linha) o link simplesmente nao aparece -- testado.
+        # O correto e' `label`, e o matcherRegex e' o NOME do campo.
+        - name: TraceID
+          matcherType: label
+          matcherRegex: trace_id
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'Ver trace no Tempo'
+          datasourceUid: tempo

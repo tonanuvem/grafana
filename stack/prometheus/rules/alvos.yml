@@ -1,0 +1,17 @@
+# =============================================================================
+# ARQUIVO GERADO -- nao edite a mao.
+#   ./slo.sh alvo 99.5      muda o alvo do SLO
+#   ./slo.sh ticket 125     muda o R$ por transferencia
+#   ./slo.sh --reset        volta ao padrao
+# =============================================================================
+groups:
+  - name: alvos
+    rules:
+      # Janela do lab: 6h (em producao seriam 30 dias).
+      - record: jornada:slo_objetivo
+        expr: vector(0.99)
+        labels: { jornada: transferencia }
+
+      # Quanto vale, para o negocio, uma transferencia que nao aconteceu.
+      - record: negocio:valor_por_transferencia_brl
+        expr: vector(125)

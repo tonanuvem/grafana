@@ -1,0 +1,12 @@
+apiVersion: 1
+providers:
+  - name: LAB2
+    orgId: 1
+    folder: 'LAB 2 - Error Budget'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

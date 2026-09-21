@@ -1,0 +1,651 @@
+{
+ "uid": "lab2-budget",
+ "title": "2 · Error Budget",
+ "description": "Fase 3 — o orçamento como instrumento de decisão.",
+ "tags": [
+  "lab2",
+  "slo"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 41,
+ "version": 1,
+ "refresh": "30s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "templating": {
+  "list": [
+   {
+    "name": "alvo",
+    "label": "Alvo do SLO (explorar)",
+    "type": "custom",
+    "current": {
+     "text": "99",
+     "value": "99"
+    },
+    "query": "99,99.5,99.9,99.95",
+    "options": [
+     {
+      "text": "99",
+      "value": "99",
+      "selected": true
+     },
+     {
+      "text": "99.5",
+      "value": "99.5",
+      "selected": false
+     },
+     {
+      "text": "99.9",
+      "value": "99.9",
+      "selected": false
+     },
+     {
+      "text": "99.95",
+      "value": "99.95",
+      "selected": false
+     }
+    ],
+    "description": "Recalcula o orçamento na hora, sem mexer em nada. Para COMPROMETER-SE com um alvo (e mudar o alerta), use ./slo.sh alvo <n>."
+   }
+  ]
+ },
+ "panels": [
+  {
+   "type": "text",
+   "title": "",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 4
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "### Error Budget — Transferência entre contas\n\nJanela do lab: **6 horas** (em produção seriam 30 dias). Com alvo de 99% isso dá\n**3,6 minutos** de orçamento de erro.\n\nO seletor **Alvo do SLO** acima recalcula o orçamento na hora — é para explorar.\nComprometer-se custa um comando: `./slo.sh alvo 99.5`, que é o que muda o alerta."
+   }
+  },
+  {
+   "type": "gauge",
+   "title": "Orçamento restante",
+   "description": "Rollback ESTANCA o consumo, não repõe. Só o tempo repõe, conforme os minutos ruins saem da janela de 6h.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 6,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "jornada:error_budget_restante:ratio * 100",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "min": 0,
+     "max": 100,
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 25
+       },
+       {
+        "color": "yellow",
+        "value": 50
+       },
+       {
+        "color": "green",
+        "value": 75
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "showThresholdMarkers": true,
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Burn rate (5 min)",
+   "description": "Velocidade de consumo. 1 = gasta o orçamento exatamente no fim da janela. 7,2 = esgota em ~50 min.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 6,
+    "y": 4,
+    "w": 5,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "jornada:burn_rate:5m",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 3.6
+       },
+       {
+        "color": "red",
+        "value": 7.2
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Orçamento com o alvo de $alvo%",
+   "description": "O mesmo incidente, medido contra outro compromisso. Mude o seletor e veja o mesmo dado virar outra decisão. (limitado a 0-100%: orçamento estourado é zero, não número negativo)",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 11,
+    "y": 4,
+    "w": 5,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "clamp(( 1 - (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - $alvo/100) ) * 100, 0, 100)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 25
+       },
+       {
+        "color": "green",
+        "value": 75
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Minutos de orçamento na janela",
+   "description": "Quanto tempo de falha total o compromisso permite em 6h. Cada nove a mais custa plantão.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 4,
+    "w": 4,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "(1 - $alvo/100) * 6 * 60",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "m",
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "R$ por minuto não transacionado",
+   "description": "Volume perdido em relação ao normal, multiplicado pelo valor por transferência. É o custo de falha em linguagem de negócio. Nota: o valor por transferência entra com scalar() porque não compartilha labels com a série de volume.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 20,
+    "y": 4,
+    "w": 4,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "clamp_min(max_over_time(negocio:transferencias_por_min[6h]) - negocio:transferencias_por_min, 0) * scalar(negocio:valor_por_transferencia_brl)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyBRL",
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 1
+       },
+       {
+        "color": "red",
+        "value": 1000
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Burn rate — duas janelas",
+   "description": "O alerta exige as DUAS acima do limite: a curta detecta rápido, a longa evita acordar alguém por um soluço de 40 segundos.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 11,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "jornada:burn_rate:5m",
+     "legendFormat": "5 min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "jornada:burn_rate:30m",
+     "legendFormat": "30 min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true,
+      "thresholdsStyle": {
+       "mode": "dashed"
+      }
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 3.6
+       },
+       {
+        "color": "red",
+        "value": 7.2
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "SLI de latência — % das transferências abaixo de 1,5s",
+   "description": "O bucket de 1500ms só existe porque o SLO pediu. Sem ele, este indicador não seria calculável — e nenhuma query conserta isso depois.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 11,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "jornada:sli_latencia:ratio5m * 100",
+     "legendFormat": "% abaixo de 1,5s",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "max": 100
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "p90 por VERSÃO — a evidência de que foi a mudança",
+   "description": "Quebrar por versão é o que transforma 'está lento' em 'foi o deploy das 14:32'.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 19,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.9, sum by (service_version, le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))",
+     "legendFormat": "v{{service_version}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Transferências por minuto (negócio) × erros (técnico)",
+   "description": "Na degradação parcial a linha de negócio cai ANTES de qualquer erro aparecer: requisições mais lentas concluem menos no mesmo minuto.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 19,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "negocio:transferencias_por_min",
+     "legendFormat": "transferências/min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "jornada:errors:rate5m * 60",
+     "legendFormat": "erros/min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "showPoints": "never",
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": true,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prom"
+    },
+    "enable": true,
+    "iconColor": "purple",
+    "name": "Deploys",
+    "expr": "changes(lab2_deploy_timestamp_seconds[1m]) > 0",
+    "titleFormat": "deploy / rollback",
+    "step": "30s"
+   }
+  ]
+ }
+}

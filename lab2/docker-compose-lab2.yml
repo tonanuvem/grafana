@@ -1,0 +1,74 @@
+# =============================================================================
+# Override do bank-demo para o LAB 2
+# =============================================================================
+#   docker compose \
+#     -f ~/bank-demo-docker/docker-compose-network-docker-internal.yml \
+#     -f ~/grafana/lab2/docker-compose-lab2.yml up -d
+#
+# (o run-stack.sh faz isso por voce)
+#
+# Nada aqui altera o repo do bank-demo: sao so' variaveis de ambiente e
+# configuracao de log driver.
+# =============================================================================
+
+# Os servicos Python exportam log por OTLP, ja com trace_id e span_id dentro
+# do LogRecord -- e' isso que faz o clique Loki -> Tempo funcionar.
+x-python-lab2: &python-lab2
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_PYTHON_LOG_CORRELATION: "true"
+  # SEM ISTO a recusa de transferencia nao aparece em lugar nenhum.
+  # O `logging.basicConfig(level=DEBUG)` da aplicacao vira no-op porque a
+  # distro OTel configura o logger antes; o nivel fica em INFO e a linha
+  # {'approved': False, 'message': 'Insufficient Balance'} nunca e' emitida.
+  OTEL_PYTHON_LOG_LEVEL: "debug"
+
+# Node nao exporta log por OTLP (as apps usam console.log e morgan).
+# Vai pelo log driver do Docker ate o fluent_forward do collector.
+# 127.0.0.1 porque quem conecta e' o DAEMON, no host -- e 8007 porque a
+# 8006 e' do collector da Splunk.
+x-log-node: &log-node
+  driver: fluentd
+  options:
+    fluentd-address: "tcp://127.0.0.1:8007"
+    fluentd-async: "true"
+    fluentd-max-retries: "10"
+
+services:
+
+  dashboard:
+    environment:
+      <<: *python-lab2
+      # O cliente ve "servico indisponivel" em vez de SyntaxError.
+      # Desligue (false) para reproduzir o achado do Encontro 1 ao vivo.
+      ERROS_AMIGAVEIS: "true"
+
+  transactions:
+    environment: *python-lab2
+
+  accounts:
+    environment: *python-lab2
+
+  loan:
+    environment: *python-lab2
+
+  customer-auth:
+    environment:
+      # Node fala OTLP por HTTP (4318), nao gRPC.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
+    logging:
+      <<: *log-node
+      options:
+        fluentd-address: "tcp://127.0.0.1:8007"
+        fluentd-async: "true"
+        tag: "fiapbank.customer-auth"
+
+  atm-locator:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
+    logging:
+      <<: *log-node
+      options:
+        fluentd-address: "tcp://127.0.0.1:8007"
+        fluentd-async: "true"
+        tag: "fiapbank.atm-locator"
