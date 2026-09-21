@@ -233,15 +233,20 @@ IP=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
 H="${IP:-localhost}"
 PORTA_DASH=$(grep -E '^PORTA_DASHBOARD=' "$ENV_EFETIVO" 2>/dev/null | tail -1 | cut -d= -f2)
 
-titulo "PRONTO"
+#titulo "PRONTO"
 echo
 echo "=================================================="
 echo " BANK INICIADO (MICROSERVICES)"
 echo "=================================================="
 echo
 echo "  Banco          http://$H:3000"
-# echo "  Guia do aluno  http://$H:8031"
 echo
+echo "LOGIN DE TESTE:"
+echo
+echo "Email: $TEST_EMAIL"
+echo "Senha: $TEST_PASSWORD"
+echo
+# echo "  Guia do aluno  http://$H:8031"
 echo
 echo "=================================================="
 echo " GRAFANA INICIADO (OBSERVABILIDADE)"
