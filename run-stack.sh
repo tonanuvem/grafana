@@ -143,26 +143,7 @@ if [ "$RELIGAR_APP" = "true" ]; then
         exit 1
     fi
 
-    # A porta 5000 e' disputada em algumas maquinas (no macOS, pelo AirPlay
-    # Receiver). Em vez de falhar com "address already in use" no meio da
-    # aula, remapeamos -- e como o compose ja parametriza a porta, isso e'
-    # uma linha no .env, nao um override.
-    if ss -lnt 2>/dev/null | grep -q ":5000 " || lsof -nP -iTCP:5000 -sTCP:LISTEN >/dev/null 2>&1; then
-        if ! docker ps --format '{{.Names}} {{.Ports}}' | grep -q ":5000->"; then
-            aviso "porta 5000 ocupada por outro processo -- usando ${PORTA_DASHBOARD:-5050}"
-            definir_env PORTA_DASHBOARD "${PORTA_DASHBOARD:-5050}"
-        fi
-    fi
-
-    # O RUM roda no navegador do aluno: o endereco do coletor precisa ser o
-    # que ELE alcanca. Em EC2 isso e' o IP publico; numa maquina local,
-    # localhost mesmo. Sem esse ajuste a pagina tenta postar num endereco que
-    # so' existe dentro do Docker e o RUM fica mudo, sem erro visivel.
-    IP_PUB=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
-    if [ -n "$IP_PUB" ] && grep -q '^FARO_COLLECTOR_URL=http://localhost' "$ENV_LAB"; then
-        definir_env FARO_COLLECTOR_URL "http://${IP_PUB}:8027/collect"
-        ok "RUM (Faro) apontando para http://${IP_PUB}:8027/collect"
-    fi
+    ajustar_porta_dashboard
 
     gerar_env
     FS=(); while IFS= read -r linha; do FS+=("$linha"); done < <(compose_app)

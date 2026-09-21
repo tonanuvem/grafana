@@ -17,14 +17,20 @@ Guia para o aluno (nginx local): `bash app/guia.sh` → porta 8031.
 ## Antes da aula — preparo do instrutor
 
 ```bash
-cd ~/bank-demo-docker && docker compose -f docker-compose-network-docker-internal.yml up -d
-cd ~/grafana && bash run-stack.sh
-bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m
-bash app/guia.sh
+cd ~/grafana && bash run-lab.sh --com-carga
 ```
 
-O `run-stack.sh` valida sozinho e avisa se faltar tráfego. Confira nos painéis
-que há dado nos **últimos 5 minutos** — não basta a série existir.
+Um comando: ele baixa o `bank-demo`, garante o MongoDB, constrói as imagens,
+sobe a aplicação, o stack e o guia, e deixa a carga rodando. Na primeira vez o
+build leva 10 a 20 minutos — vale fazer na véspera.
+
+Depois confira nos painéis que há dado nos **últimos 5 minutos**: não basta a
+série existir. Para derrubar ao fim da aula, `bash remove-lab.sh`.
+
+**Numa EC2**, libere no Security Group `3000 3001 5000 8000 8001 8027 8031
+8080 9090 9093`. A **8027** é a do RUM, e é a que costuma faltar — sem ela a
+página do banco funciona normalmente e o RUM fica mudo, sem erro em lugar
+nenhum além do console do navegador.
 
 **Como o LAB GRAFANA muda a aplicação:** por um arquivo de variáveis
 (`env/grafana.env`), não por override de compose. O `run-stack.sh` funde esse

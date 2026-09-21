@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# =============================================================================
+# LAB GRAFANA -- sobe TUDO, na ordem certa
+# =============================================================================
+#   bash run-lab.sh                 baixa, constroi, sobe aplicacao + stack + guia
+#   bash run-lab.sh --sem-build     pula o build (as imagens ja existem)
+#   bash run-lab.sh --com-carga     ja deixa a carga rodando ao final
+#   bash run-lab.sh --sem-guia      nao sobe a pagina do aluno
+#
+# Existe porque a ordem importa e errar a ordem da erro: a aplicacao precisa
+# subir ANTES do stack (e' ela que cria a rede em que o collector entra), e o
+# MongoDB precisa existir antes da aplicacao.
+#
+# NAO mexe no splunk-otel-collector. Os dois convivem: o collector deste lab
+# nao publica 4317/4318 no host.
+# =============================================================================
+
+set -uo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+REPO_APP="${REPO_APP:-https://github.com/tonanuvem/bank-demo.git}"
+FAZER_BUILD=true
+SUBIR_GUIA=true
+COM_CARGA=false
+
+for ARG in "$@"; do
+    case "$ARG" in
+        --sem-build) FAZER_BUILD=false ;;
+        --sem-guia)  SUBIR_GUIA=false ;;
+        --com-carga) COM_CARGA=true ;;
+        -h|--help)   sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) erro "opcao desconhecida: $ARG"; exit 1 ;;
+    esac
+done
+
+titulo "LAB GRAFANA -- SUBINDO O AMBIENTE COMPLETO"
+
+# ---------------------------------------------------------------- 1. docker
+echo
+echo "1. PRE-REQUISITOS"
+echo "--------------------------------------------------"
+command -v docker >/dev/null 2>&1 || { erro "Docker nao encontrado."; exit 1; }
+docker info >/dev/null 2>&1      || { erro "Docker instalado, mas o daemon nao responde."; exit 1; }
+command -v git    >/dev/null 2>&1 || { erro "git nao encontrado."; exit 1; }
+ok "docker e git"
+
+LIVRE=$(df -Pk "$HOME" 2>/dev/null | awk 'NR==2{print int($4/1024/1024)}')
+if [ -n "$LIVRE" ] && [ "$LIVRE" -lt 8 ]; then
+    aviso "so' ${LIVRE}GB livres em $HOME -- as imagens ocupam cerca de 6GB"
+fi
+
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet splunk-otel-collector 2>/dev/null; then
+    ok "splunk-otel-collector ativo -- sera' preservado (nao ha conflito de porta)"
+fi
+
+# ------------------------------------------------------------- 2. mongodb
+echo
+echo "2. MONGODB"
+echo "--------------------------------------------------"
+# A variante bridge aponta para host.docker.internal:27017, entao o Mongo e'
+# um container separado, com volume proprio -- o mesmo do encontro anterior.
+if docker ps --format '{{.Names}}' | grep -qx fiap-mongodb; then
+    ok "fiap-mongodb no ar"
+elif docker ps -a --format '{{.Names}}' | grep -qx fiap-mongodb; then
+    docker start fiap-mongodb >/dev/null && ok "fiap-mongodb reiniciado"
+else
+    echo "   criando (o volume fiap-mongodb-data e' preservado entre execucoes)"
+    docker run -d --name fiap-mongodb --restart unless-stopped \
+        -p 27017:27017 -v fiap-mongodb-data:/data/db mongo:7 >/dev/null \
+        && ok "fiap-mongodb criado" || { erro "nao subiu"; exit 1; }
+fi
+
+# --------------------------------------------------------- 3. repo da app
+echo
+echo "3. APLICACAO (bank-demo)"
+echo "--------------------------------------------------"
+if [ -d "$BASE_APP/.git" ]; then
+    if git -C "$BASE_APP" pull --ff-only origin main >/dev/null 2>&1; then
+        ok "atualizado: $BASE_APP"
+    else
+        aviso "nao consegui atualizar $BASE_APP (mudancas locais?) -- seguindo com o que existe"
+        echo "       Se o lab se comportar diferente do esperado, e' o primeiro lugar a olhar."
+    fi
+else
+    echo "   clonando $REPO_APP"
+    git clone -q "$REPO_APP" "$BASE_APP" && ok "clonado em $BASE_APP" \
+        || { erro "falha ao clonar"; exit 1; }
+fi
+
+# -------------------------------------------------------------- 4. build
+if [ "$FAZER_BUILD" = "true" ]; then
+    echo
+    echo "4. CONSTRUINDO AS IMAGENS"
+    echo "--------------------------------------------------"
+    echo "   Sao 7 imagens com versoes fixas. Na primeira vez leva 10-20 min;"
+    echo "   depois o cache resolve em segundos."
+    if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" build) >/tmp/lab-build.log 2>&1; then
+        ok "imagens construidas"
+    else
+        erro "o build falhou. Ultimas linhas:"
+        tail -12 /tmp/lab-build.log | sed 's/^/       /'
+        exit 1
+    fi
+else
+    echo
+    echo "4. BUILD PULADO (--sem-build)"
+    echo "--------------------------------------------------"
+    aviso "usando as imagens que ja existem"
+fi
+
+# ------------------------------------------------------- 5. subir a app
+echo
+echo "5. SUBINDO A APLICACAO"
+echo "--------------------------------------------------"
+# Sobe JA' com o env do lab -- inclusive a porta do dashboard, decidida acima.
+# Descobrir o conflito de porta depois nao adianta: o `up` ja' falhou.
+#
+# As aplicacoes vao apontar para otelcol:4317, que ainda nao existe. E' inofensivo:
+# o exportador OTel tenta, falha e repete ate o collector subir no passo 6.
+ajustar_porta_dashboard
+FS=(); while IFS= read -r linha; do FS+=("$linha"); done < <(compose_app)
+if (cd "$BASE_APP" && docker compose "${FS[@]}" up -d) >/tmp/lab-up.log 2>&1; then
+    ok "aplicacao no ar"
+else
+    erro "falha ao subir a aplicacao:"
+    tail -8 /tmp/lab-up.log | sed 's/^/       /'
+    exit 1
+fi
+
+# ------------------------------------------------------------ 6. o stack
+echo
+echo "6. STACK DE OBSERVABILIDADE"
+echo "--------------------------------------------------"
+bash "$AQUI/run-stack.sh" || { erro "o run-stack.sh falhou"; exit 1; }
+
+# -------------------------------------------------------------- 7. guia
+if [ "$SUBIR_GUIA" = "true" ]; then
+    echo
+    echo "7. GUIA DO ALUNO"
+    echo "--------------------------------------------------"
+    bash "$AQUI/app/guia.sh" >/dev/null 2>&1 && ok "guia no ar" || aviso "o guia nao subiu (siga sem ele)"
+fi
+
+# ------------------------------------------------------------- 8. carga
+if [ "$COM_CARGA" = "true" ]; then
+    echo
+    echo "8. CARGA"
+    echo "--------------------------------------------------"
+    bash "$AQUI/carga.sh" --fundo --cenario transaction --usuarios 10 --duracao 120m
+fi
+
+# ------------------------------------------------------------- resumo
+IP=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
+H="${IP:-localhost}"
+PORTA_DASH=$(grep -E '^PORTA_DASHBOARD=' "$ENV_EFETIVO" 2>/dev/null | tail -1 | cut -d= -f2)
+
+titulo "PRONTO"
+echo
+echo "  Banco          http://$H:3000"
+echo "  Guia do aluno  http://$H:8031"
+echo "  Grafana        http://$H:3001"
+echo "  Prometheus     http://$H:9090"
+echo "  Alertmanager   http://$H:9093"
+[ -n "$PORTA_DASH" ] && [ "$PORTA_DASH" != "5000" ] && echo "  Dashboard/BFF  http://$H:$PORTA_DASH  (5000 estava ocupada)"
+echo
+if [ "$COM_CARGA" != "true" ]; then
+    echo "  Sem carga os paineis ficam vazios. Comece por:"
+    echo "    bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m"
+    echo
+fi
+[ -n "$IP" ] && echo "  Libere no Security Group: 3000, 3001, 5000, 8000, 8001, 8027, 8031, 8080, 9090, 9093" && \
+                echo "  A 8027 e' a do RUM -- sem ela a pagina funciona e o RUM fica mudo, sem erro." && echo
+echo "  Para derrubar tudo:  bash remove-lab.sh"
+echo

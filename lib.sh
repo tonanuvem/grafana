@@ -106,6 +106,23 @@ except Exception:
 "
 }
 
+# A porta 5000 e' disputada em algumas maquinas (no macOS, pelo AirPlay
+# Receiver). Precisa ser decidida ANTES de a aplicacao subir -- descobrir
+# depois nao adianta: o `up` ja' falhou com "address already in use".
+# Idempotente: quem chamar primeiro decide, os outros so' confirmam.
+ajustar_porta_dashboard() {
+    local livre=true
+    if ss -lnt 2>/dev/null | grep -q ":5000 " || lsof -nP -iTCP:5000 -sTCP:LISTEN >/dev/null 2>&1; then
+        docker ps --format '{{.Names}} {{.Ports}}' | grep -q ":5000->" || livre=false
+    fi
+    if [ "$livre" = "false" ]; then
+        if ! grep -qE '^PORTA_DASHBOARD=' "$ENV_ESTADO" 2>/dev/null; then
+            aviso "porta 5000 ocupada por outro processo -- usando ${PORTA_DASHBOARD:-5050}"
+        fi
+        definir_env PORTA_DASHBOARD "${PORTA_DASHBOARD:-5050}"
+    fi
+}
+
 exige_stack() {
     curl -sf "$PROM/-/ready" >/dev/null 2>&1 || {
         erro "o stack do LAB GRAFANA nao esta no ar."

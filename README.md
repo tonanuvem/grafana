@@ -15,20 +15,42 @@ altera o código dela**: tudo é variável de ambiente e configuração de colle
 ## Começando
 
 ```bash
-# 1. a aplicação, na variante BRIDGE (o LAB GRAFANA não usa network_mode: host)
-cd ~/bank-demo-docker
-docker compose -f docker-compose-network-docker-internal.yml up -d
-
-# 2. o stack de observabilidade
-cd ~/grafana
-bash run-stack.sh
-
-# 3. carga (sem tráfego os painéis ficam vazios)
-bash carga.sh --cenario transaction --usuarios 10
+git clone https://github.com/tonanuvem/grafana.git ~/grafana
+cd ~/grafana && bash run-lab.sh
 ```
+
+Um comando. Ele baixa o `bank-demo`, garante o MongoDB, constrói as imagens,
+sobe a aplicação, o stack e o guia — nessa ordem, que é obrigatória: a
+aplicação cria a rede em que o collector entra, e o MongoDB precisa existir
+antes dela.
+
+```bash
+bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m
+```
+
+Sem carga os painéis ficam vazios: as métricas deste lab nascem dos traces.
 
 | | |
 |---|---|
+| Banco | http://localhost:3000 |
+| Guia do aluno | http://localhost:8031 |
+| Grafana | http://localhost:3001 |
+| Prometheus | http://localhost:9090 |
+| Alertmanager | http://localhost:9093 |
+| Service Map | Explore → Tempo → **Service Graph** |
+| Logs | Drilldown → **Logs** |
+
+Para derrubar: `bash remove-lab.sh` (preserva dados e imagens; `--dados` e
+`--imagens` removem, com confirmação).
+
+**Numa EC2**, libere no Security Group: `3000 3001 5000 8000 8001 8027 8031
+8080 9090 9093`. A **8027** é a do RUM — sem ela a página funciona e o RUM
+fica mudo, sem erro em lugar nenhum.
+
+Outras opções: `--sem-build` pula a construção das imagens, `--com-carga` já
+deixa a carga rodando, `--sem-guia` não sobe a página do aluno.
+
+---|---|
 | Grafana | http://localhost:3001 |
 | Prometheus | http://localhost:9090 |
 | Service Map | Explore → Tempo → **Service Graph** |
@@ -58,7 +80,9 @@ bank-demo ──OTLP (rede interna)──> otelcol (container)  ──> Promethe
 ## Estrutura
 
 ```
-run-stack.sh                sobe, valida e conecta a aplicação
+run-lab.sh                  porta de entrada: sobe tudo, na ordem certa
+remove-lab.sh               tira tudo do ar
+run-stack.sh                só o stack (o run-lab.sh chama este)
 carga.sh                    gerador de carga (locust)
 deploy.sh                   publica versões / rollback / piorar
 decisao.sh                  registra a decisão com os números do momento
