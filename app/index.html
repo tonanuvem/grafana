@@ -107,12 +107,18 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
   detectar a degradação pelo painel, decidir entre reverter e seguir, e comunicar
   a mesma falha para três audiências. Tudo no seu próprio ambiente — o que você
   quebrar não afeta ninguém.</p>
+  <p class="lede" style="margin-top:14px">
+  <b>SLI</b> <i>(Service Level Indicator)</i> é o que você mede — por exemplo, a fração
+  de transferências concluídas em menos de 1,5&nbsp;s. <b>SLO</b> <i>(Service Level
+  Objective)</i> é o alvo que você promete para esse número. O que sobra entre o alvo
+  e 100% é o <b>orçamento de erro</b>: quanto de falha cabe no compromisso. A
+  velocidade com que ele é consumido é o <b>burn rate</b>.</p>
 
   <section>
     <div class="sec-h"><span class="sec-n">0</span><h2>Antes de começar</h2></div>
     <p class="sec-sub">Sem tráfego os painéis ficam vazios: as métricas deste lab nascem
     dos traces. Deixe a carga rodando o encontro inteiro.</p>
-    <div class="cmd"><code>bash run-stack.sh</code><button onclick="cp(this)">copiar</button></div>
+    <div class="cmd"><code>bash run-lab.sh</code><button onclick="cp(this)">copiar</button></div>
     <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 90m</code><button onclick="cp(this)">copiar</button></div>
     <label>Integrantes do grupo</label>
     <input type="text" id="integrantes" placeholder="Nomes separados por vírgula">
@@ -152,11 +158,20 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <label>Métrica e log deram o mesmo número. Quando você escolheria cada um?</label>
     <textarea id="f_metrica_log" placeholder="Um é barato e impreciso; o outro é preciso e mais caro. O que HTTP 400 também significa, além de senha errada?"></textarea>
 
-    <div class="ia"><b>AIOps —</b> em <b>Drilldown → Logs</b>, escolha o serviço e abra a aba
+    <div class="ia"><b>AIOps</b> <i>(Artificial Intelligence for IT Operations — usar análise automática sobre os sinais de operação)</i> <b>—</b> em <b>Drilldown → Logs</b>, escolha o serviço e abra a aba
     <b>Patterns</b>. O Loki agrupa milhares de linhas em um punhado de padrões, sozinho.
     (Só funciona com volume: com poucas linhas ele acha zero padrões.)</div>
     <label>Quantos padrões o Loki encontrou, e o que isso substituiria no seu trabalho?</label>
     <textarea id="f_patterns" placeholder="Agrupar log por padrão é uma técnica de AIOps que não exige modelo nenhum."></textarea>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">d) O que o navegador viu</h3>
+    <p class="sec-sub">Role até o fim do dashboard 1, na faixa <b>RUM</b> <i>(Real User Monitoring — medir no navegador de quem usa, e não no servidor)</i>. Os painéis
+    acima medem no servidor; esses medem no cliente.</p>
+    <div class="olhe"><b>Olhe:</b> as suas próprias navegações aparecem em
+    “Páginas abertas por minuto”, e o erro do login em “Eventos do navegador”.
+    Clique num evento para abrir os detalhes.</div>
+    <label>O RUM registrou algo que nenhum painel de servidor registrou. O quê — e por quê?</label>
+    <textarea id="f_rum" placeholder="O probe sintético roda às 3h da manhã sem ninguém. O RUM só existe quando há gente. As duas visões respondem perguntas diferentes."></textarea>
   </section>
 
   <section>
@@ -176,6 +191,13 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     3. No span, clique em <b>Ver trace no Tempo</b> a partir do log, ou vá do trace ao log.<br>
     4. “Transferências por minuto” — o negócio caiu antes de qualquer erro aparecer.<br>
     5. A tela <code>/transfer</code> do banco — o que o cliente vive?</div>
+
+    <div class="ia"><b>AIOps —</b> com o incidente em curso, role o dashboard 2 até
+    a faixa de <b>ruído de alerta</b> e compare três números: alertas disparando,
+    ativos no Alertmanager e silenciados. Depois abra o Alertmanager e conte os
+    <b>grupos</b> — é o que chegaria a uma pessoa.</div>
+    <label>Quantos alertas dispararam, e quantas notificações sairiam? O que faz a diferença?</label>
+    <textarea id="f_alertas" placeholder="O agrupamento é por jornada de negócio; a supressão tira a queima lenta enquanto a rápida está ativa. Nenhum modelo, nenhum aprendizado de máquina."></textarea>
 
     <div class="grid3">
       <div><label>Horário do alerta</label><input type="text" id="f_t_alerta" placeholder="14:32"></div>
@@ -199,6 +221,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     </div>
     <textarea id="f_justificativa" placeholder="Ex.: orçamento em 63%, burn 7,2x — esgota em ~40 min. Reverter agora custa menos que descobrir daqui a meia hora."></textarea>
     <div class="cmd"><code>bash decisao.sh rollback "sua justificativa com números"</code><button onclick="cp(this)">copiar</button></div>
+    <div class="cmd"><code>bash deploy.sh rollback</code><button onclick="cp(this)">copiar</button></div>
     <div class="nota"><b>Depois do rollback, olhe o gauge.</b> A latência volta em dois minutos.
     O orçamento restante <b>não volta</b>. Rollback estanca; só o tempo repõe.</div>
     <label>O que você esperava que acontecesse com o orçamento após o rollback — e o que aconteceu?</label>
@@ -235,7 +258,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <label>Postmortem — o que muda estruturalmente</label>
     <textarea id="f_postmortem" placeholder="Não vale 'ter mais cuidado'. O que na arquitetura ou no processo impediria a repetição? Veja o CFR no dashboard 3."></textarea>
     <div class="cmd"><code>bash deploy.sh</code><button onclick="cp(this)">copiar</button></div>
-    <label>Qual o seu CFR — e por que ele ainda não significa nada?</label>
+    <label>Qual o seu CFR <i>(Change Failure Rate — proporção de mudanças que falharam)</i> — e por que ele ainda não significa nada?</label>
     <textarea id="f_cfr"></textarea>
   </section>
 </main>
@@ -244,7 +267,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 A planilha sai com duas abas: entrega e comunicação.</footer>
 
 <script>
-const CAMPOS = ["integrantes","f_servicemap","f_400","f_metrica_log","f_patterns",
+const CAMPOS = ["integrantes","f_servicemap","f_400","f_metrica_log","f_patterns","f_rum","f_alertas",
  "f_t_alerta","f_t_entendeu","f_orcamento","f_burn","f_lat","f_custo","f_decisao",
  "f_checkpoint","f_justificativa","f_pos_rollback","f_pol_50","f_pol_25","f_pol_0",
  "f_autoridade","f_com_tec","f_com_gestao","f_com_exec","f_postmortem","f_cfr"];
@@ -282,7 +305,8 @@ carregar();
 const R = [
  ["Integrantes","integrantes"],["Service Graph x Service Map","f_servicemap"],
  ["Por que o erro tecnico fica em zero","f_400"],["Metrica ou log","f_metrica_log"],
- ["Padroes de log (AIOps)","f_patterns"],["Horario do alerta","f_t_alerta"],
+ ["Padroes de log (AIOps)","f_patterns"],["O que so' o RUM viu","f_rum"],
+ ["Ruido de alerta","f_alertas"],["Horario do alerta","f_t_alerta"],
  ["Horario em que entendeu","f_t_entendeu"],["Orcamento restante","f_orcamento"],
  ["Burn rate","f_burn"],["% abaixo de 1,5s","f_lat"],["R$/min nao transacionado","f_custo"],
  ["Decisao","f_decisao"],["Checkpoint","f_checkpoint"],["Justificativa","f_justificativa"],

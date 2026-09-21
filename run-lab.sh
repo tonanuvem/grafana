@@ -3,7 +3,9 @@
 # LAB GRAFANA -- sobe TUDO, na ordem certa
 # =============================================================================
 #   bash run-lab.sh                 baixa, constroi, sobe aplicacao + stack + guia
-#   bash run-lab.sh --sem-build     pula o build (as imagens ja existem)
+#   bash run-lab.sh --build         forca construir localmente
+#   bash run-lab.sh --pull          so' baixa; falha se nao conseguir
+#   bash run-lab.sh --sem-build     nao mexe nas imagens (ja existem)
 #   bash run-lab.sh --com-carga     ja deixa a carga rodando ao final
 #   bash run-lab.sh --sem-guia      nao sobe a pagina do aluno
 #
@@ -21,13 +23,15 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 REPO_APP="${REPO_APP:-https://github.com/tonanuvem/bank-demo.git}"
 # dashboard, accounts, transactions, loan, customer-auth, atm-locator, ui
 TOTAL_IMAGENS=7
-FAZER_BUILD=true
+MODO_IMAGENS=auto      # auto = tenta baixar, constroi se falhar
 SUBIR_GUIA=true
 COM_CARGA=false
 
 for ARG in "$@"; do
     case "$ARG" in
-        --sem-build) FAZER_BUILD=false ;;
+        --sem-build) MODO_IMAGENS=nenhum ;;
+        --build)     MODO_IMAGENS=build ;;
+        --pull)      MODO_IMAGENS=pull ;;
         --sem-guia)  SUBIR_GUIA=false ;;
         --com-carga) COM_CARGA=true ;;
         -h|--help)   sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -90,9 +94,30 @@ else
 fi
 
 # -------------------------------------------------------------- 4. build
-if [ "$FAZER_BUILD" = "true" ]; then
+if [ "$MODO_IMAGENS" = "auto" ] || [ "$MODO_IMAGENS" = "pull" ]; then
     echo
-    echo "4. CONSTRUINDO AS IMAGENS"
+    echo "4. BAIXANDO AS IMAGENS"
+    echo "--------------------------------------------------"
+    echo "   Publicadas em tonanuvem/fiap-bank-*. Baixar leva ~3 min contra"
+    echo "   10-20 do build -- e nao depende do PyPI nem do npm estarem de pe'."
+    if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" pull --quiet) >/tmp/lab-pull.log 2>&1; then
+        ok "imagens baixadas"
+        MODO_IMAGENS=nenhum
+    elif [ "$MODO_IMAGENS" = "pull" ]; then
+        erro "nao consegui baixar as imagens:"
+        tail -6 /tmp/lab-pull.log | sed 's/^/       /'
+        exit 1
+    else
+        aviso "nao consegui baixar -- vou construir localmente"
+        echo "       Motivo provavel: limite de pulls do Docker Hub, tag ausente"
+        echo "       ou arquitetura diferente. Detalhes em /tmp/lab-pull.log"
+        MODO_IMAGENS=build
+    fi
+fi
+
+if [ "$MODO_IMAGENS" = "build" ]; then
+    echo
+    echo "4b. CONSTRUINDO AS IMAGENS"
     echo "--------------------------------------------------"
     echo "   Sao $TOTAL_IMAGENS imagens com versoes fixas. Na primeira vez leva 10-20 min;"
     echo "   depois o cache resolve em segundos."
@@ -160,11 +185,6 @@ if [ "$FAZER_BUILD" = "true" ]; then
         echo "       Log completo em /tmp/lab-build.log"
         exit 1
     fi
-else
-    echo
-    echo "4. BUILD PULADO (--sem-build)"
-    echo "--------------------------------------------------"
-    aviso "usando as imagens que ja existem"
 fi
 
 # ------------------------------------------------------- 5. subir a app

@@ -47,8 +47,17 @@ Para derrubar: `bash remove-lab.sh` (preserva dados e imagens; `--dados` e
 8080 9090 9093`. A **8027** é a do RUM — sem ela a página funciona e o RUM
 fica mudo, sem erro em lugar nenhum.
 
-Outras opções: `--sem-build` pula a construção das imagens, `--com-carga` já
-deixa a carga rodando, `--sem-guia` não sobe a página do aluno.
+Por padrão ele **baixa** as imagens de `tonanuvem/fiap-bank-*` e só constrói se
+o download falhar. Baixar leva ~3 min contra 10–20 do build, e não depende de
+o PyPI e o npm estarem de pé na hora da aula.
+
+Outras opções: `--build` força construir localmente, `--pull` exige o download
+(falha em vez de construir), `--sem-build` não mexe nas imagens, `--com-carga`
+já deixa a carga rodando, `--sem-guia` não sobe a página do aluno.
+
+Para publicar imagens novas depois de mexer na aplicação, o script está no
+outro repositório: `bash ~/bank-demo-docker/publicar-imagens.sh` (rode
+`docker login` antes).
 
 ---|---|
 | Grafana | http://localhost:3001 |
