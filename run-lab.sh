@@ -235,11 +235,22 @@ PORTA_DASH=$(grep -E '^PORTA_DASHBOARD=' "$ENV_EFETIVO" 2>/dev/null | tail -1 | 
 
 titulo "PRONTO"
 echo
+echo "=================================================="
+echo " BANK INICIADO (MICROSERVICES)"
+echo "=================================================="
+echo
 echo "  Banco          http://$H:3000"
-echo "  Guia do aluno  http://$H:8031"
+# echo "  Guia do aluno  http://$H:8031"
+echo
+echo
+echo "=================================================="
+echo " GRAFANA INICIADO (OBSERVABILIDADE)"
+echo "=================================================="
+echo
 echo "  Grafana        http://$H:3001"
 echo "  Prometheus     http://$H:9090"
 echo "  Alertmanager   http://$H:9093"
+echo
 [ -n "$PORTA_DASH" ] && [ "$PORTA_DASH" != "5000" ] && echo "  Dashboard/BFF  http://$H:$PORTA_DASH  (5000 estava ocupada)"
 echo
 if [ "$COM_CARGA" != "true" ]; then
@@ -247,7 +258,7 @@ if [ "$COM_CARGA" != "true" ]; then
     echo "    bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m"
     echo
 fi
-[ -n "$IP" ] && echo "  Libere no Security Group: 3000, 3001, 5000, 8000, 8001, 8027, 8031, 8080, 9090, 9093" && \
-                echo "  A 8027 e' a do RUM -- sem ela a pagina funciona e o RUM fica mudo, sem erro." && echo
-echo "  Para derrubar tudo:  bash remove-lab.sh"
+#[ -n "$IP" ] && echo "  Libere no Security Group: 3000, 3001, 5000, 8000, 8001, 8027, 8031, 8080, 9090, 9093" && \
+#                echo "  A 8027 e' a do RUM -- sem ela a pagina funciona e o RUM fica mudo, sem erro." && echo
+# echo "  Para derrubar tudo:  bash remove-lab.sh"
 echo
