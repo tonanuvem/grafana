@@ -19,6 +19,8 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 REPO_APP="${REPO_APP:-https://github.com/tonanuvem/bank-demo.git}"
+# dashboard, accounts, transactions, loan, customer-auth, atm-locator, ui
+TOTAL_IMAGENS=7
 FAZER_BUILD=true
 SUBIR_GUIA=true
 COM_CARGA=false
@@ -92,13 +94,70 @@ if [ "$FAZER_BUILD" = "true" ]; then
     echo
     echo "4. CONSTRUINDO AS IMAGENS"
     echo "--------------------------------------------------"
-    echo "   Sao 7 imagens com versoes fixas. Na primeira vez leva 10-20 min;"
+    echo "   Sao $TOTAL_IMAGENS imagens com versoes fixas. Na primeira vez leva 10-20 min;"
     echo "   depois o cache resolve em segundos."
-    if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" build) >/tmp/lab-build.log 2>&1; then
-        ok "imagens construidas"
+    echo
+
+    # O build corre em segundo plano e o progresso sai daqui. Sem isto a tela
+    # fica parada por 20 minutos e parece travada -- em sala, alguem sempre
+    # interrompe achando que morreu.
+    #
+    # --progress plain porque o formato padrao redesenha a tela com codigos de
+    # terminal e nao da' para ler linha a linha.
+    ( cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" build --progress plain ) \
+        >/tmp/lab-build.log 2>&1 &
+    BUILD_PID=$!
+
+    INICIO=$(date +%s)
+    CHEIO="################################"
+    VAZIO="                                "
+
+    while kill -0 "$BUILD_PID" 2>/dev/null; do
+        # Uma imagem pronta produz "naming to docker.io/library/<imagem>".
+        # `grep -c` JA imprime 0 quando nao acha, e ainda sai com codigo 1 --
+        # um "|| echo 0" aqui produz "0\n0" e quebra a aritmetica logo abaixo.
+        PRONTAS=$(grep -c "naming to " /tmp/lab-build.log 2>/dev/null); PRONTAS=${PRONTAS:-0}
+
+        # A ultima etapa vista: "#42 [transactions 5/8]". O buildkit constroi
+        # em paralelo, entao e' a ULTIMA e nao "a atual" -- e' honesto assim.
+        ETAPA=$(grep -oE '^#[0-9]+ \[[a-z][a-z0-9-]* [0-9]+/[0-9]+\]' /tmp/lab-build.log 2>/dev/null \
+                | tail -1 | sed -E 's/^#[0-9]+ \[([a-z0-9-]+) ([0-9]+)\/([0-9]+)\]/\1 \2\/\3/')
+
+        PASSO_PCT=0
+        if [ -n "$ETAPA" ]; then
+            N=$(echo "$ETAPA" | awk '{print $2}' | cut -d/ -f1)
+            D=$(echo "$ETAPA" | awk '{print $2}' | cut -d/ -f2)
+            [ -n "$D" ] && [ "$D" -gt 0 ] 2>/dev/null && PASSO_PCT=$(( N * 100 / D ))
+        fi
+
+        PCT=$(( (PRONTAS * 100 + PASSO_PCT) / TOTAL_IMAGENS ))
+        [ "$PCT" -gt 99 ] && PCT=99
+        DECOR=$(( $(date +%s) - INICIO ))
+
+        if [ -t 1 ]; then
+            NB=$(( PCT * 32 / 100 ))
+            printf '\r   [%s%s] %3d%%  %d/%d imagens  %-26s %dm%02ds ' \
+                   "${CHEIO:0:$NB}" "${VAZIO:0:$(( 32 - NB ))}" "$PCT" \
+                   "$PRONTAS" "$TOTAL_IMAGENS" "${ETAPA:-preparando}" \
+                   $(( DECOR / 60 )) $(( DECOR % 60 ))
+            sleep 2
+        else
+            # Fora de um terminal o \r viraria lixo no arquivo de log.
+            echo "   ${PCT}% - ${PRONTAS}/${TOTAL_IMAGENS} imagens - ${ETAPA:-preparando} - $(( DECOR / 60 ))min"
+            sleep 30
+        fi
+    done
+
+    wait "$BUILD_PID"; RC=$?
+    [ -t 1 ] && printf '\r%-90s\r' " "
+
+    if [ "$RC" -eq 0 ]; then
+        DECOR=$(( $(date +%s) - INICIO ))
+        ok "$TOTAL_IMAGENS imagens construidas em $(( DECOR / 60 ))m$(( DECOR % 60 ))s"
     else
         erro "o build falhou. Ultimas linhas:"
         tail -12 /tmp/lab-build.log | sed 's/^/       /'
+        echo "       Log completo em /tmp/lab-build.log"
         exit 1
     fi
 else
