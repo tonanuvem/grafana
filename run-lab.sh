@@ -27,8 +27,11 @@ MODO_IMAGENS=auto      # auto = tenta baixar, constroi se falhar
 SUBIR_GUIA=true
 COM_CARGA=false
 
-TEST_EMAIL="teste@teste.com"
-TEST_PASSWORD="Teste@123"
+# Mesmas credenciais do laboratorio do Splunk, de proposito: o aluno nao
+# precisa decorar duas.
+TEST_NAME="${TEST_NAME:-Aluno Teste}"
+TEST_EMAIL="${TEST_EMAIL:-teste@teste.com}"
+TEST_PASSWORD="${TEST_PASSWORD:-Teste@123}"
 
 for ARG in "$@"; do
     case "$ARG" in
@@ -239,19 +242,32 @@ fi
 # seguimos) e CONFERIMOS com um login antes de imprimir.
 criar_usuario_teste() {
     local i=0
-    until curl -s -o /dev/null --max-time 3 "http://localhost:8000/api/users/auth" \
-              -X POST -H 'Content-Type: application/json' -d '{}' 2>/dev/null || [ $i -ge 20 ]; do
+    until curl -s -o /dev/null --max-time 3 "http://localhost:8000/api/users/" 2>/dev/null || [ $i -ge 30 ]; do
         i=$((i+1)); sleep 2
     done
 
-    curl -s -o /dev/null --max-time 10 -X POST "http://localhost:8000/api/users" \
+    # --max-time 30, e nao 10: no PRIMEIRO cadastro o Node ainda esta
+    # esquentando -- o mongoose abre a conexao e o bcrypt gera o hash. Numa
+    # EC2 modesta dez segundos estouram. Essa medida vem do run-docker-bank.sh
+    # do repositorio do Splunk, onde ela foi aprendida apanhando.
+    local resposta rc
+    resposta=$(curl -s --max-time 30 -X POST "http://localhost:8000/api/users/" \
         -H 'Content-Type: application/json' \
-        -d "{\"name\":\"Aluno Teste\",\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" 2>/dev/null
+        -d "{\"name\":\"$TEST_NAME\",\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" 2>/dev/null)
+    rc=$?
 
-    # A confirmacao e' um login de verdade, nao o codigo do cadastro: se o
-    # usuario ja' existia, o cadastro devolve 400 e nao diz nada sobre a senha.
+    if [ "$rc" -ne 0 ]; then
+        case "$rc" in
+            28) aviso "o customer-auth demorou mais de 30s para responder ao cadastro" ;;
+            7)  aviso "conexao recusada: o customer-auth nao esta ouvindo na 8000" ;;
+            *)  aviso "o cadastro falhou (curl $rc)" ;;
+        esac
+    fi
+
+    # A confirmacao e' um LOGIN, nao o codigo do cadastro: se o usuario ja'
+    # existia, o cadastro devolve 400 e nao diz nada sobre a senha estar certa.
     local codigo
-    codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+    codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
         -X POST "http://localhost:8000/api/users/auth" \
         -H 'Content-Type: application/json' \
         -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" 2>/dev/null)
