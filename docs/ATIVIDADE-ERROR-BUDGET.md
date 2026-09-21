@@ -187,6 +187,34 @@ Latência e erro voltam em 1–2 min. **O orçamento restante não volta.** Ele 
 se recupera conforme os minutos ruins saem da janela de 6h — o que, numa aula,
 o aluno **não** vai ver acontecer. Não ver é a lição.
 
+## Fase 3b — ruído de alerta, número a número
+
+Medido durante o incidente, com os dois alertas em `firing`:
+
+| | |
+|---|---|
+| Alertas disparando no Prometheus | **2** |
+| Alertas ativos no Alertmanager | **1** |
+| Silenciados | **1** — a queima lenta, `inhibitedBy` a rápida |
+| Grupos | **1** — `jornada_negocio="Transferencia entre contas"` |
+
+**Dois alertas, uma notificação.** É o número que sustenta a conversa: não se
+perdeu informação nenhuma — o alerta suprimido continua visível para quem
+investiga — mas quem está de plantão é interrompido uma vez, não duas.
+
+**O tempo importa para planejar a aula.** O alerta rápido chega em cerca de
+2 minutos (`for: 2m`). O lento tem `for: 10m` por definição — é o que o torna
+lento —, então a **supressão só é observável depois de uns 10 minutos de
+incidente sustentado**. Medido aqui: o estado `suppressed` apareceu 7min42s
+depois de o rápido já estar em `firing`. Numa passada rápida o instrutor
+mostra o agrupamento e não chega na supressão.
+
+**A pergunta de fechamento:** nada disso é modelo nem aprendizado de máquina —
+é `group_by` e `inhibit_rules` num arquivo YAML. E um detector de anomalia
+treinado na taxa de erro técnica não veria absolutamente nada na Fase 2, onde
+o sinal fica em zero o tempo todo. AIOps herda o ponto cego do sinal que
+recebe.
+
 ## O que vale ponto na decisão
 
 Não existe resposta certa entre reverter e seguir. Avalia-se:
