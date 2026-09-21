@@ -27,7 +27,7 @@ O `run-stack.sh` valida sozinho e avisa se faltar tráfego. Confira nos painéis
 que há dado nos **últimos 5 minutos** — não basta a série existir.
 
 **Como o LAB 2 muda a aplicação:** por um arquivo de variáveis
-(`lab2/lab2.env`), não por override de compose. O `run-stack.sh` funde esse
+(`env/grafana.env`), não por override de compose. O `run-stack.sh` funde esse
 arquivo com o `.env` que já existir no `bank-demo` e passa o resultado com
 `--env-file`. Para reproduzir o `SyntaxError` do Encontro 1 ao vivo, basta
 `ERROS_AMIGAVEIS=false` e recriar o `dashboard`.
@@ -91,7 +91,7 @@ bash deploy.sh piorar          # 2,5s de atraso + 25% de falha
 
 ### Fase 4 — Comunicação (25 min)
 
-O `decisao.sh` gera `lab2/comunicacao-*.md` já com os números. O aluno escreve
+O `decisao.sh` gera `estado/comunicacao-*.md` já com os números. O aluno escreve
 os três textos e o postmortem.
 
 ---

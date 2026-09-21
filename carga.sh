@@ -23,8 +23,8 @@ TEMPO="60s"
 CENARIO="todos"
 DURACAO=""
 FUNDO=false
-LOG="$AQUI/lab2/.carga.log"
-PIDF="$AQUI/lab2/.carga.pid"
+LOG="$ESTADO/.carga.log"
+PIDF="$ESTADO/.carga.pid"
 
 while [ $# -gt 0 ]; do
     case "$1" in

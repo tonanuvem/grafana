@@ -1,7 +1,3 @@
-lab2/.env-efetivo
-lab2/.carga.log
-lab2/.carga.pid
-lab2/deploys.csv
-lab2/decisoes.csv
-lab2/comunicacao-*.md
+env/.env-efetivo
+estado/
 stack/.env

@@ -17,7 +17,7 @@
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-HIST="$AQUI/lab2/decisoes.csv"
+HIST="$ESTADO/decisoes.csv"
 
 num() {  # valor formatado, ou "-" quando nao ha dado
     local v; v=$(promq "$1")
@@ -100,7 +100,7 @@ ok "decisao registrada: $ACAO"
 # O rascunho das tres comunicacoes, ja com os numeros reais. O aluno escreve o
 # texto; os numeros vem do painel -- que e' exatamente o argumento do Bloco 3.
 # ---------------------------------------------------------------------------
-RASCUNHO="$AQUI/lab2/comunicacao-$(date +%H%M%S).md"
+RASCUNHO="$ESTADO/comunicacao-$(date +%H%M%S).md"
 cat > "$RASCUNHO" <<TXT
 # Comunicacao do incidente -- $(date +%d/%m\ %H:%M)
 

@@ -70,8 +70,8 @@ stack/
   otelcol/config.yaml       spanmetrics, service_graph, normalização, peer.service
   prometheus/rules/         SLIs, error budget, burn rate  (alvos.yml é gerado)
   loki/ tempo/ grafana/     configs e provisionamento
-lab2/
-  lab2.env                  o que o LAB 2 muda no bank-demo -- só variáveis
+env/
+  grafana.env               o que o LAB 2 muda no bank-demo -- só variáveis
 ```
 
 ---
@@ -103,7 +103,7 @@ deixa o painel de latência vazio, sem erro nenhum.
 **Nenhum override de compose.** O compose do `bank-demo` declara as variáveis
 com `${VAR:-default}`, então o LAB 2 é um arquivo `.env` — inclusive o deploy,
 que reescreve quatro linhas em vez de gerar YAML. O `run-stack.sh` **funde**
-`lab2/lab2.env` com o `.env` que já existir no `bank-demo`, porque
+`env/grafana.env` com o `.env` que já existir no `bank-demo`, porque
 `--env-file` substitui o `.env` padrão em vez de somar, e na EC2 do Encontro 1
 há um com realm e token do Splunk.
 

@@ -12,8 +12,14 @@ aviso() { echo "  [!]  $1"; }
 erro()  { echo "  [ERRO] $1"; }
 titulo(){ echo; echo "=================================================="; echo " $1"; echo "=================================================="; }
 
-ENV_LAB2="$AQUI/lab2/lab2.env"
-ENV_EFETIVO="$AQUI/lab2/.env-efetivo"
+ENV_LAB2="$AQUI/env/grafana.env"
+ENV_EFETIVO="$AQUI/env/.env-efetivo"
+
+# Tudo o que o lab PRODUZ (historico de deploys, decisoes, rascunhos de
+# comunicacao, log da carga) fica aqui, separado do que ele CONFIGURA.
+# Criado na hora: diretorio vazio nao sobrevive a um git clone.
+ESTADO="$AQUI/estado"
+mkdir -p "$ESTADO"
 
 # Funde o .env que ja existir no bank-demo com o do LAB 2 (o nosso por cima).
 #
@@ -23,7 +29,7 @@ ENV_EFETIVO="$AQUI/lab2/.env-efetivo"
 gerar_env() {
     {
         echo "# ARQUIVO GERADO por run-stack.sh -- nao edite, nao versione."
-        echo "# Fonte: $BASE_APP/.env (se existir) + lab2/lab2.env por cima."
+        echo "# Fonte: $BASE_APP/.env (se existir) + env/grafana.env por cima."
         [ -f "$BASE_APP/.env" ] && grep -vE '^\s*(#|$)' "$BASE_APP/.env"
         grep -vE '^\s*(#|$)' "$ENV_LAB2"
     } > "$ENV_EFETIVO"
@@ -39,7 +45,7 @@ compose_app() {
         -f "$BASE_APP/docker-compose-logs-fluentd.yml"
 }
 
-# Reescreve uma variavel no lab2.env e regenera o efetivo.
+# Reescreve uma variavel no env/grafana.env e regenera o efetivo.
 definir_env() {
     local chave="$1" valor="$2"
     if grep -qE "^${chave}=" "$ENV_LAB2"; then

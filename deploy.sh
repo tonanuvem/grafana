@@ -17,7 +17,7 @@
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-HIST="$AQUI/lab2/deploys.csv"
+HIST="$ESTADO/deploys.csv"
 
 # ---- a sequencia. Duas saudaveis e uma degradada, nesta ordem. -------------
 #   versao   | cpus  | descricao (nao aparece para o aluno antes da hora)
@@ -52,7 +52,7 @@ campo() { echo "${VERSOES[$1]}" | cut -d'|' -f"$2"; }
 # ---- aplica uma versao ao container -------------------------------------------
 # Sem gerar YAML: o compose do bank-demo declara estas variaveis com
 # ${VAR:-default}, entao publicar uma versao e' reescrever quatro linhas do
-# lab2.env e recriar UM container.
+# env/grafana.env e recriar UM container.
 aplicar() {
     local versao="$1" atraso="$2" falha="$3"
     local jitter=0
