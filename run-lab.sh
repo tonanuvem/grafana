@@ -231,6 +231,47 @@ if [ "$COM_CARGA" = "true" ]; then
     bash "$AQUI/carga.sh" --fundo --cenario transaction --usuarios 10 --duracao 120m
 fi
 
+
+# ------------------------------------------------------- usuario de teste
+# As credenciais sao ANUNCIADAS no fim do script, entao elas precisam existir
+# de verdade -- exibir um login que nao funciona e' pior que nao exibir nada.
+# Criamos aqui (idempotente: se ja' existir, o customer-auth devolve 400 e
+# seguimos) e CONFERIMOS com um login antes de imprimir.
+criar_usuario_teste() {
+    local i=0
+    until curl -s -o /dev/null --max-time 3 "http://localhost:8000/api/users/auth" \
+              -X POST -H 'Content-Type: application/json' -d '{}' 2>/dev/null || [ $i -ge 20 ]; do
+        i=$((i+1)); sleep 2
+    done
+
+    curl -s -o /dev/null --max-time 10 -X POST "http://localhost:8000/api/users" \
+        -H 'Content-Type: application/json' \
+        -d "{\"name\":\"Aluno Teste\",\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" 2>/dev/null
+
+    # A confirmacao e' um login de verdade, nao o codigo do cadastro: se o
+    # usuario ja' existia, o cadastro devolve 400 e nao diz nada sobre a senha.
+    local codigo
+    codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+        -X POST "http://localhost:8000/api/users/auth" \
+        -H 'Content-Type: application/json' \
+        -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" 2>/dev/null)
+    [ "$codigo" = "200" ]
+}
+
+echo
+echo "9. USUARIO DE TESTE"
+echo "--------------------------------------------------"
+if criar_usuario_teste; then
+    ok "$TEST_EMAIL pronto (login conferido)"
+    LOGIN_OK=true
+else
+    aviso "nao consegui deixar o login de teste funcionando"
+    echo "       O banco sobe do mesmo jeito -- crie uma conta pela tela"
+    echo "       'Abra sua conta'. Para investigar:"
+    echo "         docker logs fiapbank-otel-hg-customer-auth-1 --tail 20"
+    LOGIN_OK=false
+fi
+
 # ------------------------------------------------------------- resumo
 IP=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
 H="${IP:-localhost}"
@@ -244,10 +285,14 @@ echo "=================================================="
 echo
 echo "  Banco          http://$H:3000"
 echo
-echo "LOGIN DE TESTE:"
-echo
-echo "Email: $TEST_EMAIL"
-echo "Senha: $TEST_PASSWORD"
+if [ "${LOGIN_OK:-false}" = "true" ]; then
+    echo "LOGIN DE TESTE:"
+    echo
+    echo "Email: $TEST_EMAIL"
+    echo "Senha: $TEST_PASSWORD"
+else
+    echo "LOGIN DE TESTE: indisponivel -- use 'Abra sua conta' na tela"
+fi
 echo
 # echo "  Guia do aluno  http://$H:8031"
 echo
