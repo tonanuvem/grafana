@@ -133,7 +133,7 @@ case "$ACAO" in
 
   --reset)
       exige_stack
-      rm -f "$HIST"
+      rm -f "$HIST" "$ENV_ESTADO"
       aplicar "v1.0.0" "0" "0"
       publicar_metricas
       ok "voltou para v1.0.0 e limpou o historico"

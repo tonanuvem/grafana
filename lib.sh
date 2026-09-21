@@ -21,6 +21,22 @@ ENV_EFETIVO="$AQUI/env/.env-efetivo"
 ESTADO="$AQUI/estado"
 mkdir -p "$ESTADO"
 
+# Tudo o que muda ao RODAR o lab -- a versao publicada, a regressao simulada,
+# a porta que sobrou livre nesta maquina, o IP que o navegador alcanca -- mora
+# aqui, e nao no arquivo versionado. Senao rodar a aula deixa o repositorio
+# sujo, e o `git pull` seguinte traz conflito num arquivo de configuracao.
+ENV_ESTADO="$ESTADO/ambiente.env"
+if [ ! -f "$ENV_ESTADO" ]; then
+    cat > "$ENV_ESTADO" <<'PADRAO'
+# ARQUIVO GERADO -- estado desta execucao. Nao versionar.
+# Use ./deploy.sh e ./run-stack.sh; editar isto a mao nao recria container.
+APP_VERSION=1.0.0
+ATRASO_ARTIFICIAL_MS=0
+ATRASO_JITTER_MS=0
+FALHA_ARTIFICIAL_PCT=0
+PADRAO
+fi
+
 # Funde o .env que ja existir no bank-demo com o do LAB GRAFANA (o nosso por cima).
 #
 # Por que fundir e nao so' apontar: `--env-file` SUBSTITUI o .env padrao, nao
@@ -32,6 +48,8 @@ gerar_env() {
         echo "# Fonte: $BASE_APP/.env (se existir) + env/grafana.env por cima."
         [ -f "$BASE_APP/.env" ] && grep -vE '^\s*(#|$)' "$BASE_APP/.env"
         grep -vE '^\s*(#|$)' "$ENV_LAB"
+        # por ultimo: o estado desta execucao vence a configuracao
+        grep -vE '^\s*(#|$)' "$ENV_ESTADO"
     } > "$ENV_EFETIVO"
 }
 
@@ -45,11 +63,23 @@ compose_app() {
         -f "$BASE_APP/docker-compose-logs-fluentd.yml"
 }
 
-# Reescreve uma variavel no env/grafana.env e regenera o efetivo.
+# Reescreve uma variavel e regenera o efetivo. O terceiro argumento escolhe o
+# arquivo: "deploy" para o estado, qualquer outra coisa para a configuracao.
 definir_env() {
-    local chave="$1" valor="$2"
-    if grep -qE "^${chave}=" "$ENV_LAB"; then
-        python3 - "$ENV_LAB" "$chave" "$valor" <<'PYEOF'
+    local chave="$1" valor="$2" onde="${3:-estado}"
+
+    # O padrao e' o ESTADO: quase tudo o que os scripts mudam e' consequencia
+    # de rodar o lab NESTA maquina -- a versao publicada, a regressao, a porta
+    # que sobrou livre, o IP que o navegador alcanca. Nada disso pertence a um
+    # arquivo versionado: senao dar aula deixa o repositorio sujo e o `git
+    # pull` seguinte vira conflito.
+    #
+    # Passe "config" como terceiro argumento para gravar no env/grafana.env.
+    local arquivo="$ENV_ESTADO"
+    [ "$onde" = "config" ] && arquivo="$AQUI/env/grafana.env"
+
+    if grep -qE "^${chave}=" "$arquivo"; then
+        python3 - "$arquivo" "$chave" "$valor" <<'PYEOF'
 import sys, re
 arq, chave, valor = sys.argv[1], sys.argv[2], sys.argv[3]
 linhas = open(arq, encoding="utf-8").read().splitlines(keepends=True)
@@ -58,7 +88,7 @@ saida = [re.sub(rf"^{re.escape(chave)}=.*$", f"{chave}={valor}", l.rstrip("\n"))
 open(arq, "w", encoding="utf-8").writelines(saida)
 PYEOF
     else
-        printf '%s=%s\n' "$chave" "$valor" >> "$ENV_LAB"
+        printf '%s=%s\n' "$chave" "$valor" >> "$arquivo"
     fi
     gerar_env
 }
