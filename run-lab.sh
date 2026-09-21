@@ -27,6 +27,9 @@ MODO_IMAGENS=auto      # auto = tenta baixar, constroi se falhar
 SUBIR_GUIA=true
 COM_CARGA=false
 
+TEST_EMAIL="teste@teste.com"
+TEST_PASSWORD="Teste@123"
+
 for ARG in "$@"; do
     case "$ARG" in
         --sem-build) MODO_IMAGENS=nenhum ;;
