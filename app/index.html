@@ -295,9 +295,57 @@ function limpar(){
   try{localStorage.removeItem(CHAVE)}catch(e){}
   salvar();
 }
+/*
+ * Copiar texto SEM depender da API moderna.
+ *
+ * navigator.clipboard so' existe em contexto seguro: https, ou localhost. O
+ * guia e' servido por http num IP (e' assim que o aluno acessa a EC2), entao
+ * ali `navigator.clipboard` e' undefined -- a versao anterior chamava
+ * .writeText nele e estourava um TypeError que ninguem via, porque nao havia
+ * catch. O botao simplesmente nao fazia nada.
+ *
+ * O caminho antigo (execCommand) ainda funciona em http, desde que chamado
+ * DENTRO do gesto do usuario -- por isso ele acontece de forma sincrona aqui,
+ * e nao dentro de um then().
+ */
+function copiarTexto(texto){
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(texto).then(()=>true, ()=>false);
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = texto;
+    ta.setAttribute("readonly","");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return Promise.resolve(ok);
+  } catch (e) {
+    return Promise.resolve(false);
+  }
+}
+
 function cp(b){
-  const t=b.parentElement.querySelector("code").textContent;
-  navigator.clipboard.writeText(t).then(()=>{b.textContent="copiado";setTimeout(()=>b.textContent="copiar",1200)});
+  const code = b.parentElement.querySelector("code");
+  copiarTexto(code.textContent).then((ok)=>{
+    if (ok) {
+      b.textContent = "copiado";
+    } else {
+      // Ultimo recurso: seleciona o comando para o aluno copiar a mao, em vez
+      // de deixar um botao que nao responde.
+      const r = document.createRange();
+      r.selectNodeContents(code);
+      const s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+      b.textContent = "selecionado";
+    }
+    setTimeout(()=>{ b.textContent = "copiar"; }, 1400);
+  });
 }
 CAMPOS.forEach(c=>{const e=el(c); if(e)e.addEventListener("input",salvar)});
 carregar();
