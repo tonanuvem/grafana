@@ -274,12 +274,51 @@ criar_usuario_teste() {
     [ "$codigo" = "200" ]
 }
 
+
+# Uma conta de CADA tipo, senao a tela de transferencia nasce inutil: o filtro
+# por tipo de conta so' mostra o que existe, e um usuario com uma conta so'
+# nunca ve o filtro funcionar. Idempotente -- cria apenas os tipos que faltam.
+criar_contas_teste() {
+    local porta existentes criadas=0 tipo
+    porta=$(grep -E '^PORTA_DASHBOARD=' "$ENV_EFETIVO" 2>/dev/null | tail -1 | cut -d= -f2)
+    porta="${porta:-5000}"
+
+    local i=0
+    until curl -s -o /dev/null --max-time 3 "http://localhost:$porta/" 2>/dev/null || [ $i -ge 20 ]; do
+        i=$((i+1)); sleep 2
+    done
+
+    existentes=$(curl -s --max-time 20 -X POST "http://localhost:$porta/account/allaccounts" \
+        --data-urlencode "email_id=$TEST_EMAIL" 2>/dev/null)
+
+    # IFS trocado so' aqui dentro: "Money Market" tem espaco no nome.
+    local IFS=$'\n'
+    for tipo in "Checking" "Savings" "Investment" "Money Market"; do
+        case "$existentes" in *"\"$tipo\""*) continue ;; esac
+        curl -s -o /dev/null --max-time 20 -X POST "http://localhost:$porta/account/create" \
+            --data-urlencode "name=$TEST_NAME" \
+            --data-urlencode "email_id=$TEST_EMAIL" \
+            --data-urlencode "account_type=$tipo" \
+            --data-urlencode "government_id_type=Passport" \
+            --data-urlencode "govt_id_number=LAB0001" \
+            --data-urlencode "address=Av. Paulista, 1106" 2>/dev/null
+        criadas=$((criadas + 1))
+    done
+    echo "$criadas"
+}
+
 echo
 echo "9. USUARIO DE TESTE"
 echo "--------------------------------------------------"
 if criar_usuario_teste; then
     ok "$TEST_EMAIL pronto (login conferido)"
     LOGIN_OK=true
+    NOVAS=$(criar_contas_teste)
+    if [ "${NOVAS:-0}" -gt 0 ]; then
+        ok "$NOVAS conta(s) criada(s) -- uma de cada tipo, para a tela de transferencia"
+    else
+        ok "contas de teste ja existiam"
+    fi
 else
     aviso "nao consegui deixar o login de teste funcionando"
     echo "       O banco sobe do mesmo jeito -- crie uma conta pela tela"
