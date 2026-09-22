@@ -89,6 +89,14 @@ table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint)}
 td select{padding:6px 8px}
+.ir{
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--accent); color:var(--on-accent);
+  border-radius:7px; padding:3px 9px; font-size:13px; font-weight:500;
+  text-decoration:none; white-space:nowrap;
+}
+.ir:hover{filter:brightness(1.08)}
+.ir::after{content:"↗"; font-size:11px; opacity:.85}
 footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);font-size:13px}
 </style>
 
@@ -130,15 +138,17 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <div class="cmd"><code>docker ps --format '{{.Names}}\t{{.Status}}' | grep fiapbank</code><button onclick="cp(this)">copiar</button></div>
     <div class="olhe"><b>Olhe:</b> o <i>uptime</i> dos containers da aplicação. Eles não foram
     recriados — e mesmo assim a telemetria agora chega no Grafana.</div>
-    <p class="sec-sub">Abra <b>Explore → Tempo → Service Graph</b>. É o Service Map do
-    Encontro 1, montado a partir das mesmas informações.</p>
+    <p class="sec-sub">Abra <a class="ir" data-ir="service-graph" href="#">Service Graph</a> — é a
+    terceira aba de <i>Query type</i>, ao lado de Search e TraceQL; o padrão é
+    TraceQL, que mostra “No data” até você digitar algo. É o Service Map do
+    Encontro anterior, montado a partir das mesmas informações.</p>
     <label>O que existe no Service Graph do Grafana que não existia no Splunk — e o contrário?</label>
     <textarea id="f_servicemap" placeholder="Compare os dois mapas. Repare em quem aparece como nó e de onde vem o nome de cada um."></textarea>
   </section>
 
   <section>
     <div class="sec-h"><span class="sec-n">2</span><h2>Saúde do negócio: a falha que não é erro</h2></div>
-    <p class="sec-sub">Abra <b>LAB GRAFANA → 1 · Saúde do Negócio</b> e deixe aberto.</p>
+    <p class="sec-sub">Abra <a class="ir" data-ir="dash-negocio" href="#">1 · Saúde do Negócio</a> e deixe aberto.</p>
 
     <h3 style="font-size:16px;margin:18px 0 4px">a) A jornada feliz tem forma</h3>
     <div class="cmd"><code>bash carga.sh --cenario auth --usuarios 10 --tempo 60s</code><button onclick="cp(this)">copiar</button></div>
@@ -158,7 +168,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <label>Métrica e log deram o mesmo número. Quando você escolheria cada um?</label>
     <textarea id="f_metrica_log" placeholder="Um é barato e impreciso; o outro é preciso e mais caro. O que HTTP 400 também significa, além de senha errada?"></textarea>
 
-    <div class="ia"><b>AIOps</b> <i>(Artificial Intelligence for IT Operations — usar análise automática sobre os sinais de operação)</i> <b>—</b> em <b>Drilldown → Logs</b>, escolha o serviço e abra a aba
+    <div class="ia"><b>AIOps</b> <i>(Artificial Intelligence for IT Operations — usar análise automática sobre os sinais de operação)</i> <b>—</b> em <a class="ir" data-ir="logs" href="#">Drilldown → Logs</a>, escolha o serviço e abra a aba
     <b>Patterns</b>. O Loki agrupa milhares de linhas em um punhado de padrões, sozinho.
     (Só funciona com volume: com poucas linhas ele acha zero padrões.)</div>
     <label>Quantos padrões o Loki encontrou, e o que isso substituiria no seu trabalho?</label>
@@ -176,7 +186,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
   <section>
     <div class="sec-h"><span class="sec-n">3</span><h2>O incidente</h2></div>
-    <p class="sec-sub">Abra <b>LAB GRAFANA → 2 · Error Budget</b>. Confira o ponto de partida:
+    <p class="sec-sub">Abra <a class="ir" data-ir="dash-budget" href="#">2 · Error Budget</a>. Confira o ponto de partida:
     orçamento, burn rate e latência. Depois publique — <b>sem saber</b> se a versão é boa.</p>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
     <div class="nota"><b>Espere.</b> O sinal leva cerca de um minuto para aparecer: as janelas
@@ -194,7 +204,8 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
     <div class="ia"><b>AIOps —</b> com o incidente em curso, role o dashboard 2 até
     a faixa de <b>ruído de alerta</b> e compare três números: alertas disparando,
-    ativos no Alertmanager e silenciados. Depois abra o Alertmanager e conte os
+    ativos no Alertmanager e silenciados. Depois abra o
+    <a class="ir" data-ir="alertmanager" href="#">Alertmanager</a> e conte os
     <b>grupos</b> — é o que chegaria a uma pessoa.</div>
     <label>Quantos alertas dispararam, e quantas notificações sairiam? O que faz a diferença?</label>
     <textarea id="f_alertas" placeholder="O agrupamento é por jornada de negócio; a supressão tira a queima lenta enquanto a rápida está ativa. Nenhum modelo, nenhum aprendizado de máquina."></textarea>
@@ -267,6 +278,42 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 A planilha sai com duas abas: entrega e comunicação.</footer>
 
 <script>
+/*
+ * Os links abaixo apontam para o Grafana NA MESMA MAQUINA que serve este
+ * guia -- o host vem de window.location, entao funciona em localhost, no IP
+ * da EC2 e em qualquer DNS, sem ninguem configurar nada.
+ *
+ * Existem porque "Explore > Tempo > Service Graph" e' uma instrucao que
+ * parece simples e nao e': Service Graph e' a TERCEIRA aba de "Query type",
+ * ao lado de Search e TraceQL, e o padrao e' TraceQL -- que mostra "No data"
+ * ate' alguem digitar uma consulta. Quem nao conhece a tela conclui que o
+ * Service Map nao existe.
+ */
+function urlGrafana(caminho, params){
+  const base = `${location.protocol}//${location.hostname}:3001`;
+  return base + caminho + (params ? "?" + params : "");
+}
+
+function montarLinks(){
+  const panes = (q) => "schemaVersion=1&orgId=1&panes=" + encodeURIComponent(JSON.stringify(q));
+
+  const destinos = {
+    "service-graph": urlGrafana("/explore", panes({a:{datasource:"tempo",
+      queries:[{refId:"A",datasource:{type:"tempo",uid:"tempo"},queryType:"serviceMap"}],
+      range:{from:"now-1h",to:"now"}}})),
+    "dash-negocio": urlGrafana("/d/lab-negocio/", "from=now-30m&to=now"),
+    "dash-budget":  urlGrafana("/d/lab-budget/",  "from=now-30m&to=now"),
+    "dash-cfr":     urlGrafana("/d/lab-cfr/",     "from=now-1h&to=now"),
+    "logs":         urlGrafana("/a/grafana-lokiexplore-app/explore", ""),
+    "alertmanager": `${location.protocol}//${location.hostname}:9093`,
+  };
+
+  document.querySelectorAll("a.ir[data-ir]").forEach((a) => {
+    const destino = destinos[a.dataset.ir];
+    if (destino) { a.href = destino; a.target = "_blank"; a.rel = "noopener"; }
+  });
+}
+
 const CAMPOS = ["integrantes","f_servicemap","f_400","f_metrica_log","f_patterns","f_rum","f_alertas",
  "f_t_alerta","f_t_entendeu","f_orcamento","f_burn","f_lat","f_custo","f_decisao",
  "f_checkpoint","f_justificativa","f_pos_rollback","f_pol_50","f_pol_25","f_pol_0",
@@ -349,6 +396,7 @@ function cp(b){
 }
 CAMPOS.forEach(c=>{const e=el(c); if(e)e.addEventListener("input",salvar)});
 carregar();
+montarLinks();
 
 const R = [
  ["Integrantes","integrantes"],["Service Graph x Service Map","f_servicemap"],
