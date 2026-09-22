@@ -29,7 +29,7 @@
    },
    "options": {
     "mode": "markdown",
-    "content": "### Deploys e Change Failure Rate\n\n**CFR = deploys revertidos ÷ deploys totais.** É a definição do DORA: falhou o\nque exigiu rollback ou hotfix.\n\nCom 3 deploys numa aula o número é ridículo — e isso também é conteúdo. CFR é\nmétrica de **tendência**, não de incidente. Ela não diz o que houve hoje; diz\nse a sua cadência de entrega é sustentável ao longo de meses."
+    "content": "### Deploys e Change Failure Rate\n\n**CFR = deploys revertidos ÷ deploys totais.** É a definição : falhou o\nque exigiu rollback ou hotfix.\n\nCFR mede a qualidade e a segurança das alterações que entram em produção (porcentagem de deploys que quebram o sistema). CFR é\nmétrica de **tendência**, não de incidente. Ela não diz o que houve hoje; diz\nse a sua cadência de entrega é sustentável ao longo de meses."
    }
   },
   {
