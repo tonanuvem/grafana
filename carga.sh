@@ -85,14 +85,24 @@ if [ "$FALHAS" -gt 0 ] \
     aviso "--falhas age em 'auth' e 'transaction'; em '$CENARIO' sera' ignorado."
 fi
 
+# `--build` SEMPRE, e nao so' quando o container esta fora do ar.
+#
+# Os cenarios vivem DENTRO da imagem (`COPY . /service/`), e a imagem do locust
+# nao e' publicada: ela nasce local. Sem o --build, um `git pull` que traz
+# cenario novo nao chega a lugar nenhum -- o container antigo continua de pe'
+# rodando o codigo antigo, e o resultado e' o pior tipo de erro: numeros
+# plausiveis e silenciosamente errados. Foi assim que `--falhas` devolveu
+# "0 falhas" com 100% pedido, porque a imagem ainda lia a variavel com o nome
+# anterior.
+#
+# Com cache o build leva segundos; so' refaz a camada quando um .py mudou.
+echo "Preparando o container do locust (profile 'load')..."
+(cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" --profile load up -d --build locust) \
+    >/tmp/lab-locust.log 2>&1 \
+    || { erro "falha ao preparar o locust -- veja /tmp/lab-locust.log"; exit 1; }
+sleep 3
 CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
-if [ -z "$CT" ]; then
-    echo "Subindo o container do locust (profile 'load')..."
-    (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" --profile load up -d locust) >/dev/null 2>&1
-    sleep 4
-    CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
-    [ -z "$CT" ] && { erro "o container do locust nao subiu."; exit 1; }
-fi
+[ -z "$CT" ] && { erro "o container do locust nao subiu -- veja /tmp/lab-locust.log"; exit 1; }
 
 # Na variante bridge os destinos sao os NOMES dos servicos, resolvidos pelo
 # DNS interno do Docker -- nao localhost.
