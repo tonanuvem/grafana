@@ -158,6 +158,25 @@ EXPLICACOES = {
 }
 
 
+# Texto inserido logo abaixo de uma linha, para explicar o que vem a seguir.
+TEXTO_DE_LINHA = {
+ "15983": {
+  "Signal flows":
+    "### O caminho que cada sinal percorre\n"
+    "Cada grafo abaixo é **uma pipeline do collector**, desenhada a partir do "
+    "que está realmente passando por ela — não de um diagrama escrito à mão.\n\n"
+    "Leia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, "
+    "`faro`) entregam aos **processors**, que entregam aos **exporters** "
+    "(`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação "
+    "é o volume.\n\n"
+    "São três grafos porque são três sinais independentes: **traces**, "
+    "**métricas** e **logs** seguem caminhos diferentes dentro do mesmo "
+    "processo. É por isso que dá para perder log sem perder trace — e é por "
+    "isso que este dashboard tem um painel de fila para cada um.",
+ },
+}
+
+
 def baixar(ident, revisao):
     os.makedirs(CACHE, exist_ok=True)
     destino = os.path.join(CACHE, "%s.json" % ident)
@@ -209,6 +228,26 @@ def normalizar_ds(o, uid="prom"):
         return [normalizar_ds(v, uid) for v in o]
     if isinstance(o, str) and o.startswith("${DS_") and o.endswith("}"):
         return uid
+    return o
+
+
+def corrigir_cadvisor(o):
+    """Troca o label `container` por `name` no dashboard de containers.
+
+    O autor agrupa por `container`, que e' um label do kubelet -- o cAdvisor
+    puro nao o emite. O resultado e' `sum by (container)` colapsando TUDO numa
+    serie so', com o label vazio: o grafico mostra uma linha chamada "Value" em
+    vez de uma por container, e o seletor de container nasce vazio.
+    """
+    if isinstance(o, dict):
+        return {k: corrigir_cadvisor(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [corrigir_cadvisor(v) for v in o]
+    if isinstance(o, str):
+        return (o.replace("by (container)", "by (name)")
+                 .replace('container=~"$container"', 'name=~"$container"')
+                 .replace('instance=~"$node"},container)',
+                          'instance=~"$node"},name)'))
     return o
 
 
@@ -269,6 +308,10 @@ def resolver_marcadores(o):
 #   resolve. MEDIDO -- o batch publica apenas otelcol_processor_batch_* e nunca
 #   incoming/outgoing items.
 #
+#   15983 / "Service Instance Details": consulta os labels "service.instance.id"
+#   e "service.version", que o nosso collector nao emite -- MEDIDO,
+#   otelcol_process_uptime so' traz __name__, instance e job.
+#
 #   1860 / SWAP: a EC2 do laboratorio nao tem swap, entao os dois medidores
 #   ficam em N/A, um deles em VERMELHO. Nao ha nada errado ali -- e' so' um
 #   alarme falso permanente na primeira tela que o aluno abre.
@@ -276,7 +319,7 @@ def resolver_marcadores(o):
 #   JSON versionado mudaria conforme a maquina onde o gerador rodou (esta,
 #   por exemplo, tem 1 GiB de swap).
 PODAR_EXPLICITO = {
-    "15983": {"Metric Points ${metric:text}"},
+    "15983": {"Metric Points ${metric:text}", "Service Instance Details"},
     "1860": {"SWAP Used", "SWAP Total"},
 }
 
@@ -318,18 +361,53 @@ def tirar_linhas_vazias(paineis):
     return saida
 
 
-def compactar(paineis):
-    """Fecha os buracos que a poda abriu, sem redesenhar o que estava bom.
+def _linhas_da_secao(secao):
+    """Divide uma secao em linhas para reencaixe.
 
-    A versao anterior reempacotava TUDO da esquerda para a direita, o que
-    destruia o arranjo do autor em dashboards onde nada foi podado -- os onze
-    medidores do Node Exporter viravam outra coisa.
-
-    Aqui as linhas ORIGINAIS sao preservadas (agrupadas pelo `y` de origem).
-    So' a linha que perdeu painel e' refeita: os que sobraram encostam a
-    esquerda e crescem proporcionalmente ate ocupar as 24 colunas -- senao
-    sobra o vao branco de quem foi embora.
+    Agrupa pelo `y` de origem, que e' a intencao do autor. Dentro de um grupo
+    com ALTURAS diferentes, separa por altura: o 1860 poe medidores altos e
+    stats baixos lado a lado, e tratar os dois como uma linha so' deixava os
+    stats orfaos num vao. Por fim une linhas vizinhas de mesma altura que
+    caibam juntas -- e' o que reagrupa os quatro stats do 1860, que o autor
+    tinha espalhado em duas sublinhas na margem direita.
     """
+    por_y, ordem = {}, []
+    for q in secao:
+        yo = (q.get("gridPos") or {}).get("y", 0)
+        if yo not in por_y:
+            por_y[yo] = []
+            ordem.append(yo)
+        por_y[yo].append(q)
+
+    linhas = []
+    for yo in ordem:
+        grupo = por_y[yo]
+        alturas = []
+        for q in grupo:
+            h = int((q.get("gridPos") or {}).get("h", 8))
+            if h not in alturas:
+                alturas.append(h)
+        for h in sorted(alturas, reverse=True):
+            linhas.append([q for q in grupo
+                           if int((q.get("gridPos") or {}).get("h", 8)) == h])
+
+    unidas = []
+    for linha in linhas:
+        largura = sum(int((q.get("gridPos") or {}).get("w", 8)) for q in linha)
+        altura = int((linha[0].get("gridPos") or {}).get("h", 8))
+        if unidas:
+            ant = unidas[-1]
+            alt_ant = int((ant[0].get("gridPos") or {}).get("h", 8))
+            larg_ant = sum(int((q.get("gridPos") or {}).get("w", 8)) for q in ant)
+            if alt_ant == altura and larg_ant + largura <= 24:
+                ant.extend(linha)
+                continue
+        unidas.append(list(linha))
+    return unidas
+
+
+def compactar(paineis):
+    """Fecha os buracos que a poda abriu, sem redesenhar o que estava bom."""
     y = 0
     i = 0
     while i < len(paineis):
@@ -345,20 +423,12 @@ def compactar(paineis):
             secao.append(paineis[i])
             i += 1
 
-        # Agrupa pela linha de origem, na ordem em que aparecem.
-        linhas, vistos = [], {}
-        for q in secao:
-            yo = (q.get("gridPos") or {}).get("y", 0)
-            if yo not in vistos:
-                vistos[yo] = []
-                linhas.append(vistos[yo])
-            vistos[yo].append(q)
-
-        for linha in linhas:
+        for linha in _linhas_da_secao(secao):
             larguras = [max(1, int((q.get("gridPos") or {}).get("w", 8)))
                         for q in linha]
             total = sum(larguras)
             alvo = min(24, max(int(linha[0].get("_alvo_linha", 24)), total))
+            intacta = total == alvo
             if total < alvo:
                 # Reparte proporcionalmente e entrega as colunas que sobram do
                 # arredondamento uma a uma, para quem tem a maior fracao
@@ -373,9 +443,6 @@ def compactar(paineis):
                 while sum(larguras) < alvo:
                     larguras[resto[k % len(resto)]] += 1
                     k += 1
-            # Linha intacta: so' o `y` muda. Mexer no `x` de uma linha que nao
-            # perdeu nada seria redesenhar o que o autor ja' tinha arranjado.
-            intacta = total == alvo
             x = 0
             altura = 0
             for q, w in zip(linha, larguras):
@@ -394,6 +461,8 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     for chave in ("__inputs", "__requires", "id"):
         d.pop(chave, None)
     d = normalizar_ds(d)
+    if ident == "15798":
+        d = corrigir_cadvisor(d)
     d.update({"uid": uid, "title": titulo, "tags": tags, "editable": True,
               "refresh": "30s", "time": {"from": "now-1h", "to": "now"}})
     ajustar_variaveis(d)
@@ -441,12 +510,31 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     paineis = tirar_linhas_vazias(
         podar(paineis, vivas, cortados, PODAR_EXPLICITO.get(ident, frozenset())))
 
+    # Texto explicativo logo abaixo da linha a que ele se refere.
+    for titulo_linha, conteudo in TEXTO_DE_LINHA.get(ident, {}).items():
+        for k, q in enumerate(paineis):
+            if q.get("type") == "row" and q.get("title") == titulo_linha:
+                paineis.insert(k + 1, {
+                    "type": "text", "title": "", "transparent": True,
+                    "gridPos": {"h": 5, "w": 24, "x": 0, "y": -1},
+                    "options": {"mode": "markdown", "content": conteudo},
+                })
+                break
+
+    paineis = compactar(paineis)
+
+    # O cabecalho entra DEPOIS de compactar. Inserido antes, ele dividia o
+    # `y` com a primeira linha do autor: no dashboard de containers os cinco
+    # stats acabavam empurrados para as colunas 24 a 48, fora da grade, e o
+    # Grafana os empilhava na margem direita.
+    for q in paineis:
+        q["gridPos"]["y"] += 3
     paineis.insert(0, {
         "type": "text", "title": "", "transparent": True,
         "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
         "options": {"mode": "markdown", "content": AVISO},
     })
-    d["panels"] = compactar(paineis)
+    d["panels"] = paineis
     for q in d["panels"]:
         q.pop("_alvo_linha", None)
 

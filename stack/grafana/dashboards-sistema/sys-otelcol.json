@@ -34,10 +34,10 @@
       "title": "",
       "transparent": true,
       "gridPos": {
-        "x": 0,
-        "y": 0,
+        "h": 3,
         "w": 24,
-        "h": 3
+        "x": 0,
+        "y": 0
       },
       "options": {
         "mode": "markdown",
@@ -2987,109 +2987,31 @@
       ]
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 67,
-        "w": 24,
-        "h": 5
-      },
-      "id": 57,
-      "interval": "$minstep",
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "13.2.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max(otelcol_process_uptime${suffix_seconds}{\"service.instance.id\"=~\".*\",job=\"$job\",\"service.version\"=\".+\"}) by (\"service.instance.id\",\"service.name\",\"service.version\")\r\nor\r\nmax(\r\n  otelcol_process_uptime${suffix_seconds}{\"service.instance.id\"=~\".*\",job=\"$job\"} \r\n  * on(job, instance) \r\n  group_left(\"service.version\") \r\n  (\r\n    target_info \r\n    * on(job, instance) \r\n    group_left \r\n    label_replace(target_info{}, \"service.instance.id\", \"$1\", \"instance\", \"(.*)\")\r\n  )\r\n) by (\"service.instance.id\", \"service.name\", \"service.version\")",
-          "format": "table",
-          "instant": true,
-          "interval": "$minstep",
-          "intervalFactor": 1,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "B"
-        }
-      ],
-      "title": "Service Instance Details",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true
-            },
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "table",
-      "description": "\n\n---\n**De onde vem este número**\n\n```\nmax(otelcol_process_uptime${suffix_seconds}{\"service.instance.id\"=~\".*\",job=\"$job\",\"service.version\"=\".+\"}) by (\"service.instance.id\",\"service.name\",\"service.version\")\r\nor\r\nmax(\r\n  otelcol_process_uptime${suffix_seconds}{\"service.instance.id\"=~\".*\",job=\"$job\"} \r\n  * on(job, instance) \r\n  group_left(\"service.version\") \r\n  (\r\n    target_info \r\n    * on(job, instance) \r\n    group_left \r\n    label_replace(target_info{}, \"service.instance.id\", \"$1\", \"instance\", \"(.*)\")\r\n  )\r\n) by (\"service.instance.id\", \"service.name\", \"service.version\")\n```",
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22max%28otelcol_process_uptime%24%7Bsuffix_seconds%7D%7B%5C%22service.instance.id%5C%22%3D~%5C%22.%2A%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%5C%22service.version%5C%22%3D%5C%22.%2B%5C%22%7D%29%20by%20%28%5C%22service.instance.id%5C%22%2C%5C%22service.name%5C%22%2C%5C%22service.version%5C%22%29%5Cr%5Cnor%5Cr%5Cnmax%28%5Cr%5Cn%20%20otelcol_process_uptime%24%7Bsuffix_seconds%7D%7B%5C%22service.instance.id%5C%22%3D~%5C%22.%2A%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%5Cr%5Cn%20%20%2A%20on%28job%2C%20instance%29%20%5Cr%5Cn%20%20group_left%28%5C%22service.version%5C%22%29%20%5Cr%5Cn%20%20%28%5Cr%5Cn%20%20%20%20target_info%20%5Cr%5Cn%20%20%20%20%2A%20on%28job%2C%20instance%29%20%5Cr%5Cn%20%20%20%20group_left%20%5Cr%5Cn%20%20%20%20label_replace%28target_info%7B%7D%2C%20%5C%22service.instance.id%5C%22%2C%20%5C%22%241%5C%22%2C%20%5C%22instance%5C%22%2C%20%5C%22%28.%2A%29%5C%22%29%5Cr%5Cn%20%20%29%5Cr%5Cn%29%20by%20%28%5C%22service.instance.id%5C%22%2C%20%5C%22service.name%5C%22%2C%20%5C%22service.version%5C%22%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 72,
+        "y": 67,
         "w": 24,
         "h": 1
       },
       "id": 90,
       "title": "Signal flows",
       "type": "row"
+    },
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### O caminho que cada sinal percorre\nCada grafo abaixo é **uma pipeline do collector**, desenhada a partir do que está realmente passando por ela — não de um diagrama escrito à mão.\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, `faro`) entregam aos **processors**, que entregam aos **exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação é o volume.\n\nSão três grafos porque são três sinais independentes: **traces**, **métricas** e **logs** seguem caminhos diferentes dentro do mesmo processo. É por isso que dá para perder log sem perder trace — e é por isso que este dashboard tem um painel de fila para cada um."
+      }
     },
     {
       "datasource": {
