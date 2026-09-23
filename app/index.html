@@ -162,8 +162,10 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
     <h3 style="font-size:16px;margin:18px 0 4px">b) A jornada infeliz, disparada por você</h3>
     <p class="sec-sub">Primeiro um patamar de recusas contínuo, para o painel ter forma em vez
-    de um pico solitário. O <code>--falhas 20</code> faz um em cada cinco logins usar a senha errada.</p>
-    <div class="cmd"><code>bash carga.sh --cenario auth --usuarios 10 --tempo 60s --falhas 20</code><button onclick="cp(this)">copiar</button></div>
+    de um pico solitário. Sem valor, o <code>--falhas</code> recusa <b>todas</b> as tentativas —
+    o percentual que você passar é exatamente a taxa que o painel vai mostrar
+    (<code>--falhas 30</code> para 30%).</p>
+    <div class="cmd"><code>bash carga.sh --cenario auth --usuarios 10 --tempo 60s --falhas</code><button onclick="cp(this)">copiar</button></div>
     <div class="nota">Use <code>--cenario auth</code>, e não o padrão. Com os cinco cenários girando,
     as recusas viram uma fração pequena do tráfego total e a <b>taxa</b> de recusa fica diluída —
     o número no painel deixa de bater com os 20% que você pediu.</div>
@@ -193,7 +195,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     HTTP diretas — nunca abre um navegador, nunca executa o JavaScript da página, nunca carrega
     o agente de RUM. Toda a carga de fundo que você deixou rodando desde o item 0 é invisível
     para esta faixa. Só entra o que <b>você mesmo</b> fizer clicando na tela agora.
-    <br><br>Volte ao item b: as recusas do <code>--falhas 20</code> e as suas cinco senhas erradas
+    <br><br>Volte ao item b: as recusas do <code>--falhas</code> e as suas cinco senhas erradas
     ficaram <b>idênticas</b> nos painéis de servidor. Aqui, só as suas aparecem. Um mesmo evento de
     negócio é visível em um plano e invisível no outro — e nenhum dos dois está errado.</div>
     <div class="olhe"><b>Olhe:</b> as suas próprias navegações aparecem em
