@@ -34,10 +34,10 @@
       "title": "",
       "transparent": true,
       "gridPos": {
-        "h": 3,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 3
       },
       "options": {
         "mode": "markdown",
@@ -47,10 +47,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 3
+        "y": 3,
+        "w": 24,
+        "h": 1
       },
       "id": 86,
       "title": "Receivers",
@@ -140,10 +140,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 0,
-        "y": 4
+        "y": 4,
+        "w": 8,
+        "h": 8
       },
       "id": 28,
       "interval": "$minstep",
@@ -290,10 +290,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "x": 8,
+        "y": 4,
         "w": 8,
-        "x": 16,
-        "y": 4
+        "h": 8
       },
       "id": 47,
       "interval": "$minstep",
@@ -359,10 +359,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 12
+        "y": 12,
+        "w": 24,
+        "h": 1
       },
       "id": 87,
       "title": "Processors",
@@ -469,10 +469,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 0,
-        "y": 13
+        "y": 13,
+        "w": 8,
+        "h": 8
       },
       "id": 85,
       "interval": "$minstep",
@@ -636,10 +636,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 8,
-        "y": 13
+        "y": 13,
+        "w": 8,
+        "h": 8
       },
       "id": 83,
       "interval": "$minstep",
@@ -803,10 +803,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 16,
-        "y": 13
+        "y": 13,
+        "w": 8,
+        "h": 8
       },
       "id": 84,
       "interval": "$minstep",
@@ -891,10 +891,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 0,
-        "y": 29
+        "y": 21,
+        "w": 8,
+        "h": 8
       },
       "id": 49,
       "interval": "$minstep",
@@ -1034,10 +1034,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 8,
-        "y": 29
+        "y": 21,
+        "w": 8,
+        "h": 8
       },
       "id": 36,
       "interval": "$minstep",
@@ -1177,10 +1177,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
         "x": 16,
-        "y": 29
+        "y": 21,
+        "w": 8,
+        "h": 8
       },
       "id": 56,
       "interval": "$minstep",
@@ -1246,10 +1246,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 37
+        "y": 29,
+        "w": 24,
+        "h": 1
       },
       "id": 88,
       "title": "Exporters",
@@ -1339,10 +1339,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 0,
-        "y": 38
+        "y": 30,
+        "w": 8,
+        "h": 9
       },
       "id": 37,
       "interval": "$minstep",
@@ -1504,10 +1504,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 8,
-        "y": 38
+        "y": 30,
+        "w": 8,
+        "h": 9
       },
       "id": 38,
       "interval": "$minstep",
@@ -1669,10 +1669,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 16,
-        "y": 38
+        "y": 30,
+        "w": 8,
+        "h": 9
       },
       "id": 48,
       "interval": "$minstep",
@@ -1813,10 +1813,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 0,
-        "y": 47
+        "y": 39,
+        "w": 8,
+        "h": 9
       },
       "id": 10,
       "options": {
@@ -1926,10 +1926,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 8,
-        "y": 47
+        "y": 39,
+        "w": 8,
+        "h": 9
       },
       "id": 55,
       "options": {
@@ -2039,10 +2039,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 16,
-        "y": 47
+        "y": 39,
+        "w": 8,
+        "h": 9
       },
       "id": 67,
       "options": {
@@ -2092,10 +2092,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 56
+        "y": 48,
+        "w": 24,
+        "h": 1
       },
       "id": 89,
       "title": "Collector",
@@ -2235,10 +2235,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 0,
-        "y": 57
+        "y": 49,
+        "w": 8,
+        "h": 9
       },
       "id": 40,
       "interval": "$minstep",
@@ -2450,10 +2450,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 8,
-        "y": 57
+        "y": 49,
+        "w": 8,
+        "h": 9
       },
       "id": 52,
       "interval": "$minstep",
@@ -2665,10 +2665,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 16,
-        "y": 57
+        "y": 49,
+        "w": 8,
+        "h": 9
       },
       "id": 53,
       "interval": "$minstep",
@@ -2876,10 +2876,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 0,
-        "y": 66
+        "y": 58,
+        "w": 8,
+        "h": 9
       },
       "id": 39,
       "interval": "$minstep",
@@ -3022,10 +3022,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 8,
-        "y": 66
+        "y": 58,
+        "w": 8,
+        "h": 9
       },
       "id": 41,
       "interval": "$minstep",
@@ -3136,10 +3136,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 16,
-        "y": 66
+        "y": 58,
+        "w": 8,
+        "h": 9
       },
       "id": 54,
       "interval": "$minstep",
@@ -3226,10 +3226,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 24,
         "x": 0,
-        "y": 75
+        "y": 67,
+        "w": 24,
+        "h": 5
       },
       "id": 57,
       "interval": "$minstep",
@@ -3275,10 +3275,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 80
+        "y": 72,
+        "w": 24,
+        "h": 1
       },
       "id": 90,
       "title": "Signal flows",
@@ -3291,10 +3291,10 @@
       },
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).",
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 0,
-        "y": 81
+        "y": 73,
+        "w": 8,
+        "h": 9
       },
       "id": 58,
       "options": {
@@ -3369,10 +3369,10 @@
       },
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).",
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 8,
-        "y": 81
+        "y": 73,
+        "w": 8,
+        "h": 9
       },
       "id": 60,
       "options": {
@@ -3447,10 +3447,10 @@
       },
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).",
       "gridPos": {
-        "h": 9,
-        "w": 8,
         "x": 16,
-        "y": 81
+        "y": 73,
+        "w": 8,
+        "h": 9
       },
       "id": 61,
       "options": {
@@ -3521,10 +3521,10 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 94
+        "y": 82,
+        "w": 24,
+        "h": 1
       },
       "id": 95,
       "title": "Documentation",
@@ -3532,10 +3532,10 @@
     },
     {
       "gridPos": {
-        "h": 3,
-        "w": 24,
         "x": 0,
-        "y": 95
+        "y": 83,
+        "w": 24,
+        "h": 3
       },
       "id": 45,
       "options": {

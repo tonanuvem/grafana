@@ -201,6 +201,46 @@ def tirar_linhas_vazias(paineis):
     return saida
 
 
+def compactar(paineis):
+    """Reencaixa os paineis da esquerda para a direita, sem buracos.
+
+    A poda tira paineis do meio de uma linha e os que sobram mantem o `x`
+    original: no dashboard do collector, cortar "Metric Points" de Receivers
+    deixava um vao de 8 colunas entre os dois paineis restantes. O Grafana nao
+    reflui sozinho -- a posicao e' explicita no JSON.
+    """
+    y = 0
+    i = 0
+    while i < len(paineis):
+        p = paineis[i]
+        if p.get("type") == "row":
+            p["gridPos"] = {"x": 0, "y": y, "w": 24, "h": 1}
+            y += 1
+            i += 1
+            continue
+
+        grupo = []
+        while i < len(paineis) and paineis[i].get("type") != "row":
+            grupo.append(paineis[i])
+            i += 1
+
+        x = 0
+        altura_linha = 0
+        for q in grupo:
+            g = q.get("gridPos") or {}
+            w = min(int(g.get("w", 8)), 24)
+            h = int(g.get("h", 8))
+            if x + w > 24:
+                y += altura_linha
+                x = 0
+                altura_linha = 0
+            q["gridPos"] = {"x": x, "y": y, "w": w, "h": h}
+            x += w
+            altura_linha = max(altura_linha, h)
+        y += altura_linha
+    return paineis
+
+
 def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     d = baixar(ident, FONTES[ident])
     for chave in ("__inputs", "__requires", "id"):
@@ -231,15 +271,12 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     cortados = []
     paineis = tirar_linhas_vazias(podar(paineis, vivas, cortados))
 
-    for p in paineis:
-        p.setdefault("gridPos", {})
-        p["gridPos"]["y"] = p["gridPos"].get("y", 0) + 3
     paineis.insert(0, {
         "type": "text", "title": "", "transparent": True,
         "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
         "options": {"mode": "markdown", "content": AVISO},
     })
-    d["panels"] = paineis
+    d["panels"] = compactar(paineis)
 
     io.open(os.path.join(DEST, uid + ".json"), "w", encoding="utf-8").write(
         json.dumps(d, indent=2, ensure_ascii=False) + "\n")

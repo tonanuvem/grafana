@@ -126,7 +126,30 @@ fi
 [ -z "$SOCK" ]  && SOCK=/var/run/docker.sock
 [ -z "$CSOCK" ] && CSOCK=/run/containerd/containerd.sock
 
+# Hash do conteudo de cada diretorio de config.
+#
+# Os arquivos de configuracao entram por bind mount, e `docker compose up -d`
+# NAO recria um container por causa deles: ele compara a ESPECIFICACAO do
+# servico, nao o conteudo dos arquivos montados. MEDIDO -- ao acrescentar um
+# job ao prometheus.yml e rodar `up -d`, o compose responde "Container Running"
+# e o job nao existe.
+#
+# O sintoma era mudo e caro: a pasta System Health aparecia (o Grafana FOI
+# recriado, porque ganhou um mount novo) mas os tres dashboards ficavam
+# vazios, porque o Prometheus seguia com a config antiga e sem os jobs.
+#
+# Passando o hash como variavel de ambiente, a especificacao do servico muda
+# quando o arquivo muda, e o proprio compose recria so' o que precisa.
+hash_de() {
+    find "$1" -type f 2>/dev/null | LC_ALL=C sort | xargs cat 2>/dev/null \
+        | cksum | awk '{print $1}'
+}
+
 { printf 'REDE_BANK=%s\n' "$REDE"
+  for D in otelcol prometheus loki tempo alertmanager blackbox; do
+      printf 'CONF_%s=%s\n' "$(echo "$D" | tr 'a-z' 'A-Z')" "$(hash_de "$STACK/$D")"
+  done
+  printf 'CONF_GRAFANA=%s\n' "$(hash_de "$STACK/grafana/provisioning")"
   printf 'DOCKER_SOCK=%s\n' "$SOCK"
   printf 'CONTAINERD_SOCK=%s\n' "$CSOCK"; } > "$STACK/.env"
 

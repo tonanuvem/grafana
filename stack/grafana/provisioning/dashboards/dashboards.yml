@@ -2,7 +2,7 @@ apiVersion: 1
 providers:
   - name: LAB-GRAFANA
     orgId: 1
-    folder: 'LAB GRAFANA - Error Budget'
+    folder: 'LAB GRAFANA - Business Health'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

@@ -113,7 +113,7 @@ print('sim' if 50 <= v < 100 else 'nao')")
       escrever "$OBJ" "${TKT:-125}" && recarregar || exit 1
       ok "alvo agora e' $NOVO% (orcamento: $(orcamento_minutos "$OBJ") min em ${JANELA_H}h)"
       echo
-      echo "  Confira o efeito:  Grafana > LAB GRAFANA > Error Budget"
+      echo "  Confira o efeito:  Grafana > LAB GRAFANA - Business Health > 2 · Error Budget"
       echo "  O alerta tambem mudou -- e' ele que decide se alguem e' acordado."
       exit 0 ;;
 

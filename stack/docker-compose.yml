@@ -23,6 +23,9 @@ services:
   otelcol:
     image: otel/opentelemetry-collector-contrib:0.161.0
     container_name: obs-otelcol
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_OTELCOL:-0}" }
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./otelcol/config.yaml:/etc/otelcol/config.yaml:ro
@@ -35,6 +38,9 @@ services:
   prometheus:
     image: prom/prometheus:v3.6.0
     container_name: obs-prometheus
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_PROMETHEUS:-0}" }
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=30d
@@ -48,6 +54,9 @@ services:
   loki:
     image: grafana/loki:3.5.7
     container_name: obs-loki
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_LOKI:-0}" }
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
       - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
@@ -58,6 +67,9 @@ services:
   tempo:
     image: grafana/tempo:2.9.0
     container_name: obs-tempo
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_TEMPO:-0}" }
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     user: "0:0"
     volumes:
@@ -80,6 +92,9 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.28.1
     container_name: obs-alertmanager
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_ALERTMANAGER:-0}" }
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
       - --storage.path=/alertmanager
@@ -123,6 +138,9 @@ services:
   blackbox:
     image: prom/blackbox-exporter:v0.28.0
     container_name: obs-blackbox
+    # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
+    # recria o container, e a config antiga fica no ar em silencio.
+    environment: { CONF_HASH: "${CONF_BLACKBOX:-0}" }
     command: ["--config.file=/etc/blackbox/blackbox.yml"]
     volumes:
       - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
@@ -157,6 +175,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
       GF_AUTH_BASIC_ENABLED: "false"
       GF_USERS_DEFAULT_THEME: dark
+      CONF_HASH: "${CONF_GRAFANA:-0}"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

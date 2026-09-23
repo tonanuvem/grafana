@@ -46,10 +46,10 @@
       "title": "",
       "transparent": true,
       "gridPos": {
-        "h": 3,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 3
       },
       "options": {
         "mode": "markdown",
@@ -91,10 +91,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 4,
         "x": 0,
-        "y": 3
+        "y": 3,
+        "w": 4,
+        "h": 3
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -172,10 +172,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 5,
         "x": 4,
-        "y": 3
+        "y": 3,
+        "w": 5,
+        "h": 3
       },
       "id": 5,
       "maxDataPoints": 100,
@@ -252,10 +252,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 5,
         "x": 9,
-        "y": 3
+        "y": 3,
+        "w": 5,
+        "h": 3
       },
       "id": 9,
       "maxDataPoints": 100,
@@ -332,10 +332,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 5,
         "x": 14,
-        "y": 3
+        "y": 3,
+        "w": 5,
+        "h": 3
       },
       "id": 6,
       "maxDataPoints": 100,
@@ -412,10 +412,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 5,
         "x": 19,
-        "y": 3
+        "y": 3,
+        "w": 5,
+        "h": 3
       },
       "id": 10,
       "maxDataPoints": 100,
@@ -516,10 +516,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
         "x": 0,
-        "y": 6
+        "y": 6,
+        "w": 24,
+        "h": 7
       },
       "id": 2,
       "options": {
@@ -619,10 +619,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
         "x": 0,
-        "y": 13
+        "y": 13,
+        "w": 24,
+        "h": 7
       },
       "id": 1,
       "options": {
@@ -724,10 +724,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
         "x": 0,
-        "y": 20
+        "y": 20,
+        "w": 24,
+        "h": 7
       },
       "id": 3,
       "options": {
@@ -842,10 +842,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
         "x": 0,
-        "y": 27
+        "y": 27,
+        "w": 24,
+        "h": 7
       },
       "id": 8,
       "options": {
