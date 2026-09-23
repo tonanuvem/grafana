@@ -140,6 +140,49 @@ estimativa() {
     fi
 }
 
+# Tabela das recusas que o --falhas vai disparar, so' dos cenarios que serao
+# rodados. Sem ela o aluno pede --falhas e nao sabe o que esperar em cada
+# painel -- e as recusas sao de naturezas diferentes de proposito, que e'
+# justamente o ponto do dashboard de saude do negocio.
+descricao_da_falha() {
+    case "$1" in
+        auth)        echo "senha errada|400|metrica e log" ;;
+        transaction) echo "transferencia acima do saldo|200|so' log" ;;
+        loan)        echo "valor < 1, credito negado|200|so' log" ;;
+        account)     echo "conta do tipo ja' existe|200|so' log" ;;
+        atm)         echo "caixa inexistente|404|metrica e log" ;;
+        *)           echo "" ;;
+    esac
+}
+
+tabela_falhas() {
+    [ "$FALHAS" -eq 0 ] && return 0
+    local lista="$CENARIO"
+    [ "$CENARIO" = "todos" ] && lista="$CENARIOS"
+
+    local alguma=false c d
+    for c in $lista; do
+        [ -n "$(descricao_da_falha "$c")" ] && alguma=true
+    done
+    [ "$alguma" = "false" ] && return 0
+
+    echo "  Falhas previstas em ${FALHAS}% das operacoes:"
+    printf "    %-12s %-30s %-5s %s\n" "JORNADA" "RECUSA" "HTTP" "ONDE APARECE"
+    for c in $lista; do
+        d=$(descricao_da_falha "$c")
+        [ -z "$d" ] && continue
+        printf "    %-12s %-30s %-5s %s\n" "$c" \
+            "$(echo "$d" | cut -d'|' -f1)" \
+            "$(echo "$d" | cut -d'|' -f2)" \
+            "$(echo "$d" | cut -d'|' -f3)"
+    done
+    for c in $lista; do
+        [ -n "$(descricao_da_falha "$c")" ] && continue
+        printf "    %-12s sem recusa de negocio -- o SLI dessa jornada e' latencia\n" "$c"
+    done
+    echo
+}
+
 arquivo_do_cenario() {
     case "$1" in
         auth)        echo "auth_locust.py" ;;
@@ -187,6 +230,8 @@ if [ "$FUNDO" = "true" ]; then
     ok "carga rodando em segundo plano (pid $(cat "$PIDF")) · $(estimativa)"
     echo "     acompanhar:  tail -f $LOG"
     echo "     encerrar:    ./carga.sh --parar"
+    echo
+    tabela_falhas
     exit 0
 fi
 
@@ -199,6 +244,7 @@ else
     echo "  $TEMPO de carga · duracao total $(estimativa)"
 fi
 echo
+tabela_falhas
 laco
 echo
 ok "carga concluida"
