@@ -121,6 +121,17 @@ groups:
             service_name="dashboard", span_name="POST /loan/"}[5m]))
           * 60 or vector(0)
 
+      # A UNICA recusa de negocio deste lab que o indicador TECNICO enxerga.
+      # O cliente abre um caixa que nao existe mais e recebe 404 -- e 404 o
+      # span_metrics conta. Serve de contraexemplo: "falha de negocio e'
+      # invisivel na metrica" nao e' lei, e' consequencia de como a rota foi
+      # desenhada. As outras deste dashboard devolvem 200 e so' existem no log.
+      - record: negocio:caixas_nao_encontrados_por_min
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="atm-locator", http_status_code="404"}[5m]))
+          * 60 or vector(0)
+
       # Um emprestimo RECUSADO devolve HTTP 200 -- a regra de negocio diz nao,
       # a rota funcionou. Igual ao "Insufficient Balance" da transferencia:
       # nao ha metrica que o veja, so' o log.

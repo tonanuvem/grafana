@@ -8,6 +8,7 @@
 #   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
 #   ./carga.sh --cenario auth --falhas        toda tentativa erra a senha
 #   ./carga.sh --cenario transaction --falhas transferencias acima do saldo
+#   ./carga.sh --cenario loan --falhas        credito negado
 #   ./carga.sh --cenario auth --falhas 35     ou o percentual que quiser
 #   ./carga.sh --duracao 20m                  repete ate completar 20 min
 #   ./carga.sh --parar                        encerra a carga em segundo plano
@@ -67,7 +68,7 @@ while [ $# -gt 0 ]; do
                 aviso "nao ha carga em segundo plano"
             fi
             exit 0 ;;
-        -h|--help) sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) erro "opcao desconhecida: $1"; exit 1 ;;
     esac
 done
@@ -77,16 +78,18 @@ case "$FALHAS" in
 esac
 [ "$FALHAS" -gt 100 ] && { erro "--falhas nao pode passar de 100"; exit 1; }
 
-# --falhas age em dois cenarios, com falhas de natureza diferente:
-#   auth        -> senha errada, HTTP 400, visivel na metrica E no log
-#   transaction -> transferencia acima do saldo, HTTP 200, so' no log
-# Avisar nos outros e' melhor do que aceitar em silencio -- caso contrario o
-# aluno roda `--cenario atm --falhas 30`, nao ve recusa nenhuma e conclui que
-# o lab esta quebrado.
-if [ "$FALHAS" -gt 0 ] \
-   && [ "$CENARIO" != "auth" ] && [ "$CENARIO" != "transaction" ] \
-   && [ "$CENARIO" != "todos" ]; then
-    aviso "--falhas age em 'auth' e 'transaction'; em '$CENARIO' sera' ignorado."
+# --falhas age em todo cenario que tenha uma recusa de NEGOCIO, e cada uma e'
+# de natureza diferente -- e' esse contraste que o dashboard 1 mostra:
+#   auth        -> senha errada .................. HTTP 400, metrica E log
+#   transaction -> acima do saldo ................ HTTP 200, so' log
+#   loan        -> valor menor que 1, recusado ... HTTP 200, so' log
+#   account     -> conta do tipo ja' existe ...... HTTP 200, so' log
+#   atm         -> caixa inexistente ............. HTTP 404, metrica E log
+#
+# `extrato` fica de fora porque nao tem "nao" de negocio: consultar extrato ou
+# funciona ou e' erro tecnico. O SLI dele e' latencia, nao recusa.
+if [ "$FALHAS" -gt 0 ] && [ "$CENARIO" = "extrato" ]; then
+    aviso "--falhas nao age em 'extrato': o SLI dessa jornada e' latencia."
 fi
 
 # `--build` SEMPRE, e nao so' quando o container esta fora do ar.

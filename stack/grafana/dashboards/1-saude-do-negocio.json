@@ -615,11 +615,172 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Empréstimos recusados (só o LOG vê)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Crédito negado é receita não realizada — o evento mais caro desta tela. Devolve HTTP 200 com 'Loan Rejected': a regra de negócio disse não, a rota funcionou, e nenhuma métrica o enxerga.\n\nGere com `carga.sh --cenario loan --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"loan\"} |= \"Loan Rejected\" [1m]))\n```",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"loan\"} |= \"Loan Rejected\" [1m]))",
+          "legendFormat": "recusados/min",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22loan%5C%22%7D%20%7C%3D%20%5C%22Loan%20Rejected%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Contas duplicadas (só o LOG vê)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "O cliente tentou abrir uma conta do tipo que já tem. Atrito de abertura: ele não conseguiu o que veio fazer, e o serviço respondeu 200 com `{\"response\": false}`.\n\nGere com `carga.sh --cenario account --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"accounts\"} |= \"Account already exists\" [1m]))\n```",
+      "gridPos": {
+        "x": 8,
+        "y": 30,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"accounts\"} |= \"Account already exists\" [1m]))",
+          "legendFormat": "duplicadas/min",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22accounts%5C%22%7D%20%7C%3D%20%5C%22Account%20already%20exists%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Caixas não encontrados (a MÉTRICA vê)",
+      "description": "**O contraexemplo desta tela.** O cliente abre um caixa que não existe mais e recebe **404** — e 404 a métrica conta.\n\nCompare com os dois painéis à esquerda: as três são falhas de negócio, mas só esta aparece no indicador técnico. *Falha de negócio é invisível na métrica* não é lei — é consequência de como cada rota foi desenhada.\n\nGere com `carga.sh --cenario atm --falhas`.\n\n---\n**De onde vem este número**\n\n```\nnegocio:caixas_nao_encontrados_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 30,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:caixas_nao_encontrados_por_min",
+          "legendFormat": "404/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Acaixas_nao_encontrados_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
       "type": "text",
       "title": "",
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 37,
         "w": 24,
         "h": 4
       },
@@ -638,7 +799,7 @@
       "description": "Sinal que só existe quando há gente usando. O probe sintético roda às 3h da manhã sem ninguém; o RUM, não. As duas visões respondem perguntas diferentes.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))\n```",
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -692,7 +853,7 @@
       "description": "O TypeError que o Encontro anterior encontrou no RUM da Splunk aparece aqui. Falha de jornada com backend impecável.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))\n```",
       "gridPos": {
         "x": 8,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -750,7 +911,7 @@
       "description": "kind=event são marcos de navegação e interação; kind=measurement traz os Web Vitals; kind=exception, os erros. Clique num evento para seguir até o trace.\n\n---\n**De onde vem este número**\n\n```\n{service_name=\"fiap-bank-ui\"}\n```",
       "gridPos": {
         "x": 16,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -784,7 +945,7 @@
       "title": "",
       "gridPos": {
         "x": 0,
-        "y": 41,
+        "y": 48,
         "w": 24,
         "h": 4
       },
@@ -803,7 +964,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 45,
+        "y": 52,
         "w": 12,
         "h": 7
       },
@@ -859,7 +1020,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 45,
+        "y": 52,
         "w": 12,
         "h": 7
       },
