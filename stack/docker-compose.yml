@@ -117,6 +117,17 @@ services:
       - /:/host/root:ro
     restart: unless-stopped
 
+  # Sondagem sintetica: bate nas jornadas de fora, no intervalo do scrape,
+  # com ou sem aluno usando o banco. E' o unico sinal do lab que existe as 3h
+  # da manha -- o RUM, por definicao, nao.
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    container_name: obs-blackbox
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    restart: unless-stopped
+
   # Atras de um profile: os dois sockets abaixo NAO existem no Docker Desktop
   # (macOS/Windows), onde o containerd vive dentro da VM. Sem o profile, o bind
   # de um caminho inexistente derruba a subida do stack INTEIRO -- e o aluno

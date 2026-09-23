@@ -1,0 +1,29 @@
+# =============================================================================
+# blackbox_exporter -- sondagem sintetica
+# =============================================================================
+# A sonda roda SEMPRE, com ou sem gente usando o banco. E' o contraponto do
+# RUM: o RUM so' existe quando ha cliente na tela, e por isso nao distingue
+# "ninguem reclamou" de "ninguem tentou". A sonda distingue.
+#
+# Ela NAO substitui o RUM, e nem o contrario. Sao perguntas diferentes:
+#   sonda -> "o servico esta de pe' agora?"
+#   RUM   -> "quem tentou usar, conseguiu?"
+# =============================================================================
+
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_status_codes: []        # vazio = qualquer 2xx
+      method: GET
+      preferred_ip_protocol: ip4
+      follow_redirects: true
+      # Accept e' obrigatorio para a UI, e a falha sem ele engana: o dev server
+      # do Vite so' devolve o index.html quando o cliente diz aceitar HTML --
+      # e' o fallback de SPA. Sem o cabecalho ele responde 404, e a sonda
+      # acusa a tela como fora do ar enquanto o navegador a abre normalmente.
+      # MEDIDO: curl (que manda Accept) recebe 200 no mesmo endereco em que o
+      # wget recebe 404.
+      headers:
+        Accept: "text/html,application/xhtml+xml,*/*;q=0.8"

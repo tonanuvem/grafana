@@ -1,575 +1,937 @@
 {
- "uid": "lab-negocio",
- "title": "1 · Saúde do Negócio",
- "description": "Fase 2 e Fase 3 — a falha vista pelo cliente, não pelo servidor.",
- "tags": [
-  "lab",
-  "negocio"
- ],
- "timezone": "browser",
- "schemaVersion": 41,
- "version": 1,
- "refresh": "30s",
- "time": {
-  "from": "now-30m",
-  "to": "now"
- },
- "panels": [
-  {
-   "type": "text",
-   "title": "",
-   "gridPos": {
-    "x": 0,
-    "y": 0,
-    "w": 24,
-    "h": 4
-   },
-   "options": {
-    "mode": "markdown",
-    "content": "### Saúde do Negócio — o que o cliente conseguiu fazer\n\nNenhum painel aqui mostra CPU, memória ou latência de serviço. Todos respondem\nà mesma pergunta: **quantas pessoas conseguiram concluir o que vieram fazer?**\n\nCompare a linha vermelha de recusas com a taxa de erro técnica ao lado.\nAs duas discordam — e a de negócio é a que está certa."
-   }
+  "uid": "lab-negocio",
+  "title": "1 · Saúde do Negócio",
+  "description": "Fase 2 e Fase 3 — a falha vista pelo cliente, não pelo servidor.",
+  "tags": [
+    "lab",
+    "negocio"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
   },
-  {
-   "type": "timeseries",
-   "title": "Clientes autenticados por minuto",
-   "description": "Jornada feliz. Suba os usuários da carga e esta linha sobe junto — é volume de negócio, não de requisição.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 4,
-    "w": 12,
-    "h": 7
-   },
-   "targets": [
+  "panels": [
     {
-     "refId": "A",
-     "expr": "negocio:logins_sucesso:rate5m * 60",
-     "legendFormat": "entraram",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     }
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "showPoints": "never",
-      "spanNulls": true
-     }
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Saúde do Negócio — o que o cliente conseguiu fazer\n\nNenhum painel aqui mostra CPU, memória ou latência de serviço. Todos respondem\nà mesma pergunta: **quantas pessoas conseguiram concluir o que vieram fazer?**\n\nCompare a linha vermelha de recusas com a taxa de erro técnica ao lado.\nAs duas discordam — e a de negócio é a que está certa."
+      }
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Autenticações recusadas por minuto",
-   "description": "Erre a senha na tela de login e observe. Cada pico é um cliente que não entrou no banco.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 12,
-    "y": 4,
-    "w": 12,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "negocio:logins_recusados:rate5m * 60",
-     "legendFormat": "recusadas (HTTP 400)",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     }
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "showPoints": "never",
-      "spanNulls": true
-     }
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   }
-  },
-  {
-   "type": "stat",
-   "title": "Taxa de erro TÉCNICA do customer-auth",
-   "description": "O SLI clássico. Fica em ZERO enquanto os clientes são recusados: HTTP 400 não marca o span como erro. Repare que ele mostra 0,00 mesmo sem tráfego nenhum: a regra tem `or vector(0)`. Zero confortável e zero por ausência de dado são indistinguíveis aqui.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 11,
-    "w": 6,
-    "h": 5
-   },
-   "targets": [
-    {
-     "refId": "A",
-     "expr": "tecnico:auth_erros:rate5m * 60",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true,
-     "legendFormat": ""
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "decimals": 2,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "red",
-        "value": 0.01
-       }
+      "type": "timeseries",
+      "title": "Clientes autenticados por minuto",
+      "description": "Jornada feliz. Suba os usuários da carga e esta linha sobe junto — é volume de negócio, não de requisição.\n\n---\n**De onde vem este número**\n\n```\nnegocio:logins_sucesso:rate5m * 60\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:logins_sucesso:rate5m * 60",
+          "legendFormat": "entraram",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Alogins_sucesso%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     }
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "stat",
-   "title": "% de logins recusados",
-   "description": "A mesma falha, medida pelo negócio. Fica em branco quando NÃO HÁ tentativas de login: sem denominador não há indicador. Em branco não é 'saudável' — é 'não sei', e a diferença entre as duas coisas é metade deste laboratório.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 6,
-    "y": 11,
-    "w": 6,
-    "h": 5
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "negocio:taxa_recusa_login:ratio5m * 100",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true,
-     "legendFormat": ""
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "percent",
-     "decimals": 1,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "yellow",
-        "value": 5
-       },
-       {
-        "color": "red",
-        "value": 15
-       }
+      "type": "timeseries",
+      "title": "Autenticações recusadas por minuto",
+      "description": "Erre a senha na tela de login e observe. Cada pico é um cliente que não entrou no banco.\n\n---\n**De onde vem este número**\n\n```\nnegocio:logins_recusados:rate5m * 60\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:logins_recusados:rate5m * 60",
+          "legendFormat": "recusadas (HTTP 400)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Alogins_recusados%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     },
-     "noValue": "sem tráfego de login"
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Recusas de login vistas no LOG (Loki)",
-   "datasource": {
-    "type": "loki",
-    "uid": "loki"
-   },
-   "description": "O mesmo número por outro caminho: a linha do morgan. Métrica é barata e imprecisa (400 também é campo em branco); log é preciso e mais caro.",
-   "gridPos": {
-    "x": 12,
-    "y": 11,
-    "w": 12,
-    "h": 5
-   },
-   "targets": [
     {
-     "refId": "A",
-     "datasource": {
-      "type": "loki",
-      "uid": "loki"
-     },
-     "queryType": "range",
-     "expr": "sum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))",
-     "legendFormat": "recusas/min"
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 10,
-      "showPoints": "never"
-     }
+      "type": "stat",
+      "title": "Taxa de erro TÉCNICA do customer-auth",
+      "description": "O SLI clássico. Fica em ZERO enquanto os clientes são recusados: HTTP 400 não marca o span como erro. Repare que ele mostra 0,00 mesmo sem tráfego nenhum: a regra tem `or vector(0)`. Zero confortável e zero por ausência de dado são indistinguíveis aqui.\n\n---\n**De onde vem este número**\n\n```\ntecnico:auth_erros:rate5m * 60\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "tecnico:auth_erros:rate5m * 60",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.01
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22tecnico%3Aauth_erros%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "single"
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Transferências concluídas por minuto",
-   "description": "A linha de negócio da Fase 3. Ela DESPENCA na degradação — sem nenhum erro técnico, só porque cada transferência passou a demorar mais.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 16,
-    "w": 12,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "negocio:transferencias_por_min",
-     "legendFormat": "transferências/min",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     }
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "showPoints": "never",
-      "spanNulls": true
-     }
+      "type": "stat",
+      "title": "% de logins recusados",
+      "description": "A mesma falha, medida pelo negócio. Fica em branco quando NÃO HÁ tentativas de login: sem denominador não há indicador. Em branco não é 'saudável' — é 'não sei', e a diferença entre as duas coisas é metade deste laboratório.\n\n---\n**De onde vem este número**\n\n```\nnegocio:taxa_recusa_login:ratio5m * 100\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 11,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:taxa_recusa_login:ratio5m * 100",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "sem tráfego de login"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Ataxa_recusa_login%3Aratio5m%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Transferências recusadas por saldo (só o LOG vê)",
-   "datasource": {
-    "type": "loki",
-    "uid": "loki"
-   },
-   "description": "'Insufficient Balance' devolve HTTP 200 e fica invisível na métrica. Só existe no log — por isso o Loki não é acessório neste lab.",
-   "gridPos": {
-    "x": 12,
-    "y": 16,
-    "w": 12,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "datasource": {
-      "type": "loki",
-      "uid": "loki"
-     },
-     "queryType": "range",
-     "expr": "sum(count_over_time({service_name=\"dashboard\"} |= \"Insufficient Balance\" [1m]))",
-     "legendFormat": "recusadas/min"
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 10,
-      "showPoints": "never"
-     }
+      "type": "timeseries",
+      "title": "Recusas de login vistas no LOG (Loki)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "O mesmo número por outro caminho: a linha do morgan. Métrica é barata e imprecisa (400 também é campo em branco); log é preciso e mais caro.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))\n```",
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))",
+          "legendFormat": "recusas/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22customer-auth%5C%22%7D%20%7C%3D%20%5C%22/api/users/auth%5C%22%20%7C%3D%20%5C%22400%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "single"
-    }
-   }
-  },
-  {
-   "type": "text",
-   "title": "",
-   "gridPos": {
-    "x": 0,
-    "y": 23,
-    "w": 24,
-    "h": 4
-   },
-   "options": {
-    "mode": "markdown",
-    "content": "### RUM — o que o navegador do cliente viveu\n\nOs painéis acima medem no **servidor**. Estes medem no **cliente**, e é a única\nfonte que responde \"ele conseguiu?\". Um erro de JavaScript derruba a jornada\nsem produzir um único erro no backend — e nenhum SLI de servidor o enxerga."
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Páginas abertas por minuto",
-   "datasource": {
-    "type": "loki",
-    "uid": "loki"
-   },
-   "description": "Sinal que só existe quando há gente usando. O probe sintético roda às 3h da manhã sem ninguém; o RUM, não. As duas visões respondem perguntas diferentes.",
-   "gridPos": {
-    "x": 0,
-    "y": 27,
-    "w": 8,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "datasource": {
-      "type": "loki",
-      "uid": "loki"
-     },
-     "queryType": "range",
-     "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))",
-     "legendFormat": "navegações/min"
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 10,
-      "showPoints": "never"
-     }
+      "type": "timeseries",
+      "title": "Transferências concluídas por minuto",
+      "description": "A linha de negócio da Fase 3. Ela DESPENCA na degradação — sem nenhum erro técnico, só porque cada transferência passou a demorar mais.\n\n---\n**De onde vem este número**\n\n```\nnegocio:transferencias_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:transferencias_por_min",
+          "legendFormat": "transferências/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Atransferencias_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "single"
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Erros de JavaScript por minuto",
-   "datasource": {
-    "type": "loki",
-    "uid": "loki"
-   },
-   "description": "O TypeError que o Encontro anterior encontrou no RUM da Splunk aparece aqui. Falha de jornada com backend impecável.",
-   "gridPos": {
-    "x": 8,
-    "y": 27,
-    "w": 8,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "datasource": {
-      "type": "loki",
-      "uid": "loki"
-     },
-     "queryType": "range",
-     "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))",
-     "legendFormat": "erros/min"
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 10,
-      "showPoints": "never"
-     },
-     "color": {
-      "mode": "fixed",
-      "fixedColor": "red"
-     }
+      "type": "timeseries",
+      "title": "Transferências recusadas por saldo (só o LOG vê)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "'Insufficient Balance' devolve HTTP 200 e fica invisível na métrica. Só existe no log — por isso o Loki não é acessório neste lab.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"dashboard\"} |= \"Insufficient Balance\" [1m]))\n```",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({service_name=\"dashboard\"} |= \"Insufficient Balance\" [1m]))",
+          "legendFormat": "recusadas/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22dashboard%5C%22%7D%20%7C%3D%20%5C%22Insufficient%20Balance%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "single"
-    }
-   }
-  },
-  {
-   "type": "logs",
-   "title": "Eventos do navegador (RUM)",
-   "datasource": {
-    "type": "loki",
-    "uid": "loki"
-   },
-   "description": "kind=event são marcos de navegação e interação; kind=measurement traz os Web Vitals; kind=exception, os erros. Clique num evento para seguir até o trace.",
-   "gridPos": {
-    "x": 16,
-    "y": 27,
-    "w": 8,
-    "h": 7
-   },
-   "targets": [
     {
-     "refId": "A",
-     "datasource": {
-      "type": "loki",
-      "uid": "loki"
-     },
-     "queryType": "range",
-     "expr": "{service_name=\"fiap-bank-ui\"}"
+      "type": "timeseries",
+      "title": "Extratos consultados por minuto",
+      "description": "Jornada de leitura. Ela não move dinheiro, então some dos indicadores técnicos — mas é a tela que o cliente abre mais vezes por dia.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extratos_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:extratos_por_min",
+          "legendFormat": "extratos/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aextratos_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Empréstimos solicitados por minuto",
+      "description": "Volume de negócio da jornada de crédito. Um empréstimo RECUSADO devolve HTTP 200: a regra de negócio disse não, a rota funcionou. Igual ao 'Insufficient Balance' da transferência, nenhuma métrica o vê.\n\n---\n**De onde vem este número**\n\n```\nnegocio:emprestimos_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 23,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:emprestimos_por_min",
+          "legendFormat": "empréstimos/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aemprestimos_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "p90 do extrato",
+      "description": "Latência sentida por quem abre o extrato. É a jornada mais barata de servir e a que o cliente mais repete — se ela degrada, ele percebe antes de qualquer alerta técnico disparar.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extrato_p90_ms\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 23,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:extrato_p90_ms",
+          "legendFormat": "p90 (ms)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aextrato_p90_ms%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### RUM — o que o navegador do cliente viveu\n\nOs painéis acima medem no **servidor**. Estes medem no **cliente**, e é a única\nfonte que responde \"ele conseguiu?\". Um erro de JavaScript derruba a jornada\nsem produzir um único erro no backend — e nenhum SLI de servidor o enxerga."
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Páginas abertas por minuto",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Sinal que só existe quando há gente usando. O probe sintético roda às 3h da manhã sem ninguém; o RUM, não. As duas visões respondem perguntas diferentes.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))\n```",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))",
+          "legendFormat": "navegações/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22fiap-bank-ui%5C%22%7D%20%7C%20kind%3D%5C%22event%5C%22%20%7C%3D%20%5C%22faro.performance.navigation%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Erros de JavaScript por minuto",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "O TypeError que o Encontro anterior encontrou no RUM da Splunk aparece aqui. Falha de jornada com backend impecável.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))\n```",
+      "gridPos": {
+        "x": 8,
+        "y": 34,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))",
+          "legendFormat": "erros/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22fiap-bank-ui%5C%22%7D%20%7C%20kind%3D%5C%22exception%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Eventos do navegador (RUM)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "kind=event são marcos de navegação e interação; kind=measurement traz os Web Vitals; kind=exception, os erros. Clique num evento para seguir até o trace.\n\n---\n**De onde vem este número**\n\n```\n{service_name=\"fiap-bank-ui\"}\n```",
+      "gridPos": {
+        "x": 16,
+        "y": 34,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "{service_name=\"fiap-bank-ui\"}"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%7Bservice_name%3D%5C%22fiap-bank-ui%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Sonda sintética — o que responde quando não há ninguém\nO RUM só existe quando há cliente na tela: ele não distingue **ninguém reclamou** de **ninguém tentou**. A sonda bate nas mesmas telas a cada 30 segundos, de fora, com ou sem aula acontecendo. É o único sinal deste lab que existe às 3h da manhã — e o único que acusa uma queda de madrugada, quando não há RUM nenhum para acusá-la."
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Disponibilidade da sonda (últimos 5 min)",
+      "description": "Fração das sondagens que voltaram 2xx. Cai para zero no instante em que o serviço sai do ar, mesmo sem nenhum cliente por perto — o oposto do RUM.\n\n---\n**De onde vem este número**\n\n```\navg_over_time(probe_success[5m]) * 100\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg_over_time(probe_success[5m]) * 100",
+          "legendFormat": "{{alvo}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22avg_over_time%28probe_success%5B5m%5D%29%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tempo de resposta da sonda",
+      "description": "Latência medida de fora, sempre do mesmo ponto e com o mesmo pedido. Como a sonda não varia, uma subida aqui é do serviço, não do tráfego.\n\n---\n**De onde vem este número**\n\n```\nprobe_duration_seconds\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 45,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_duration_seconds",
+          "legendFormat": "{{alvo}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22probe_duration_seconds%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     }
-   ],
-   "options": {
-    "showTime": true,
-    "wrapLogMessage": true,
-    "sortOrder": "Descending",
-    "enableLogDetails": true
-   }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prom"
+        },
+        "enable": true,
+        "iconColor": "purple",
+        "name": "Deploys",
+        "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
+        "titleFormat": "deploy / rollback",
+        "step": "30s"
+      }
+    ]
   }
- ],
- "annotations": {
-  "list": [
-   {
-    "builtIn": 1,
-    "datasource": {
-     "type": "grafana",
-     "uid": "-- Grafana --"
-    },
-    "enable": true,
-    "hide": true,
-    "iconColor": "rgba(0, 211, 255, 1)",
-    "name": "Annotations & Alerts",
-    "type": "dashboard"
-   },
-   {
-    "datasource": {
-     "type": "prometheus",
-     "uid": "prom"
-    },
-    "enable": true,
-    "iconColor": "purple",
-    "name": "Deploys",
-    "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
-    "titleFormat": "deploy / rollback",
-    "step": "30s"
-   }
-  ]
- }
 }

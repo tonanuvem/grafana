@@ -1,402 +1,444 @@
 {
- "uid": "lab-cfr",
- "title": "3 · Deploys e CFR",
- "description": "Fase 3 — a mudança como causa, medida ao longo do tempo.",
- "tags": [
-  "lab",
-  "dora"
- ],
- "timezone": "browser",
- "schemaVersion": 41,
- "version": 1,
- "refresh": "30s",
- "time": {
-  "from": "now-30m",
-  "to": "now"
- },
- "templating": {
-  "list": []
- },
- "panels": [
-  {
-   "type": "text",
-   "title": "",
-   "gridPos": {
-    "x": 0,
-    "y": 0,
-    "w": 24,
-    "h": 5
-   },
-   "options": {
-    "mode": "markdown",
-    "content": "### Deploys e Change Failure Rate\n\n**CFR = deploys revertidos ÷ deploys totais.** É a definição : falhou o\nque exigiu rollback ou hotfix.\n\nCFR mede a qualidade e a segurança das alterações que entram em produção (porcentagem de deploys que quebram o sistema). CFR é\nmétrica de **tendência**, não de incidente. Ela não diz o que houve hoje; diz\nse a sua cadência de entrega é sustentável ao longo de meses."
-   }
+  "uid": "lab-cfr",
+  "title": "3 · Deploys e CFR",
+  "description": "Fase 3 — a mudança como causa, medida ao longo do tempo.",
+  "tags": [
+    "lab",
+    "dora"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
   },
-  {
-   "type": "stat",
-   "title": "Change Failure Rate",
-   "description": "Acima de 15% a literatura do DORA considera baixo desempenho. Com N pequeno, não conclua nada.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 5,
-    "w": 6,
-    "h": 6
-   },
-   "targets": [
+  "templating": {
+    "list": []
+  },
+  "panels": [
     {
-     "refId": "A",
-     "expr": "(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "percent",
-     "decimals": 0,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "yellow",
-        "value": 15
-       },
-       {
-        "color": "red",
-        "value": 30
-       }
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Deploys e Change Failure Rate\n\n**CFR = deploys revertidos ÷ deploys totais.** É a definição : falhou o\nque exigiu rollback ou hotfix.\n\nCFR mede a qualidade e a segurança das alterações que entram em produção (porcentagem de deploys que quebram o sistema). CFR é\nmétrica de **tendência**, não de incidente. Ela não diz o que houve hoje; diz\nse a sua cadência de entrega é sustentável ao longo de meses."
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Change Failure Rate",
+      "description": "Acima de 15% a literatura do DORA considera baixo desempenho. Com N pequeno, não conclua nada.\n\n---\n**De onde vem este número**\n\n```\n(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 15
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%28lab_rollbacks_total%20/%20clamp_min%28lab_deploys_total%2C%201%29%29%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     }
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "stat",
-   "title": "Deploys",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 6,
-    "y": 5,
-    "w": 4,
-    "h": 6
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "lab_deploys_total",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "decimals": 0,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "text",
-        "value": null
-       }
+      "type": "stat",
+      "title": "Deploys",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nlab_deploys_total\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "lab_deploys_total",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22lab_deploys_total%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     }
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "stat",
-   "title": "Revertidos",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 10,
-    "y": 5,
-    "w": 4,
-    "h": 6
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "lab_rollbacks_total",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "decimals": 0,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "red",
-        "value": 1
-       }
+      "type": "stat",
+      "title": "Revertidos",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nlab_rollbacks_total\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 10,
+        "y": 5,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "lab_rollbacks_total",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22lab_rollbacks_total%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     }
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "stat",
-   "title": "Versão em produção",
-   "description": "Qual versão está de fato atendendo. Vem do atributo service.version dos traces — a aplicação declara quem ela é.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 14,
-    "y": 5,
-    "w": 10,
-    "h": 6
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "topk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     },
-     "instant": true
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "decimals": 2,
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "text",
-        "value": null
-       }
+      "type": "stat",
+      "title": "Versão em produção",
+      "description": "Qual versão está de fato atendendo. Vem do atributo service.version dos traces — a aplicação declara quem ela é.\n\n---\n**De onde vem este número**\n\n```\ntopk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 5,
+        "w": 10,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          },
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22topk%281%2C%20sum%20by%20%28service_version%29%20%28rate%28traces_span_metrics_calls_total%7Bservice_name%3D%5C%22transactions%5C%22%2C%20span_name%3D%5C%22POST%20/transfer%5C%22%7D%5B5m%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
       ]
-     },
-     "color": {
-      "mode": "thresholds"
-     }
     },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "textMode": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Volume por versão — a troca acontecendo",
-   "description": "A versão antiga decai e a nova assume. O cruzamento é o deploy.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 11,
-    "w": 12,
-    "h": 8
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])) * 60",
-     "legendFormat": "v{{service_version}}",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     }
-    }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "showPoints": "never",
-      "spanNulls": true
-     }
+      "type": "timeseries",
+      "title": "Volume por versão — a troca acontecendo",
+      "description": "A versão antiga decai e a nova assume. O cruzamento é o deploy.\n\n---\n**De onde vem este número**\n\n```\nsum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])) * 60\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])) * 60",
+          "legendFormat": "v{{service_version}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%20by%20%28service_version%29%20%28rate%28traces_span_metrics_calls_total%7Bservice_name%3D%5C%22transactions%5C%22%2C%20span_name%3D%5C%22POST%20/transfer%5C%22%7D%5B5m%5D%29%29%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   }
-  },
-  {
-   "type": "timeseries",
-   "title": "Erro por versão",
-   "description": "Atribuir a falha à mudança é o que separa CFR de 'taxa de erro'.",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "prom"
-   },
-   "gridPos": {
-    "x": 12,
-    "y": 11,
-    "w": 12,
-    "h": 8
-   },
-   "targets": [
     {
-     "refId": "A",
-     "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\", status_code=\"STATUS_CODE_ERROR\"}[5m])) * 60",
-     "legendFormat": "v{{service_version}} — erros/min",
-     "datasource": {
-      "type": "prometheus",
-      "uid": "prom"
-     }
+      "type": "timeseries",
+      "title": "Erro por versão",
+      "description": "Atribuir a falha à mudança é o que separa CFR de 'taxa de erro'.\n\n---\n**De onde vem este número**\n\n```\nsum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\", status_code=\"STATUS_CODE_ERROR\"}[5m])) * 60\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\", status_code=\"STATUS_CODE_ERROR\"}[5m])) * 60",
+          "legendFormat": "v{{service_version}} — erros/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%20by%20%28service_version%29%20%28rate%28traces_span_metrics_calls_total%7Bservice_name%3D%5C%22transactions%5C%22%2C%20span_name%3D%5C%22POST%20/transfer%5C%22%2C%20status_code%3D%5C%22STATUS_CODE_ERROR%5C%22%7D%5B5m%5D%29%29%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     }
-   ],
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "custom": {
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "showPoints": "never",
-      "spanNulls": true
-     }
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prom"
+        },
+        "enable": true,
+        "iconColor": "purple",
+        "name": "Deploys",
+        "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
+        "titleFormat": "deploy / rollback",
+        "step": "30s"
+      }
+    ]
   }
- ],
- "annotations": {
-  "list": [
-   {
-    "builtIn": 1,
-    "datasource": {
-     "type": "grafana",
-     "uid": "-- Grafana --"
-    },
-    "enable": true,
-    "hide": true,
-    "iconColor": "rgba(0, 211, 255, 1)",
-    "name": "Annotations & Alerts",
-    "type": "dashboard"
-   },
-   {
-    "datasource": {
-     "type": "prometheus",
-     "uid": "prom"
-    },
-    "enable": true,
-    "iconColor": "purple",
-    "name": "Deploys",
-    "expr": "changes(lab_deploy_timestamp_seconds[1m]) > 0",
-    "titleFormat": "deploy / rollback",
-    "step": "30s"
-   }
-  ]
- }
 }

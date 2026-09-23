@@ -32,11 +32,14 @@ done
 # ------------------------------------------------------------------ parar
 if [ "$ACAO" = "parar" ]; then
     titulo "PARANDO O STACK DO LAB GRAFANA"
-    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" down 2>/dev/null
+    # --profile containers: sem ele o `down` ignora o cAdvisor, que e'
+    # profile-gated, e o container fica de pe' depois do "stack parado".
+    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" \
+        --profile containers down 2>/dev/null
     ok "stack parado (volumes preservados)"
     echo
     echo "  Para apagar tambem os dados:"
-    echo "    docker compose -p $PROJETO -f $STACK/docker-compose.yml down -v"
+    echo "    docker compose -p $PROJETO -f $STACK/docker-compose.yml --profile containers down -v"
     exit 0
 fi
 
@@ -218,7 +221,7 @@ if [ -z "$SERIES" ] || [ "$SERIES" = "0" ]; then
     echo "       Isso e' ESPERADO sem transito: as metricas nascem dos traces."
     echo "       Gere carga e os paineis se preenchem em ~30s:"
     echo
-    echo "         bash $AQUI/carga.sh --cenario transaction --usuarios 10"
+    echo "         bash $AQUI/carga.sh --cenario todos --usuarios 5 --tempo 45s"
 else
     ok "$SERIES series derivadas dos traces"
 fi

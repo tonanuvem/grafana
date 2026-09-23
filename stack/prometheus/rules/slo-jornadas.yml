@@ -101,6 +101,35 @@ groups:
       - record: negocio:transferencias_por_min
         expr: jornada:requests:rate5m{jornada="transferencia"} * 60
 
+      # ---------------------------------------------------------------------
+      # Extrato e emprestimo. Duas jornadas de NEGOCIO que ja' passavam pelo
+      # pipeline sem nenhum painel: o span existia, ninguem olhava.
+      #
+      # As duas medem no `dashboard` e nao no servico de tras, de proposito:
+      # e' onde a jornada do cliente comeca. Se o transactions cair, a queda
+      # aparece aqui do mesmo jeito -- e e' isso que o cliente vive.
+      # ---------------------------------------------------------------------
+      - record: negocio:extratos_por_min
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="dashboard", span_name="POST /transaction/history"}[5m]))
+          * 60 or vector(0)
+
+      - record: negocio:emprestimos_por_min
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="dashboard", span_name="POST /loan/"}[5m]))
+          * 60 or vector(0)
+
+      # Um emprestimo RECUSADO devolve HTTP 200 -- a regra de negocio diz nao,
+      # a rota funcionou. Igual ao "Insufficient Balance" da transferencia:
+      # nao ha metrica que o veja, so' o log.
+      - record: negocio:extrato_p90_ms
+        expr: |
+          histogram_quantile(0.90, sum by (le) (rate(
+            traces_span_metrics_duration_milliseconds_bucket{
+              service_name="dashboard", span_name="POST /transaction/history"}[5m])))
+
   - name: error_budget
     interval: 30s
     rules:

@@ -125,9 +125,14 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
   <section>
     <div class="sec-h"><span class="sec-n">0</span><h2>Antes de começar</h2></div>
     <p class="sec-sub">Sem tráfego os painéis ficam vazios: as métricas deste lab nascem
-    dos traces. Deixe a carga rodando o encontro inteiro.</p>
+    dos traces. O comando abaixo dá uma passada em <b>todas</b> as jornadas — leva cerca de
+    5 minutos e serve para nenhum painel nascer vazio.</p>
     <div class="cmd"><code>bash run-lab.sh</code><button onclick="cp(this)">copiar</button></div>
-    <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 90m</code><button onclick="cp(this)">copiar</button></div>
+    <div class="cmd"><code>bash carga.sh --cenario todos --usuarios 5 --tempo 45s</code><button onclick="cp(this)">copiar</button></div>
+    <div class="nota">Daqui em diante, <b>cada exercício dispara a carga de que precisa</b> —
+    o comando vem junto do passo. As janelas de taxa são de 5 minutos, então um painel volta
+    a zero poucos minutos depois que a carga para. Isso não é defeito: é o indicador dizendo
+    que ninguém está usando o banco.</div>
     <label>Integrantes do grupo</label>
     <input type="text" id="integrantes" placeholder="Nomes separados por vírgula">
   </section>
@@ -200,6 +205,10 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
   <section>
     <div class="sec-h"><span class="sec-n">3</span><h2>O incidente</h2></div>
+    <p class="sec-sub">Esta fase inteira depende de tráfego vivo: você vai publicar, esperar o
+    sinal aparecer e percorrer cinco telas. Deixe a carga rodando <b>em segundo plano</b> antes
+    de começar, e só a encerre no fim da fase.</p>
+    <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 45m</code><button onclick="cp(this)">copiar</button></div>
     <p class="sec-sub">Abra <a class="ir" data-ir="dash-budget" href="#">2 · Error Budget</a>. Confira o ponto de partida:
     orçamento, burn rate e latência. Depois publique — <b>sem saber</b> se a versão é boa.</p>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>

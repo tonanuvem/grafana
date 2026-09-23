@@ -67,10 +67,10 @@ echo
 echo "3. STACK DE OBSERVABILIDADE"
 echo "--------------------------------------------------"
 if [ "$REMOVER_DADOS" = "true" ]; then
-    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" down -v >/dev/null 2>&1 \
+    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" --profile containers down -v >/dev/null 2>&1 \
         && ok "stack removido, volumes apagados"
 else
-    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" down >/dev/null 2>&1 \
+    docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" --profile containers down >/dev/null 2>&1 \
         && ok "stack parado, volumes preservados"
 fi
 

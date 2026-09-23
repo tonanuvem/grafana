@@ -246,7 +246,10 @@ if [ "$COM_CARGA" = "true" ]; then
     echo
     echo "8. CARGA"
     echo "--------------------------------------------------"
-    bash "$AQUI/carga.sh" --fundo --cenario transaction --usuarios 10 --duracao 120m
+    # Uma passada por TODOS os cenarios, so' para nenhum painel nascer vazio.
+    # A carga de cada exercicio e' disparada pelo proprio exercicio, no guia --
+    # carga de fundo longa some do radar do aluno e ninguem sabe se ainda roda.
+    bash "$AQUI/carga.sh" --cenario todos --usuarios 5 --tempo 45s
 fi
 
 
@@ -377,8 +380,11 @@ echo
 [ -n "$PORTA_DASH" ] && [ "$PORTA_DASH" != "5000" ] && echo "  Dashboard/BFF  http://$H:$PORTA_DASH  (5000 estava ocupada)"
 echo
 if [ "$COM_CARGA" != "true" ]; then
-    echo "  Sem carga os paineis ficam vazios. Comece por:"
-    echo "    bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 120m"
+    echo "  Sem carga os paineis ficam vazios. Uma passada em todas as"
+    echo "  jornadas leva ~5 min e enche o dashboard 1:"
+    echo "    bash carga.sh --cenario todos --usuarios 5 --tempo 45s"
+    echo
+    echo "  Depois disso, cada exercicio do guia dispara a carga de que precisa."
     echo
 fi
 #[ -n "$IP" ] && echo "  Libere no Security Group: 3000, 3001, 5000, 8000, 8001, 8027, 8031, 8080, 9090, 9093" && \

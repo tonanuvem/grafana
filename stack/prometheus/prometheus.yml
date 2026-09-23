@@ -41,3 +41,27 @@ scrape_configs:
 
   - job_name: cadvisor
     static_configs: [ { targets: ['cadvisor:8080'] } ]
+
+  # ---------------------------------------------------------------------------
+  # Sondagem sintetica. O Prometheus nao raspa o alvo: ele pede ao blackbox que
+  # SONDE o alvo, por isso o relabel -- `__address__` vira o endereco do
+  # exporter e o alvo real viaja no parametro `target`. Sem os quatro passos
+  # abaixo o job aponta para o lugar errado e nao ha erro nenhum: so' um
+  # `probe_success` que nunca aparece.
+  # ---------------------------------------------------------------------------
+  - job_name: sonda
+    metrics_path: /probe
+    params: { module: [http_2xx] }
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - http://ui:3000/            # a tela que o cliente abre
+          - http://dashboard:5000/     # a API que a tela chama
+          - http://nginx:8080/         # a borda
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: alvo
+      - target_label: __address__
+        replacement: blackbox:9115
