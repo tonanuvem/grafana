@@ -5,4 +5,4 @@ stack/.env
 # Cache do download dos dashboards oficiais. As revisoes estao pinadas em
 # gerar-dashboards-sistema.py, entao o arquivo e' reconstruivel; o que vai
 # versionado e' o resultado adaptado (sys-*.json).
-stack/grafana/dashboards-sistema/.fonte-*.json
+stack/grafana/.cache-dashboards/

@@ -26,6 +26,13 @@ import urllib.request
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.join(AQUI, "dashboards-sistema")
+
+# O cache do download fica FORA de DEST. O provider do Grafana le todo .json do
+# diretorio que provisiona -- inclusive um arquivo comecando com ponto. Com o
+# cache la' dentro, a pasta ganhava SEIS dashboards: os tres adaptados e os
+# tres originais, estes ultimos apontando para o datasource do autor e sem
+# nenhuma poda. MEDIDO numa instalacao real.
+CACHE = os.path.join(AQUI, ".cache-dashboards")
 PROM = os.environ.get("PROM_URL", "http://localhost:9090")
 
 # Revisoes PINADAS. Sem isto o lab muda sozinho quando o autor publica uma
@@ -59,7 +66,8 @@ AVISO = (
 
 
 def baixar(ident, revisao):
-    destino = os.path.join(DEST, ".fonte-%s.json" % ident)
+    os.makedirs(CACHE, exist_ok=True)
+    destino = os.path.join(CACHE, "%s.json" % ident)
     if not os.path.exists(destino):
         url = "https://grafana.com/api/dashboards/%s/revisions/%s/download" % (
             ident, revisao)
@@ -242,6 +250,11 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
 
 def main():
     os.makedirs(DEST, exist_ok=True)
+    # Limpa o cache de uma versao anterior que o guardava dentro de DEST.
+    for velho in os.listdir(DEST):
+        if velho.startswith(".fonte-"):
+            os.remove(os.path.join(DEST, velho))
+            print("  removido do diretorio provisionado: %s" % velho)
     vivas = metricas_vivas()
     print("metricas vivas no Prometheus: %d\n" % len(vivas))
     if len(vivas) < 100:
