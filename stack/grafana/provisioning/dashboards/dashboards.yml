@@ -10,3 +10,17 @@ providers:
     options:
       path: /var/lib/grafana/dashboards
       foldersFromFilesStructure: false
+
+  # Segunda pasta, separada de proposito. Os dashboards daqui NAO sao do lab:
+  # sao os oficiais da comunidade, e existem como CONTRAPROVA -- durante o
+  # incidente de login da Fase 2, tudo aqui fica verde.
+  - name: LAB-GRAFANA-SISTEMA
+    orgId: 1
+    folder: 'LAB GRAFANA - System Health'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards-sistema
+      foldersFromFilesStructure: false

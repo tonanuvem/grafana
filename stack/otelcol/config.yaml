@@ -165,7 +165,23 @@ exporters:
     tls: { insecure: true }
 
 service:
-  telemetry: { logs: { level: warn } }
+  telemetry:
+    logs: { level: warn }
+    # A telemetria INTERNA do collector -- quantos spans ele aceitou, recusou e
+    # enviou. E' o que alimenta o dashboard do proprio collector.
+    #
+    # Precisa ser declarada: desde a versao 0.123 o padrao escuta so' em
+    # localhost, e de outro container a 8888 responde "connection refused"
+    # (MEDIDO neste ambiente antes da mudanca). Nao ha erro em log nenhum --
+    # o alvo simplesmente aparece "down" no Prometheus.
+    #
+    # Nao confundir com a 8889: la' saem as metricas DERIVADAS dos traces
+    # (RED, service graph). Aqui sai a saude do pipeline que produz aquilo.
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus: { host: 0.0.0.0, port: 8888 }
   pipelines:
     traces/metricas:
       receivers: [otlp]

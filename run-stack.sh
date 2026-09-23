@@ -85,7 +85,47 @@ if command -v systemctl >/dev/null 2>&1; then
     fi
 fi
 
-printf 'REDE_BANK=%s\n' "$REDE" > "$STACK/.env"
+# O socket do Docker, para o cAdvisor nomear os containers.
+#
+# Sem ele o cAdvisor nao registra o "docker container factory" e cai para
+# cgroup cru: as metricas continuam saindo, mas SEM os labels `name` e `image`
+# -- e o dashboard de containers, que filtra por `image!=""`, fica inteiro
+# vazio. MEDIDO: o log do cAdvisor diz "Registration of the docker container
+# factory failed" e nada mais reclama.
+#
+# O caminho nao e' o mesmo em todo lugar: em Linux e' /var/run/docker.sock, mas
+# o Docker Desktop usa ~/.docker/run/docker.sock.
+SOCK=""
+for C in /var/run/docker.sock "$HOME/.docker/run/docker.sock"; do
+    [ -S "$C" ] && { SOCK="$C"; break; }
+done
+# O cAdvisor precisa TAMBEM do socket do containerd: desde a v0.47 ele usa o
+# cliente do containerd para registrar o docker factory, e so' o socket do
+# Docker nao basta. MEDIDO: com apenas o do Docker, o log passa a dizer
+# "cannot unix dial containerd api service" e os labels continuam faltando.
+CSOCK=""
+for C in /run/containerd/containerd.sock /var/run/containerd/containerd.sock; do
+    [ -S "$C" ] && { CSOCK="$C"; break; }
+done
+
+PERFIS=()
+if [ -n "$SOCK" ] && [ -n "$CSOCK" ]; then
+    ok "sockets do Docker e do containerd encontrados"
+    PERFIS=(--profile containers)
+else
+    # No Docker Desktop (macOS/Windows) o containerd fica DENTRO da VM e nao ha
+    # como monta-lo. O resto do stack funciona normalmente; so' o dashboard de
+    # containers e' afetado. Dizer isso e' melhor do que o aluno abrir a tela
+    # vazia e achar que o lab quebrou.
+    aviso "sem socket do containerd -- 'Containers - Docker' ficara sem dados."
+    echo "       Esperado no Docker Desktop (macOS/Windows); em Linux nao acontece."
+fi
+[ -z "$SOCK" ]  && SOCK=/var/run/docker.sock
+[ -z "$CSOCK" ] && CSOCK=/run/containerd/containerd.sock
+
+{ printf 'REDE_BANK=%s\n' "$REDE"
+  printf 'DOCKER_SOCK=%s\n' "$SOCK"
+  printf 'CONTAINERD_SOCK=%s\n' "$CSOCK"; } > "$STACK/.env"
 
 
 # ------------------------------------------------------------------ subir
@@ -93,7 +133,10 @@ echo
 echo "2. SUBINDO O STACK"
 echo "--------------------------------------------------"
 
-docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" up -d --remove-orphans >/dev/null 2>&1
+# ${PERFIS[@]+...}: no bash 3.2 do macOS, expandir um array VAZIO sob `set -u`
+# aborta com "unbound variable". Esta forma expande para nada quando vazio.
+docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" \
+    ${PERFIS[@]+"${PERFIS[@]}"} up -d --remove-orphans >/dev/null 2>&1
 
 # Um container que falha ao publicar porta fica CRIADO sem rede -- e um `up`
 # seguinte apenas o INICIA, quebrado e em silencio: ele aparece "Up" no

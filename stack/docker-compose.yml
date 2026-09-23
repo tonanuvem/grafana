@@ -89,6 +89,54 @@ services:
     ports: ["9093:9093"]
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # Exporters de infraestrutura -- alimentam a pasta "LAB GRAFANA - System Health".
+  #
+  # NENHUM dos dois publica porta no host, de proposito: quem os consulta e' o
+  # Prometheus, pela rede interna. O cAdvisor escuta em 8080, que no host ja' e'
+  # do nginx do bank-demo -- publicar quebraria o lab inteiro.
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: obs-node-exporter
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/host/root
+      # Sem esta exclusao o painel de disco enche de linhas dos overlays do
+      # proprio Docker, que nao dizem nada sobre a maquina.
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      # Sem `rslave`: o Docker Desktop do Mac recusa propagacao de mount
+      # ("path / is mounted on / but it is not a shared or slave mount") e o
+      # container nem sobe. Em Linux a diferenca e' so' nao enxergar
+      # montagens criadas DEPOIS que o node-exporter subiu -- irrelevante aqui.
+      - /:/host/root:ro
+    restart: unless-stopped
+
+  # Atras de um profile: os dois sockets abaixo NAO existem no Docker Desktop
+  # (macOS/Windows), onde o containerd vive dentro da VM. Sem o profile, o bind
+  # de um caminho inexistente derruba a subida do stack INTEIRO -- e o aluno
+  # perde tudo por causa de um dashboard. O run-stack.sh liga o profile so'
+  # quando encontra os dois.
+  cadvisor:
+    profiles: ["containers"]
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    container_name: obs-cadvisor
+    privileged: true
+    devices: ["/dev/kmsg"]
+    volumes:
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      # Ver run-stack.sh: sem o socket, o cAdvisor perde `name` e `image`.
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - ${CONTAINERD_SOCK:-/run/containerd/containerd.sock}:/run/containerd/containerd.sock:ro
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:12.2.0
     container_name: obs-grafana
@@ -101,6 +149,7 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/dashboards-sistema:/var/lib/grafana/dashboards-sistema:ro
       - grafana-data:/var/lib/grafana
     # 3001 porque a 3000 e' da UI do banco.
     ports: ["3001:3000"]
