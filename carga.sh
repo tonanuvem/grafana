@@ -33,8 +33,14 @@ CENARIO="todos"
 FALHAS=0
 DURACAO=""
 FUNDO=false
-LOG="$ESTADO/.carga.log"
-PIDF="$ESTADO/.carga.pid"
+# Um log por execucao e uma LISTA de pids, nao um pid so'.
+#
+# Com arquivo unico, um segundo `--fundo` sobrescrevia o pid do primeiro e o
+# `--parar` matava apenas o ultimo: o anterior continuava gerando carga sem
+# nenhum jeito de encerra-lo pelo script. MEDIDO -- em sala isso vira uma carga
+# fantasma que ninguem sabe de onde vem.
+LOG="$ESTADO/.carga-$$.log"
+PIDS="$ESTADO/.cargas.pid"
 
 # Sob `set -u`, uma opcao sem valor abortava com "$2: unbound variable" -- erro
 # cru do bash, que nem diz qual opcao faltou. E `--falhas --usuarios 10` engolia
@@ -62,8 +68,18 @@ while [ $# -gt 0 ]; do
             esac ;;
         --fundo)    FUNDO=true;    shift ;;
         --parar)
-            if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then
-                kill "$(cat "$PIDF")" 2>/dev/null; rm -f "$PIDF"; ok "carga encerrada"
+            N=0
+            if [ -f "$PIDS" ]; then
+                while IFS= read -r P; do
+                    [ -z "$P" ] && continue
+                    if kill -0 "$P" 2>/dev/null; then
+                        kill "$P" 2>/dev/null && N=$((N + 1))
+                    fi
+                done < "$PIDS"
+                rm -f "$PIDS"
+            fi
+            if [ "$N" -gt 0 ]; then
+                ok "$N carga(s) encerrada(s)"
             else
                 aviso "nao ha carga em segundo plano"
             fi
@@ -226,8 +242,9 @@ laco() {
 if [ "$FUNDO" = "true" ]; then
     : > "$LOG"
     laco >> "$LOG" 2>&1 &
-    echo $! > "$PIDF"
-    ok "carga rodando em segundo plano (pid $(cat "$PIDF")) · $(estimativa)"
+    PID=$!
+    echo "$PID" >> "$PIDS"
+    ok "carga rodando em segundo plano (pid $PID) · $(estimativa)"
     echo "     acompanhar:  tail -f $LOG"
     echo "     encerrar:    ./carga.sh --parar"
     echo
