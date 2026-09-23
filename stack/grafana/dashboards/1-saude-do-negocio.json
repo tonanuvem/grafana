@@ -30,24 +30,45 @@
       }
     },
     {
+      "type": "row",
+      "title": "Autenticação",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "timeseries",
-      "title": "Clientes autenticados por minuto",
-      "description": "Jornada feliz. Suba os usuários da carga e esta linha sobe junto — é volume de negócio, não de requisição.\n\n---\n**De onde vem este número**\n\n```\nnegocio:logins_sucesso:rate5m * 60\n```",
+      "title": "Logins: aceitos × recusados",
+      "description": "As duas pontas da MESMA operação (`POST /api/users/auth`), na mesma escala: quem entrou e quem foi barrado. Separadas em dois gráficos era preciso comparar eixos de olho.\n\nA recusa devolve **HTTP 400** — esta jornada é a única cuja falha de negócio também aparece no indicador técnico de erro.\n\n---\n**De onde vem este número**\n\n*aceitos*\n```\nnegocio:logins_sucesso:rate5m * 60\n```\n*recusados (HTTP 400)*\n```\nnegocio:logins_recusados:rate5m * 60\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
         "x": 0,
-        "y": 4,
-        "w": 12,
+        "y": 5,
+        "w": 10,
         "h": 7
       },
       "targets": [
         {
           "refId": "A",
           "expr": "negocio:logins_sucesso:rate5m * 60",
-          "legendFormat": "entraram",
+          "legendFormat": "aceitos",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "negocio:logins_recusados:rate5m * 60",
+          "legendFormat": "recusados (HTTP 400)",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
@@ -56,7 +77,6 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
           "custom": {
             "lineWidth": 2,
             "fillOpacity": 8,
@@ -64,7 +84,38 @@
             "spanNulls": true
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "aceitos"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recusados (HTTP 400)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -80,44 +131,42 @@
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Alogins_sucesso%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Alogins_sucesso%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22negocio%3Alogins_recusados%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
     },
     {
       "type": "timeseries",
-      "title": "Autenticações recusadas por minuto",
-      "description": "Erre a senha na tela de login e observe. Cada pico é um cliente que não entrou no banco.\n\n---\n**De onde vem este número**\n\n```\nnegocio:logins_recusados:rate5m * 60\n```",
+      "title": "Recusas de login vistas no LOG",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
+        "type": "loki",
+        "uid": "loki"
       },
+      "description": "O mesmo número por outro caminho: a linha do morgan no `customer-auth`. Métrica é barata e imprecisa; log é caro e exato. Aqui os dois concordam — e é justamente por concordarem que dá para confiar na leitura.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))\n```",
       "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 12,
+        "x": 10,
+        "y": 5,
+        "w": 8,
         "h": 7
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "negocio:logins_recusados:rate5m * 60",
-          "legendFormat": "recusadas (HTTP 400)",
+          "expr": "sum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))",
+          "legendFormat": "recusas/min",
           "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
+            "type": "loki",
+            "uid": "loki"
           }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 8,
-            "showPoints": "never",
-            "spanNulls": true
+            "fillOpacity": 10,
+            "showPoints": "never"
           }
         },
         "overrides": []
@@ -129,48 +178,45 @@
           "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single"
         }
       },
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Alogins_recusados%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22customer-auth%5C%22%7D%20%7C%3D%20%5C%22/api/users/auth%5C%22%20%7C%3D%20%5C%22400%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Taxa de erro TÉCNICA do customer-auth",
-      "description": "O SLI clássico. Fica em ZERO enquanto os clientes são recusados: HTTP 400 não marca o span como erro. Repare que ele mostra 0,00 mesmo sem tráfego nenhum: a regra tem `or vector(0)`. Zero confortável e zero por ausência de dado são indistinguíveis aqui.\n\n---\n**De onde vem este número**\n\n```\ntecnico:auth_erros:rate5m * 60\n```",
+      "title": "% de logins recusados",
+      "description": "A mesma falha, medida pelo negócio. Fica em branco quando NÃO HÁ tentativa de login: sem denominador não há indicador — e isso é informação, não erro.\n\n---\n**De onde vem este número**\n\n```\nnegocio:taxa_recusa_login:ratio5m * 100\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
-        "x": 0,
-        "y": 11,
-        "w": 6,
-        "h": 5
+        "x": 18,
+        "y": 5,
+        "w": 3,
+        "h": 7
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "tecnico:auth_erros:rate5m * 60",
+          "expr": "negocio:taxa_recusa_login:ratio5m * 100",
+          "legendFormat": "",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
-          },
-          "instant": true,
-          "legendFormat": ""
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "decimals": 2,
+          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -179,14 +225,20 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 5
+              },
+              {
                 "color": "red",
-                "value": 0.01
+                "value": 15
               }
             ]
           },
           "color": {
             "mode": "thresholds"
-          }
+          },
+          "noValue": "sem tráfego de login",
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -205,40 +257,38 @@
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22tecnico%3Aauth_erros%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Ataxa_recusa_login%3Aratio5m%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
     },
     {
       "type": "stat",
-      "title": "% de logins recusados",
-      "description": "A mesma falha, medida pelo negócio. Fica em branco quando NÃO HÁ tentativas de login: sem denominador não há indicador. Em branco não é 'saudável' — é 'não sei', e a diferença entre as duas coisas é metade deste laboratório.\n\n---\n**De onde vem este número**\n\n```\nnegocio:taxa_recusa_login:ratio5m * 100\n```",
+      "title": "Taxa de erro TÉCNICA",
+      "description": "O SLI clássico do `customer-auth`. Fica em ZERO enquanto clientes são recusados: HTTP 400 não marca o span como erro. É o painel que discorda do de negócio ao lado — e o de negócio é o que está certo.\n\n---\n**De onde vem este número**\n\n```\ntecnico:auth_erros:rate5m * 60\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
-        "x": 6,
-        "y": 11,
-        "w": 6,
-        "h": 5
+        "x": 21,
+        "y": 5,
+        "w": 3,
+        "h": 7
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "negocio:taxa_recusa_login:ratio5m * 100",
+          "expr": "tecnico:auth_erros:rate5m * 60",
+          "legendFormat": "",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
-          },
-          "instant": true,
-          "legendFormat": ""
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
           "decimals": 1,
           "thresholds": {
             "mode": "absolute",
@@ -279,76 +329,34 @@
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Ataxa_recusa_login%3Aratio5m%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22tecnico%3Aauth_erros%3Arate5m%20%2A%2060%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
     },
     {
-      "type": "timeseries",
-      "title": "Recusas de login vistas no LOG (Loki)",
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "O mesmo número por outro caminho: a linha do morgan. Métrica é barata e imprecisa (400 também é campo em branco); log é preciso e mais caro.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))\n```",
+      "type": "row",
+      "title": "Transferência",
+      "collapsed": false,
+      "panels": [],
       "gridPos": {
-        "x": 12,
-        "y": 11,
-        "w": 12,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "queryType": "range",
-          "expr": "sum(count_over_time({service_name=\"customer-auth\"} |= \"/api/users/auth\" |= \"400\" [1m]))",
-          "legendFormat": "recusas/min"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22customer-auth%5C%22%7D%20%7C%3D%20%5C%22/api/users/auth%5C%22%20%7C%3D%20%5C%22400%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "type": "timeseries",
       "title": "Transferências concluídas por minuto",
-      "description": "A linha de negócio da Fase 3. Ela DESPENCA na degradação — sem nenhum erro técnico, só porque cada transferência passou a demorar mais.\n\n---\n**De onde vem este número**\n\n```\nnegocio:transferencias_por_min\n```",
+      "description": "A linha de negócio da Fase 3. Ela DESPENCA na degradação — sem nenhum erro técnico, só porque cada transferência passou a demorar mais do que o cliente aguenta esperar.\n\n---\n**De onde vem este número**\n\n```\nnegocio:transferencias_por_min\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 13,
         "w": 12,
         "h": 7
       },
@@ -365,7 +373,6 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
           "custom": {
             "lineWidth": 2,
             "fillOpacity": 8,
@@ -396,28 +403,27 @@
     },
     {
       "type": "timeseries",
-      "title": "Transferências recusadas por saldo (só o LOG vê)",
+      "title": "Recusadas por saldo (só o LOG vê)",
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "description": "'Insufficient Balance' devolve HTTP 200: a regra de negócio disse não, a rota funcionou. Nenhuma métrica a enxerga — só existe no log, e por isso o Loki não é acessório aqui.\n\nGere estas recusas com `carga.sh --cenario transaction --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"transactions\"} |= \"Insufficient Balance\" [1m]))\n```",
+      "description": "'Insufficient Balance' devolve **HTTP 200**: a regra de negócio disse não, a rota funcionou. Nenhuma métrica a enxerga.\n\nEste gráfico fica separado do vizinho de propósito: um vem do Prometheus, outro do Loki. Junta-los sugeriria uma precisão que eles não têm.\n\nGere com `carga.sh --cenario transaction --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"transactions\"} |= \"Insufficient Balance\" [1m]))\n```",
       "gridPos": {
         "x": 12,
-        "y": 16,
+        "y": 13,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
           "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"transactions\"} |= \"Insufficient Balance\" [1m]))",
+          "legendFormat": "recusadas/min",
           "datasource": {
             "type": "loki",
             "uid": "loki"
-          },
-          "queryType": "range",
-          "expr": "sum(count_over_time({service_name=\"transactions\"} |= \"Insufficient Balance\" [1m]))",
-          "legendFormat": "recusadas/min"
+          }
         }
       ],
       "fieldConfig": {
@@ -449,17 +455,29 @@
       ]
     },
     {
+      "type": "row",
+      "title": "Extrato",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "timeseries",
       "title": "Extratos consultados por minuto",
-      "description": "Jornada de leitura. Ela não move dinheiro, então some dos indicadores técnicos — mas é a tela que o cliente abre mais vezes por dia.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extratos_por_min\n```",
+      "description": "Jornada de leitura. Não move dinheiro, então some dos indicadores financeiros — mas é a tela que o cliente abre mais vezes por dia.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extratos_por_min\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
         "x": 0,
-        "y": 23,
-        "w": 8,
+        "y": 21,
+        "w": 12,
         "h": 7
       },
       "targets": [
@@ -505,71 +523,16 @@
     },
     {
       "type": "timeseries",
-      "title": "Empréstimos solicitados por minuto",
-      "description": "Volume de negócio da jornada de crédito. Um empréstimo RECUSADO devolve HTTP 200: a regra de negócio disse não, a rota funcionou. Igual ao 'Insufficient Balance' da transferência, nenhuma métrica o vê.\n\n---\n**De onde vem este número**\n\n```\nnegocio:emprestimos_por_min\n```",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "gridPos": {
-        "x": 8,
-        "y": 23,
-        "w": 8,
-        "h": 7
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "negocio:emprestimos_por_min",
-          "legendFormat": "empréstimos/min",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "showPoints": "never",
-            "spanNulls": true
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aemprestimos_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
       "title": "p90 do extrato",
-      "description": "Latência sentida por quem abre o extrato. É a jornada mais barata de servir e a que o cliente mais repete — se ela degrada, ele percebe antes de qualquer alerta técnico disparar.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extrato_p90_ms\n```",
+      "description": "Esta jornada **não tem recusa de negócio**: consultar extrato ou funciona ou é erro técnico. O SLI dela é latência — por isso o `--falhas` não age aqui.\n\n---\n**De onde vem este número**\n\n```\nnegocio:extrato_p90_ms\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
-        "x": 16,
-        "y": 23,
-        "w": 8,
+        "x": 12,
+        "y": 21,
+        "w": 12,
         "h": 7
       },
       "targets": [
@@ -615,17 +578,84 @@
       ]
     },
     {
+      "type": "row",
+      "title": "Empréstimo",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "timeseries",
-      "title": "Empréstimos recusados (só o LOG vê)",
+      "title": "Empréstimos solicitados por minuto",
+      "description": "Volume da jornada de crédito.\n\n---\n**De onde vem este número**\n\n```\nnegocio:emprestimos_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:emprestimos_por_min",
+          "legendFormat": "solicitados/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aemprestimos_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Recusados (só o LOG vê)",
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Crédito negado é receita não realizada — o evento mais caro desta tela. Devolve HTTP 200 com 'Loan Rejected': a regra de negócio disse não, a rota funcionou, e nenhuma métrica o enxerga.\n\nGere com `carga.sh --cenario loan --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"loan\"} |= \"Loan Rejected\" [1m]))\n```",
+      "description": "Crédito negado é **receita não realizada** — o evento mais caro desta tela. Devolve HTTP 200 com 'Loan Rejected' e nenhuma métrica o enxerga.\n\nGere com `carga.sh --cenario loan --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"loan\"} |= \"Loan Rejected\" [1m]))\n```",
       "gridPos": {
-        "x": 0,
-        "y": 30,
-        "w": 8,
+        "x": 12,
+        "y": 29,
+        "w": 12,
         "h": 7
       },
       "targets": [
@@ -668,17 +698,84 @@
       ]
     },
     {
+      "type": "row",
+      "title": "Abertura de conta",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "timeseries",
-      "title": "Contas duplicadas (só o LOG vê)",
+      "title": "Contas abertas por minuto",
+      "description": "Medido no serviço `accounts`, e não no dashboard: é lá que a abertura acontece de fato.\n\n---\n**De onde vem este número**\n\n```\nnegocio:contas_abertas_por_min\n```",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "negocio:contas_abertas_por_min",
+          "legendFormat": "abertas/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Acontas_abertas_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Duplicadas (só o LOG vê)",
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "description": "O cliente tentou abrir uma conta do tipo que já tem. Atrito de abertura: ele não conseguiu o que veio fazer, e o serviço respondeu 200 com `{\"response\": false}`.\n\nGere com `carga.sh --cenario account --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"accounts\"} |= \"Account already exists\" [1m]))\n```",
+      "description": "O cliente tentou abrir uma conta do tipo que já tem. Atrito de abertura: ele não conseguiu o que veio fazer, e o serviço respondeu 200 com `{\\\"response\\\": false}`.\n\nGere com `carga.sh --cenario account --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"accounts\"} |= \"Account already exists\" [1m]))\n```",
       "gridPos": {
-        "x": 8,
-        "y": 30,
-        "w": 8,
+        "x": 12,
+        "y": 37,
+        "w": 12,
         "h": 7
       },
       "targets": [
@@ -721,24 +818,45 @@
       ]
     },
     {
+      "type": "row",
+      "title": "Caixa eletrônico",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "timeseries",
-      "title": "Caixas não encontrados (a MÉTRICA vê)",
-      "description": "**O contraexemplo desta tela.** O cliente abre um caixa que não existe mais e recebe **404** — e 404 a métrica conta.\n\nCompare com os dois painéis à esquerda: as três são falhas de negócio, mas só esta aparece no indicador técnico. *Falha de negócio é invisível na métrica* não é lei — é consequência de como cada rota foi desenhada.\n\nGere com `carga.sh --cenario atm --falhas`.\n\n---\n**De onde vem este número**\n\n```\nnegocio:caixas_nao_encontrados_por_min\n```",
+      "title": "Consultas de caixa: total × não encontrados",
+      "description": "**O contraexemplo desta tela.** Mesma operação (`GET /api/atm/:id`), mesma fonte: o total e a fatia que voltou **404**.\n\nAs outras recusas deste dashboard devolvem 200 e só existem no log. Esta aparece na métrica — *falha de negócio é invisível* não é lei, é consequência de como a rota foi desenhada.\n\n---\n**De onde vem este número**\n\n*consultas/min*\n```\nnegocio:consultas_caixa_por_min\n```\n*não encontrados (404)*\n```\nnegocio:caixas_nao_encontrados_por_min\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
       "gridPos": {
-        "x": 16,
-        "y": 30,
-        "w": 8,
+        "x": 0,
+        "y": 45,
+        "w": 12,
         "h": 7
       },
       "targets": [
         {
           "refId": "A",
+          "expr": "negocio:consultas_caixa_por_min",
+          "legendFormat": "consultas/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prom"
+          }
+        },
+        {
+          "refId": "B",
           "expr": "negocio:caixas_nao_encontrados_por_min",
-          "legendFormat": "404/min",
+          "legendFormat": "não encontrados (404)",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
@@ -754,7 +872,38 @@
             "spanNulls": true
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "consultas/min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "não encontrados (404)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -770,17 +919,82 @@
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Acaixas_nao_encontrados_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22negocio%3Aconsultas_caixa_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22negocio%3Acaixas_nao_encontrados_por_min%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Não encontrados vistos no LOG",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "A mesma recusa pelo log do `atm-locator`. Como a de login, ela aparece nos dois lugares — e pela mesma razão: a rota devolve um status de erro.\n\nGere com `carga.sh --cenario atm --falhas`.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"atm-locator\"} |= \"ATM not found\" [1m]))\n```",
+      "gridPos": {
+        "x": 12,
+        "y": 45,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"atm-locator\"} |= \"ATM not found\" [1m]))",
+          "legendFormat": "404/min",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28count_over_time%28%7Bservice_name%3D%5C%22atm-locator%5C%22%7D%20%7C%3D%20%5C%22ATM%20not%20found%5C%22%20%5B1m%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "RUM — o que o navegador do cliente viveu",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "type": "text",
       "title": "",
       "gridPos": {
         "x": 0,
-        "y": 37,
+        "y": 53,
         "w": 24,
         "h": 4
       },
@@ -799,7 +1013,7 @@
       "description": "Sinal que só existe quando há gente usando. O probe sintético roda às 3h da manhã sem ninguém; o RUM, não. As duas visões respondem perguntas diferentes.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"event\" |= \"faro.performance.navigation\" [1m]))\n```",
       "gridPos": {
         "x": 0,
-        "y": 41,
+        "y": 57,
         "w": 8,
         "h": 7
       },
@@ -853,7 +1067,7 @@
       "description": "O TypeError que o Encontro anterior encontrou no RUM da Splunk aparece aqui. Falha de jornada com backend impecável.\n\n---\n**De onde vem este número**\n\n```\nsum(count_over_time({service_name=\"fiap-bank-ui\"} | kind=\"exception\" [1m]))\n```",
       "gridPos": {
         "x": 8,
-        "y": 41,
+        "y": 57,
         "w": 8,
         "h": 7
       },
@@ -911,7 +1125,7 @@
       "description": "kind=event são marcos de navegação e interação; kind=measurement traz os Web Vitals; kind=exception, os erros. Clique num evento para seguir até o trace.\n\n---\n**De onde vem este número**\n\n```\n{service_name=\"fiap-bank-ui\"}\n```",
       "gridPos": {
         "x": 16,
-        "y": 41,
+        "y": 57,
         "w": 8,
         "h": 7
       },
@@ -941,11 +1155,23 @@
       ]
     },
     {
+      "type": "row",
+      "title": "Sonda sintética — o que responde quando não há ninguém",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
       "type": "text",
       "title": "",
       "gridPos": {
         "x": 0,
-        "y": 48,
+        "y": 65,
         "w": 24,
         "h": 4
       },
@@ -964,7 +1190,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 52,
+        "y": 69,
         "w": 12,
         "h": 7
       },
@@ -1020,7 +1246,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 52,
+        "y": 69,
         "w": 12,
         "h": 7
       },

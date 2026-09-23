@@ -121,6 +121,21 @@ groups:
             service_name="dashboard", span_name="POST /loan/"}[5m]))
           * 60 or vector(0)
 
+      # Volume das duas jornadas que faltavam ter um numero de negocio.
+      # A de conta mede no servico `accounts` (e nao no dashboard) porque e'
+      # la' que a abertura acontece de fato.
+      - record: negocio:contas_abertas_por_min
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="accounts", span_name="POST /create-account"}[5m]))
+          * 60 or vector(0)
+
+      - record: negocio:consultas_caixa_por_min
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{
+            service_name="atm-locator", span_name="GET /api/atm/:id"}[5m]))
+          * 60 or vector(0)
+
       # A UNICA recusa de negocio deste lab que o indicador TECNICO enxerga.
       # O cliente abre um caixa que nao existe mais e recebe 404 -- e 404 o
       # span_metrics conta. Serve de contraexemplo: "falha de negocio e'
