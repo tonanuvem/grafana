@@ -6,7 +6,7 @@
 #   ./carga.sh --cenario transaction          so' a jornada de transferencia
 #   ./carga.sh --cenario extrato              so' a consulta de extrato
 #   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
-#   ./carga.sh --cenario auth --falhas        20% dos logins com senha errada
+#   ./carga.sh --cenario auth --falhas        toda tentativa erra a senha antes
 #   ./carga.sh --cenario auth --falhas 35     ou o percentual que quiser
 #   ./carga.sh --duracao 20m                  repete ate completar 20 min
 #   ./carga.sh --parar                        encerra a carga em segundo plano
@@ -46,10 +46,12 @@ while [ $# -gt 0 ]; do
         --cenario)  exige_valor "$1" "${2-}"; CENARIO="$2";  shift 2 ;;
         --duracao)  exige_valor "$1" "${2-}"; DURACAO="$2";  shift 2 ;;
         # O valor e' OPCIONAL: `--falhas` sozinho e' a forma que as pessoas
-        # tentam primeiro, e faze-la falhar nao ensina nada.
+        # tentam primeiro, e faze-la falhar nao ensina nada. Sem valor vai a
+        # 100 -- quem digita so' `--falhas` quer ver o sinal aparecer, nao
+        # calibrar percentual.
         --falhas)
             case "${2-}" in
-                ""|--*) FALHAS=20;     shift   ;;
+                ""|--*) FALHAS=100;    shift   ;;
                 *)      FALHAS="$2";   shift 2 ;;
             esac ;;
         --fundo)    FUNDO=true;    shift ;;
