@@ -22,7 +22,8 @@ import os
 import urllib.parse
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-DASHBOARDS = os.path.join(AQUI, "dashboards")
+DASHBOARDS = [os.path.join(AQUI, "dashboards"),
+              os.path.join(AQUI, "dashboards-sistema")]
 
 MARCA = "\n\n---\n**De onde vem este número**\n\n"
 
@@ -94,15 +95,16 @@ def percorrer(paineis):
 
 
 def main():
-    for nome in sorted(os.listdir(DASHBOARDS)):
-        if not nome.endswith(".json"):
-            continue
-        caminho = os.path.join(DASHBOARDS, nome)
-        d = json.load(io.open(caminho, encoding="utf-8"))
-        n = percorrer(d.get("panels") or [])
-        io.open(caminho, "w", encoding="utf-8").write(
-            json.dumps(d, indent=2, ensure_ascii=False) + "\n")
-        print("  %-28s %2d paineis anotados" % (nome, n))
+    for pasta in DASHBOARDS:
+        for nome in sorted(os.listdir(pasta)):
+            if not nome.endswith(".json"):
+                continue
+            caminho = os.path.join(pasta, nome)
+            d = json.load(io.open(caminho, encoding="utf-8"))
+            n = percorrer(d.get("panels") or [])
+            io.open(caminho, "w", encoding="utf-8").write(
+                json.dumps(d, indent=2, ensure_ascii=False) + "\n")
+            print("  %-28s %2d paineis anotados" % (nome, n))
 
 
 if __name__ == "__main__":

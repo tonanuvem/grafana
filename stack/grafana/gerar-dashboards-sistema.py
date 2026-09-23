@@ -65,6 +65,99 @@ AVISO = (
 )
 
 
+# -----------------------------------------------------------------------------
+# Explicacoes por painel.
+#
+# Os dashboards da comunidade descrevem a METRICA; o aluno precisa do CONCEITO.
+# O peso esta no 15983 de proposito: ele e' o unico que fala do pipeline de
+# telemetria em si -- o assunto que o resto do encontro pressupoe funcionando.
+# -----------------------------------------------------------------------------
+EXPLICACOES = {
+ "15983": {
+  "Spans Rate":
+    "**Receiver** é a porta de entrada do collector. `accepted` são os spans "
+    "que ele recebeu e admitiu; `refused` são os que ele **recusou** — quase "
+    "sempre porque a fila de saída encheu e ele empurrou a pressão de volta "
+    "para a aplicação.\n\nRecusa aqui é perda de *telemetria*, não de "
+    "negócio: o banco segue funcionando e ninguém reclama. Por isso ela é "
+    "perigosa — todos os outros painéis deste lab passam a mentir por omissão, "
+    "sem avisar ninguém.",
+  "Log Records Rate":
+    "A mesma leitura dos spans, para log. Repare que há mais de um receiver: "
+    "`otlp` traz o que os serviços Python enviam, `fluent_forward` traz o que o "
+    "log driver do Docker recolhe do Node e do nginx, e `faro` traz o que "
+    "acontece no navegador do cliente.\n\nTrês origens, um só destino: é isso "
+    "que permite a mesma consulta no Loki alcançar servidor e navegador.",
+  "Logs Records Rate Rate":
+    "**Processor** é o que acontece *entre* receber e exportar. `incoming` é o "
+    "que entrou no processador; `outgoing` é o que saiu.\n\nA diferença entre "
+    "as duas linhas é exatamente o que aquele processador descartou ou criou. "
+    "Se elas se separam sem você ter pedido, há perda silenciosa no meio do "
+    "caminho.",
+  "Batch Send Size Heatmap":
+    "O collector não envia span a span: ele junta em lotes. Cada faixa mostra "
+    "quantos itens tinha cada lote enviado.\n\nLote grande usa menos rede e "
+    "menos CPU, mas atrasa o dado — e atraso aqui vira atraso na detecção. É a "
+    "mesma escolha do intervalo de coleta do Prometheus, do outro lado do "
+    "pipeline.",
+  "Batch Metrics 1":
+    "Quantos lotes saíram e qual o tamanho médio. Compare com o mapa de calor "
+    "ao lado: aqui está a média, lá está a distribuição — e é a distribuição "
+    "que mostra a cauda.",
+  "Batch Metrics 2":
+    "Por que cada lote foi enviado. `size_trigger` significa que ele encheu e "
+    "partiu; `timeout_trigger`, que não encheu mas o tempo acabou.\n\nCom "
+    "trânsito baixo quase tudo é timeout: esse é o piso de latência da sua "
+    "telemetria, e ele existe mesmo quando nada está errado.",
+  "Exporter Queue Size":
+    "**Exporter** é a porta de saída. Antes dela há uma **fila**, que absorve "
+    "picos e indisponibilidade temporária do destino.\n\nFila subindo "
+    "significa que o collector está produzindo mais rápido do que o Tempo ou o "
+    "Loki conseguem engolir. Enquanto ela não enche, ninguém percebe nada.",
+  "Exporter Queue Capacity":
+    "O teto da fila. Sozinho não diz nada — ele só importa comparado com o "
+    "tamanho atual, no painel ao lado.",
+  "Exporter Queue Usage":
+    "A razão entre os dois anteriores, e o número que vale acompanhar. "
+    "Chegando a 100%, o próximo dado não entra na fila: vira `refused` lá no "
+    "receiver, e a telemetria começa a ser descartada.\n\nÉ este painel que "
+    "responde à pergunta *posso confiar no que os outros dashboards mostram?*",
+  "Total RSS Memory":
+    "Memória real do processo do collector. Ele guarda estado: o conector "
+    "`service_graph` mantém pares cliente/servidor em memória por 30 segundos "
+    "para conseguir parear as duas pontas de cada chamada.\n\nMais serviços e "
+    "mais rotas custam memória aqui — observabilidade não é de graça.",
+  "CPU Usage":
+    "CPU do collector. Cada processador que você acrescenta à pipeline passa "
+    "por aqui: o `transform` que normaliza o status HTTP e o `filter` que corta "
+    "as bordas custam este número.",
+  "Uptime by Service Instance":
+    "Há quanto tempo o collector está de pé. Uma queda aqui zera as filas e "
+    "perde o que estava nelas — e o buraco resultante nos outros dashboards não "
+    "se parece com incidente de aplicação, se parece com silêncio.",
+ },
+ "1860": {
+  "CPU Basic":
+    "CPU do **host**, não dos containers. Este é o painel clássico de "
+    "infraestrutura — e o ponto do encontro é que ele fica verde durante o "
+    "incidente da Fase 2: recusar login não consome CPU.",
+  "Memory Basic":
+    "Memória do host. Repare em `Cache + Buffer`: é memória usada pelo sistema "
+    "de arquivos e liberada sob pressão. Ler *memória cheia* aqui como problema "
+    "é o erro mais comum deste painel.",
+ },
+ "15798": {
+  "Running containers":
+    "Quantos containers estão de pé. É o painel que muda quando você derruba um "
+    "serviço — e um dos poucos desta pasta que reage ao que o lab faz.",
+  "CPU Usage":
+    "CPU por container. Serve para saber **quem** consome, não se o cliente "
+    "conseguiu. A degradação desta aula é latência injetada por variável de "
+    "ambiente: ela não aparece aqui, de propósito.",
+ },
+}
+
+
 def baixar(ident, revisao):
     os.makedirs(CACHE, exist_ok=True)
     destino = os.path.join(CACHE, "%s.json" % ident)
@@ -166,13 +259,29 @@ def resolver_marcadores(o):
     return o
 
 
-def podar(paineis, vivas, cortados):
+# Paineis que NUNCA terao dado nesta montagem, por como as pipelines do
+# collector estao desenhadas -- e nao por falta de trafego. A poda por metrica
+# nao os pega: a familia `otelcol_processor_incoming_items` existe, so' nao ha
+# serie com otel.signal="metrics", porque a pipeline `metrics/derivadas` nao
+# tem processador nenhum (os receivers dela sao connectors).
+#
+# Tentei resolver na origem, acrescentando um `batch` aquela pipeline. Nao
+# resolve: MEDIDO, o batch publica apenas otelcol_processor_batch_*, e nunca
+# incoming/outgoing items. Entao o painel sai.
+SEMPRE_VAZIOS = {
+    "15983": {"Metric Points ${metric:text}"},
+}
+
+
+def podar(paineis, vivas, cortados, sempre_vazios=frozenset()):
     saida = []
     for p in paineis:
         if p.get("type") == "row":
             if p.get("panels"):
-                p["panels"] = podar(p["panels"], vivas, cortados)
+                p["panels"] = podar(p["panels"], vivas, cortados, sempre_vazios)
             saida.append(p)
+        elif p.get("title") in sempre_vazios:
+            cortados.append(p.get("title"))
         elif tem_dado(p, vivas):
             saida.append(p)
         else:
@@ -202,12 +311,16 @@ def tirar_linhas_vazias(paineis):
 
 
 def compactar(paineis):
-    """Reencaixa os paineis da esquerda para a direita, sem buracos.
+    """Fecha os buracos que a poda abriu, sem redesenhar o que estava bom.
 
-    A poda tira paineis do meio de uma linha e os que sobram mantem o `x`
-    original: no dashboard do collector, cortar "Metric Points" de Receivers
-    deixava um vao de 8 colunas entre os dois paineis restantes. O Grafana nao
-    reflui sozinho -- a posicao e' explicita no JSON.
+    A versao anterior reempacotava TUDO da esquerda para a direita, o que
+    destruia o arranjo do autor em dashboards onde nada foi podado -- os onze
+    medidores do Node Exporter viravam outra coisa.
+
+    Aqui as linhas ORIGINAIS sao preservadas (agrupadas pelo `y` de origem).
+    So' a linha que perdeu painel e' refeita: os que sobraram encostam a
+    esquerda e crescem proporcionalmente ate ocupar as 24 colunas -- senao
+    sobra o vao branco de quem foi embora.
     """
     y = 0
     i = 0
@@ -219,25 +332,44 @@ def compactar(paineis):
             i += 1
             continue
 
-        grupo = []
+        secao = []
         while i < len(paineis) and paineis[i].get("type") != "row":
-            grupo.append(paineis[i])
+            secao.append(paineis[i])
             i += 1
 
-        x = 0
-        altura_linha = 0
-        for q in grupo:
-            g = q.get("gridPos") or {}
-            w = min(int(g.get("w", 8)), 24)
-            h = int(g.get("h", 8))
-            if x + w > 24:
-                y += altura_linha
-                x = 0
-                altura_linha = 0
-            q["gridPos"] = {"x": x, "y": y, "w": w, "h": h}
-            x += w
-            altura_linha = max(altura_linha, h)
-        y += altura_linha
+        # Agrupa pela linha de origem, na ordem em que aparecem.
+        linhas, vistos = [], {}
+        for q in secao:
+            yo = (q.get("gridPos") or {}).get("y", 0)
+            if yo not in vistos:
+                vistos[yo] = []
+                linhas.append(vistos[yo])
+            vistos[yo].append(q)
+
+        for linha in linhas:
+            larguras = [max(1, int((q.get("gridPos") or {}).get("w", 8)))
+                        for q in linha]
+            total = sum(larguras)
+            alvo = min(24, max(int(linha[0].get("_alvo_linha", 24)), total))
+            if total < alvo:
+                # Distribui o que sobrou mantendo a proporcao entre os paineis.
+                sobra = alvo - total
+                for k in range(len(larguras)):
+                    larguras[k] += round(sobra * larguras[k] / total)
+                larguras[-1] += alvo - sum(larguras)
+            # Linha intacta: so' o `y` muda. Mexer no `x` de uma linha que nao
+            # perdeu nada seria redesenhar o que o autor ja' tinha arranjado.
+            intacta = total == alvo
+            x = 0
+            altura = 0
+            for q, w in zip(linha, larguras):
+                g = q.get("gridPos") or {}
+                h = int(g.get("h", 8))
+                q["gridPos"] = {"x": g.get("x", x) if intacta else x,
+                                "y": y, "w": w, "h": h}
+                x += w
+                altura = max(altura, h)
+            y += altura
     return paineis
 
 
@@ -252,6 +384,22 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     d = resolver_marcadores(d)
 
     paineis = d.get("panels", [])
+
+    # Largura que a linha ocupava ANTES da poda. E' o alvo para reencaixar os
+    # sobreviventes: se o autor deixou uma linha curta de proposito (dois stats
+    # estreitos ao lado de um vao), esticar ate 24 estragaria o arranjo dele.
+    largura_original = {}
+    for q in paineis:
+        if q.get("type") == "row":
+            continue
+        g = q.get("gridPos") or {}
+        largura_original[g.get("y", 0)] = (
+            largura_original.get(g.get("y", 0), 0) + int(g.get("w", 8)))
+    for q in paineis:
+        if q.get("type") != "row":
+            q["_alvo_linha"] = largura_original.get(
+                (q.get("gridPos") or {}).get("y", 0), 24)
+
     if manter_rows is not None:
         # O 1860 tem 31 paineis e 284 queries. As duas primeiras linhas ja' vem
         # expandidas e cobrem CPU, memoria, disco, rede e load; as outras 14
@@ -268,8 +416,14 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
                 manter.append(p)
         paineis = manter
 
+    for q in paineis:
+        texto = EXPLICACOES.get(ident, {}).get(q.get("title"))
+        if texto:
+            q["description"] = texto
+
     cortados = []
-    paineis = tirar_linhas_vazias(podar(paineis, vivas, cortados))
+    paineis = tirar_linhas_vazias(
+        podar(paineis, vivas, cortados, SEMPRE_VAZIOS.get(ident, frozenset())))
 
     paineis.insert(0, {
         "type": "text", "title": "", "transparent": True,
@@ -277,6 +431,8 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
         "options": {"mode": "markdown", "content": AVISO},
     })
     d["panels"] = compactar(paineis)
+    for q in d["panels"]:
+        q.pop("_alvo_linha", None)
 
     io.open(os.path.join(DEST, uid + ".json"), "w", encoding="utf-8").write(
         json.dumps(d, indent=2, ensure_ascii=False) + "\n")
@@ -299,14 +455,16 @@ def main():
             "  Poucas metricas. O stack esta no ar e ja' recebeu trafego?\n"
             "  As metricas de receiver do collector so' nascem com trafego.")
 
-    preparar("15983", "sys-otelcol", "Pipeline · OpenTelemetry Collector",
-             ["lab", "sistema", "pipeline"], vivas)
-    preparar("1860", "sys-node", "Host · Node Exporter",
+    # Numerados para dar ordem de leitura: do host para dentro, terminando no
+    # pipeline que produz tudo o que os outros dashboards mostram.
+    preparar("1860", "sys-node", "1 · Host",
              ["lab", "sistema", "host"], vivas,
              manter_rows={"Quick CPU / Mem / Disk",
                           "Basic CPU / Mem / Net / Disk"})
-    preparar("15798", "sys-docker", "Containers · Docker",
+    preparar("15798", "sys-docker", "2 · Containers",
              ["lab", "sistema", "containers"], vivas)
+    preparar("15983", "sys-otelcol", "3 · OpenTelemetry Collector",
+             ["lab", "sistema", "pipeline"], vivas)
 
 
 if __name__ == "__main__":

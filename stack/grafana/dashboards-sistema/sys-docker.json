@@ -91,8 +91,8 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
-        "y": 3,
+        "x": 24,
+        "y": 0,
         "w": 4,
         "h": 3
       },
@@ -135,7 +135,15 @@
       ],
       "title": "Running containers",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "Quantos containers estão de pé. É o painel que muda quando você derruba um serviço — e um dos poucos desta pasta que reage ao que o lab faz.\n\n---\n**De onde vem este número**\n\n```\ncount(container_last_seen{instance=~\"$node\",job=~\"$job\",image!=\"\"})\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22count%28container_last_seen%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -172,8 +180,8 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 4,
-        "y": 3,
+        "x": 28,
+        "y": 0,
         "w": 5,
         "h": 3
       },
@@ -215,7 +223,15 @@
       ],
       "title": "Container Memory Usage",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nsum(container_memory_usage_bytes{instance=~\"$node\",job=~\"$job\",image!=\"\"})/1024/1024\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28container_memory_usage_bytes%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%7D%29/1024/1024%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -252,8 +268,8 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 9,
-        "y": 3,
+        "x": 33,
+        "y": 0,
         "w": 5,
         "h": 3
       },
@@ -295,7 +311,15 @@
       ],
       "title": "Total Memory",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nsum(machine_memory_bytes{instance=~\"$node\",job=~\"$job\"})/1024/1024\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28machine_memory_bytes%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%7D%29/1024/1024%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -332,8 +356,8 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 14,
-        "y": 3,
+        "x": 38,
+        "y": 0,
         "w": 5,
         "h": 3
       },
@@ -375,7 +399,15 @@
       ],
       "title": "Container CPU Usage",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nsum(irate(container_cpu_usage_seconds_total{instance=~\"$node\",job=~\"$job\",image!=\"\"}[$__rate_interval]) * 100)\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28irate%28container_cpu_usage_seconds_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%7D%5B%24__rate_interval%5D%29%20%2A%20100%29%20%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -412,8 +444,8 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 19,
-        "y": 3,
+        "x": 43,
+        "y": 0,
         "w": 5,
         "h": 3
       },
@@ -455,7 +487,15 @@
       ],
       "title": "CPU Cores",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nsum(machine_cpu_cores{instance=~\"$node\",job=~\"$job\"})\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28machine_cpu_cores%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -517,7 +557,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 3,
         "w": 24,
         "h": 7
       },
@@ -559,7 +599,15 @@
         }
       ],
       "title": "CPU Usage",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "CPU por container. Serve para saber **quem** consome, não se o cliente conseguiu. A degradação desta aula é latência injetada por variável de ambiente: ela não aparece aqui, de propósito.\n\n---\n**De onde vem este número**\n\n```\nsum by (container) (rate(container_cpu_usage_seconds_total{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"}[$__rate_interval]) ) * 100\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%20by%20%28container%29%20%28rate%28container_cpu_usage_seconds_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%5B%24__rate_interval%5D%29%20%29%20%2A%20100%20%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -620,7 +668,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 13,
+        "y": 10,
         "w": 24,
         "h": 7
       },
@@ -663,7 +711,15 @@
         }
       ],
       "title": "Memory Usage",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nsum by (container) (container_memory_usage_bytes{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"})\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%20by%20%28container%29%20%28container_memory_usage_bytes%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -725,7 +781,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 17,
         "w": 24,
         "h": 7
       },
@@ -782,7 +838,15 @@
         }
       ],
       "title": "Network",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "\n\n---\n**De onde vem este número**\n\n*recv {{container}}*\n```\nsum by (container) (rate(container_network_receive_bytes_total{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"}[$__rate_interval]))\n```\n*trans {{container}}*\n```\n-(sum by (container) (rate(container_network_transmit_bytes_total{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"}[$__rate_interval])))\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22recv%22%2C%22expr%22%3A%22sum%20by%20%28container%29%20%28rate%28container_network_receive_bytes_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22trans%22%2C%22expr%22%3A%22-%28sum%20by%20%28container%29%20%28rate%28container_network_transmit_bytes_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%5B%24__rate_interval%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -843,7 +907,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 27,
+        "y": 24,
         "w": 24,
         "h": 7
       },
@@ -900,7 +964,15 @@
         }
       ],
       "title": "Disk I/O",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "\n\n---\n**De onde vem este número**\n\n*read {{container}}*\n```\nsum by (container) (rate(container_fs_reads_bytes_total{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"}[$__rate_interval]))\n```\n*write {{container}}*\n```\n-(sum by (container) (rate(container_fs_writes_bytes_total{instance=~\"$node\",job=~\"$job\",image!=\"\", service=~\"$service\", container=~\"$container\"}[$__rate_interval])))\n```",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22read%22%2C%22expr%22%3A%22sum%20by%20%28container%29%20%28rate%28container_fs_reads_bytes_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22write%22%2C%22expr%22%3A%22-%28sum%20by%20%28container%29%20%28rate%28container_fs_writes_bytes_total%7Binstance%3D~%5C%22%24node%5C%22%2Cjob%3D~%5C%22%24job%5C%22%2Cimage%21%3D%5C%22%5C%22%2C%20service%3D~%5C%22%24service%5C%22%2C%20container%3D~%5C%22%24container%5C%22%7D%5B%24__rate_interval%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     }
   ],
   "refresh": "30s",
@@ -1012,7 +1084,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Containers · Docker",
+  "title": "2 · Containers",
   "uid": "sys-docker",
   "version": 10,
   "weekStart": "",

@@ -76,7 +76,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Resource pressure via PSI",
+      "description": "Resource pressure via PSI\n\n---\n**De onde vem este número**\n\n*CPU*\n```\nrate(node_pressure_cpu_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])\n```\n*Mem*\n```\nrate(node_pressure_memory_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])\n```\n*I/O*\n```\nrate(node_pressure_io_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])\n```\n*Irq*\n```\nrate(node_pressure_irq_stalled_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -187,14 +187,21 @@
         }
       ],
       "title": "Pressure",
-      "type": "bargauge"
+      "type": "bargauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22rate%28node_pressure_cpu_waiting_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22rate%28node_pressure_memory_waiting_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22C%22%2C%22expr%22%3A%22rate%28node_pressure_io_waiting_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22D%22%2C%22expr%22%3A%22rate%28node_pressure_irq_stalled_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Overall CPU busy percentage (averaged across all cores)",
+      "description": "Overall CPU busy percentage (averaged across all cores)\n\n---\n**De onde vem este número**\n\n```\n100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$node\",job=\"$job\"}[$__rate_interval])))\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -270,14 +277,21 @@
         }
       ],
       "title": "CPU Busy",
-      "type": "gauge"
+      "type": "gauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22100%20%2A%20%281%20-%20avg%28rate%28node_cpu_seconds_total%7Bmode%3D%5C%22idle%5C%22%2Cinstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "System load over all CPU cores together",
+      "description": "System load over all CPU cores together\n\n---\n**De onde vem este número**\n\n```\nscalar(node_load1{instance=\"$node\",job=\"$job\"}) * 100 / count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu))\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -353,14 +367,21 @@
         }
       ],
       "title": "Sys Load",
-      "type": "gauge"
+      "type": "gauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22scalar%28node_load1%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%20%2A%20100%20/%20count%28count%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%20by%20%28cpu%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Real RAM usage excluding cache and reclaimable memory",
+      "description": "Real RAM usage excluding cache and reclaimable memory\n\n---\n**De onde vem este número**\n\n```\nclamp_min((1 - (node_memory_MemAvailable_bytes{instance=\"$node\", job=\"$job\"} / node_memory_MemTotal_bytes{instance=\"$node\", job=\"$job\"})) * 100, 0)\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -426,14 +447,21 @@
         }
       ],
       "title": "RAM Used",
-      "type": "gauge"
+      "type": "gauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22clamp_min%28%281%20-%20%28node_memory_MemAvailable_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%7D%20/%20node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%7D%29%29%20%2A%20100%2C%200%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Percentage of swap space currently used by the system",
+      "description": "Percentage of swap space currently used by the system\n\n---\n**De onde vem este número**\n\n```\n(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} > bool 0) * ((node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"})) * 100\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -508,14 +536,21 @@
         }
       ],
       "title": "SWAP Used",
-      "type": "gauge"
+      "type": "gauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%3E%20bool%200%29%20%2A%20%28%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20node_memory_SwapFree_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%20/%20%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%29%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Used Root FS",
+      "description": "Used Root FS\n\n---\n**De onde vem este número**\n\n```\n(\n  (node_filesystem_size_bytes{instance=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n   - node_filesystem_avail_bytes{instance=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"})\n  / node_filesystem_size_bytes{instance=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n) * 100\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -591,14 +626,21 @@
         }
       ],
       "title": "Root FS Used",
-      "type": "gauge"
+      "type": "gauge",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%28%5Cn%20%20%28node_filesystem_size_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20mountpoint%3D%5C%22/%5C%22%2C%20fstype%21%3D%5C%22rootfs%5C%22%7D%5Cn%20%20%20-%20node_filesystem_avail_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20mountpoint%3D%5C%22/%5C%22%2C%20fstype%21%3D%5C%22rootfs%5C%22%7D%29%5Cn%20%20/%20node_filesystem_size_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20mountpoint%3D%5C%22/%5C%22%2C%20fstype%21%3D%5C%22rootfs%5C%22%7D%5Cn%29%20%2A%20100%5Cn%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\ncount(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu))\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -665,14 +707,21 @@
         }
       ],
       "title": "CPU Cores",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22count%28count%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%20by%20%28cpu%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nnode_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"}\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -744,14 +793,21 @@
         }
       ],
       "title": "RAM Total",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nnode_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"}\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -823,14 +879,21 @@
         }
       ],
       "title": "SWAP Total",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nnode_filesystem_size_bytes{instance=\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"}\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -869,7 +932,7 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
+        "x": 18,
         "y": 8,
         "w": 2,
         "h": 2
@@ -907,14 +970,21 @@
         }
       ],
       "title": "RootFS Total",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_filesystem_size_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2Cmountpoint%3D%5C%22/%5C%22%2Cfstype%21%3D%5C%22rootfs%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "",
+      "description": "\n\n---\n**De onde vem este número**\n\n```\nnode_time_seconds{instance=\"$node\",job=\"$job\"} - node_boot_time_seconds{instance=\"$node\",job=\"$job\"}\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -949,7 +1019,7 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 2,
+        "x": 20,
         "y": 8,
         "w": 4,
         "h": 2
@@ -986,7 +1056,14 @@
         }
       ],
       "title": "Uptime",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_time_seconds%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20node_boot_time_seconds%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -1006,7 +1083,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "CPU time spent busy vs idle, split by activity type",
+      "description": "CPU do **host**, não dos containers. Este é o painel clássico de infraestrutura — e o ponto do encontro é que ele fica verde durante o incidente da Fase 2: recusar login não consome CPU.\n\n---\n**De onde vem este número**\n\n*Busy System*\n```\navg(rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"system\"}[$__rate_interval]))\n```\n*Busy User*\n```\navg(rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"user\"}[$__rate_interval]))\n```\n*Busy Iowait*\n```\navg(rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"iowait\"}[$__rate_interval]))\n```\n*Busy IRQs*\n```\navg(sum without(mode) (rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=~\".*irq\"}[$__rate_interval])))\n```\n*Busy Other*\n```\navg(sum without (mode) (rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\",  mode!='idle',mode!='user',mode!='system',mode!='iowait',mode!='irq',mode!='softirq'}[$__rate_interval])))\n```\n*Idle*\n```\navg(rate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"idle\"}[$__rate_interval]))\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1217,14 +1294,21 @@
         }
       ],
       "title": "CPU Basic",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22avg%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20mode%3D%5C%22system%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22avg%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20mode%3D%5C%22user%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22C%22%2C%22expr%22%3A%22avg%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20mode%3D%5C%22iowait%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22D%22%2C%22expr%22%3A%22avg%28sum%20without%28mode%29%20%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20mode%3D~%5C%22.%2Airq%5C%22%7D%5B%24__rate_interval%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22E%22%2C%22expr%22%3A%22avg%28sum%20without%20%28mode%29%20%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20%20mode%21%3D%27idle%27%2Cmode%21%3D%27user%27%2Cmode%21%3D%27system%27%2Cmode%21%3D%27iowait%27%2Cmode%21%3D%27irq%27%2Cmode%21%3D%27softirq%27%7D%5B%24__rate_interval%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22F%22%2C%22expr%22%3A%22avg%28rate%28node_cpu_seconds_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%2C%20mode%3D%5C%22idle%5C%22%7D%5B%24__rate_interval%5D%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "RAM and swap usage overview, including caches",
+      "description": "Memória do host. Repare em `Cache + Buffer`: é memória usada pelo sistema de arquivos e liberada sob pressão. Ler *memória cheia* aqui como problema é o erro mais comum deste painel.\n\n---\n**De onde vem este número**\n\n*Total*\n```\nnode_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"}\n```\n*Used*\n```\nnode_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"} - (node_memory_Cached_bytes{instance=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{instance=\"$node\",job=\"$job\"})\n```\n*Cache + Buffer*\n```\nnode_memory_Cached_bytes{instance=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{instance=\"$node\",job=\"$job\"}\n```\n*Free*\n```\nnode_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"}\n```\n*Swap used*\n```\n(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"})\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1420,14 +1504,21 @@
         }
       ],
       "title": "Memory Basic",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20node_memory_MemFree_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20%28node_memory_Cached_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%2B%20node_memory_Buffers_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%2B%20node_memory_SReclaimable_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22C%22%2C%22expr%22%3A%22node_memory_Cached_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%2B%20node_memory_Buffers_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%2B%20node_memory_SReclaimable_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22D%22%2C%22expr%22%3A%22node_memory_MemFree_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22E%22%2C%22expr%22%3A%22%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20node_memory_SwapFree_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Per-interface network traffic (receive and transmit) in bits per second",
+      "description": "Per-interface network traffic (receive and transmit) in bits per second\n\n---\n**De onde vem este número**\n\n*Rx {{device}}*\n```\nrate(node_network_receive_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8\n```\n*Tx {{device}}*\n```\nrate(node_network_transmit_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1535,14 +1626,21 @@
         }
       ],
       "title": "Network Traffic Basic",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22rate%28node_network_receive_bytes_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%2A8%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%2C%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22rate%28node_network_transmit_bytes_total%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%5B%24__rate_interval%5D%29%2A8%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Percentage of filesystem space used for each mounted device",
+      "description": "Percentage of filesystem space used for each mounted device\n\n---\n**De onde vem este número**\n\n```\n((node_filesystem_size_bytes{instance=\"$node\", job=\"$job\", device!~'rootfs'} - node_filesystem_avail_bytes{instance=\"$node\", job=\"$job\", device!~'rootfs'}) / node_filesystem_size_bytes{instance=\"$node\", job=\"$job\", device!~'rootfs'}) * 100\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1630,7 +1728,14 @@
         }
       ],
       "title": "Disk Space Used Basic",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Abrir no Explore",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%28%28node_filesystem_size_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20device%21~%27rootfs%27%7D%20-%20node_filesystem_avail_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20device%21~%27rootfs%27%7D%29%20/%20node_filesystem_size_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%2C%20device%21~%27rootfs%27%7D%29%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
+        }
+      ]
     }
   ],
   "refresh": "30s",
@@ -1725,7 +1830,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Host · Node Exporter",
+  "title": "1 · Host",
   "uid": "sys-node",
   "version": 101,
   "weekStart": "",
