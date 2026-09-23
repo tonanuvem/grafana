@@ -22,6 +22,10 @@
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
+# Uma lista so': a estimativa de duracao conta daqui, e o laco percorre daqui.
+# Duplicar a lista seria garantir que um dia elas divergissem.
+CENARIOS="auth account transaction extrato loan atm"
+
 USUARIOS=5
 TEMPO="60s"
 CENARIO="todos"
@@ -115,6 +119,24 @@ ENVS=(
   -e FALHA_PCT="$FALHAS"
 )
 
+converter() { case "$1" in *h) echo $(( ${1%h} * 3600 ));; *m) echo $(( ${1%m} * 60 ));; *s) echo "${1%s}";; *) echo "$1";; esac; }
+
+# Estimativa em minutos e segundos. Sao ~3s de partida do locust por cenario,
+# mais ~6s de preparacao do container -- MEDIDOS: um cenario de 10s leva 19s no
+# total, um de 20s leva 27s.
+estimativa() {
+    local n=1
+    [ "$CENARIO" = "todos" ] && n=$(echo $CENARIOS | wc -w)
+    local seg=$(( n * ($(converter "$TEMPO") + 3) + 6 ))
+    if [ -n "$DURACAO" ]; then
+        echo "~$(( $(converter "$DURACAO") / 60 ))min (repete ate completar)"
+    elif [ "$seg" -lt 60 ]; then
+        echo "~${seg}s"
+    else
+        echo "~$(( seg / 60 ))min$(( seg % 60 ))s"
+    fi
+}
+
 arquivo_do_cenario() {
     case "$1" in
         auth)        echo "auth_locust.py" ;;
@@ -136,14 +158,12 @@ rodar_um() {
     | awk '{printf "   %s req · %s falhas · %s req/s · med %sms\n", $2, $3, $10, $8}'
 }
 
-converter() { case "$1" in *h) echo $(( ${1%h} * 3600 ));; *m) echo $(( ${1%m} * 60 ));; *s) echo "${1%s}";; *) echo "$1";; esac; }
-
 laco() {
     local fim=""
     [ -n "$DURACAO" ] && fim=$(( $(date +%s) + $(converter "$DURACAO") ))
     while true; do
         if [ "$CENARIO" = "todos" ]; then
-            for c in auth account transaction extrato loan atm; do
+            for c in $CENARIOS; do
                 echo "  [$c]"; rodar_um "$(arquivo_do_cenario "$c")"
                 [ -n "$fim" ] && [ "$(date +%s)" -ge "$fim" ] && return 0
             done
@@ -161,15 +181,21 @@ if [ "$FUNDO" = "true" ]; then
     : > "$LOG"
     laco >> "$LOG" 2>&1 &
     echo $! > "$PIDF"
-    ok "carga rodando em segundo plano (pid $(cat "$PIDF"))"
+    ok "carga rodando em segundo plano (pid $(cat "$PIDF")) · $(estimativa)"
     echo "     acompanhar:  tail -f $LOG"
     echo "     encerrar:    ./carga.sh --parar"
     exit 0
 fi
 
 TITULO_FALHAS=""
-[ "$FALHAS" -gt 0 ] && TITULO_FALHAS=" · ${FALHAS}% de logins recusados"
+[ "$FALHAS" -gt 0 ] && TITULO_FALHAS=" · ${FALHAS}% com falha"
 titulo "CARGA -- cenario: $CENARIO · $USUARIOS usuarios${TITULO_FALHAS}"
+if [ "$CENARIO" = "todos" ]; then
+    echo "  $(echo $CENARIOS | wc -w | tr -d ' ') cenarios de $TEMPO cada · duracao total $(estimativa)"
+else
+    echo "  $TEMPO de carga · duracao total $(estimativa)"
+fi
+echo
 laco
 echo
 ok "carga concluida"
