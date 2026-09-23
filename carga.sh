@@ -5,6 +5,7 @@
 #   ./carga.sh                                todos os cenarios, 5 usuarios, 60s cada
 #   ./carga.sh --cenario transaction          so' a jornada de transferencia
 #   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
+#   ./carga.sh --cenario auth --falhas 20     20% dos logins com senha errada
 #   ./carga.sh --duracao 20m                  repete ate completar 20 min
 #   ./carga.sh --parar                        encerra a carga em segundo plano
 #   ./carga.sh --fundo --duracao 60m          roda em segundo plano
@@ -21,6 +22,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 USUARIOS=5
 TEMPO="60s"
 CENARIO="todos"
+FALHAS=0
 DURACAO=""
 FUNDO=false
 LOG="$ESTADO/.carga.log"
@@ -31,6 +33,7 @@ while [ $# -gt 0 ]; do
         --usuarios) USUARIOS="$2"; shift 2 ;;
         --tempo)    TEMPO="$2";    shift 2 ;;
         --cenario)  CENARIO="$2";  shift 2 ;;
+        --falhas)   FALHAS="$2";   shift 2 ;;
         --duracao)  DURACAO="$2";  shift 2 ;;
         --fundo)    FUNDO=true;    shift ;;
         --parar)
@@ -40,10 +43,23 @@ while [ $# -gt 0 ]; do
                 aviso "nao ha carga em segundo plano"
             fi
             exit 0 ;;
-        -h|--help) sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) erro "opcao desconhecida: $1"; exit 1 ;;
     esac
 done
+
+case "$FALHAS" in
+    ''|*[!0-9]*) erro "--falhas espera um numero de 0 a 100 (recebido: '$FALHAS')"; exit 1 ;;
+esac
+[ "$FALHAS" -gt 100 ] && { erro "--falhas nao pode passar de 100"; exit 1; }
+
+# --falhas so' tem efeito no cenario de autenticacao: e' o unico que tem uma
+# senha para errar. Avisar e' melhor do que aceitar em silencio -- caso
+# contrario o aluno roda `--cenario atm --falhas 30`, nao ve recusa nenhuma e
+# conclui que o lab esta quebrado.
+if [ "$FALHAS" -gt 0 ] && [ "$CENARIO" != "auth" ] && [ "$CENARIO" != "todos" ]; then
+    aviso "--falhas so' age no cenario 'auth'; em '$CENARIO' sera' ignorado."
+fi
 
 CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
 if [ -z "$CT" ]; then
@@ -62,6 +78,7 @@ ENVS=(
   -e VITE_ATM_URL=http://atm-locator:8001/api/atm
   -e VITE_TRANSFER_URL=http://dashboard:5000/transaction
   -e VITE_LOAN_URL=http://dashboard:5000/loan
+  -e FALHA_LOGIN_PCT="$FALHAS"
 )
 
 arquivo_do_cenario() {
@@ -115,7 +132,9 @@ if [ "$FUNDO" = "true" ]; then
     exit 0
 fi
 
-titulo "CARGA -- cenario: $CENARIO · $USUARIOS usuarios"
+TITULO_FALHAS=""
+[ "$FALHAS" -gt 0 ] && TITULO_FALHAS=" · ${FALHAS}% de logins recusados"
+titulo "CARGA -- cenario: $CENARIO · $USUARIOS usuarios${TITULO_FALHAS}"
 laco
 echo
 ok "carga concluida"
