@@ -3010,7 +3010,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### O caminho que cada sinal percorre\nCada grafo abaixo é **uma pipeline do collector**, desenhada a partir do que está realmente passando por ela — não de um diagrama escrito à mão.\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, `faro`) entregam aos **processors**, que entregam aos **exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação é o volume.\n\nSão três grafos porque são três sinais independentes: **traces**, **métricas** e **logs** seguem caminhos diferentes dentro do mesmo processo. É por isso que dá para perder log sem perder trace — e é por isso que este dashboard tem um painel de fila para cada um."
+        "content": "### O caminho que cada sinal percorre\nCada grafo abaixo é **uma pipeline do collector**, desenhada a partir do que está realmente passando por ela — não de um diagrama escrito à mão.\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, `faro`) entregam aos **processors**, que entregam aos **exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação é o volume.\n\nSão três grafos porque são três sinais independentes: **traces**, **métricas** e **logs** seguem caminhos diferentes dentro do mesmo processo."
       }
     },
     {
