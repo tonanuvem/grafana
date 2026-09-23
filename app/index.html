@@ -179,6 +179,12 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <h3 style="font-size:16px;margin:18px 0 4px">c) O mesmo número por outro caminho</h3>
     <div class="olhe"><b>Olhe:</b> o painel “Recusas de login vistas no LOG”. Os mesmos picos,
     contados a partir da linha de log.</div>
+    <p class="sec-sub">Agora o caso extremo: uma falha que a métrica <b>não tem como</b> ver.
+    O comando abaixo pede transferências acima do saldo disponível.</p>
+    <div class="cmd"><code>bash carga.sh --cenario transaction --usuarios 10 --tempo 60s --falhas</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Olhe:</b> “Transferências recusadas por saldo”. Compare com o painel
+    de recusa de login ao lado: aquela devolve HTTP 400 e aparece nos dois lugares; esta devolve
+    <b>HTTP 200</b> — a regra de negócio disse não, a rota funcionou — e existe <b>só no log</b>.</div>
     <label>Métrica e log deram o mesmo número. Quando você escolheria cada um?</label>
     <textarea id="f_metrica_log" placeholder="Um é barato e impreciso; o outro é preciso e mais caro. O que HTTP 400 também significa, além de senha errada?"></textarea>
 

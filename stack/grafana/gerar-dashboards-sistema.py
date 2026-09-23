@@ -158,6 +158,19 @@ EXPLICACOES = {
 }
 
 
+# Frase acrescentada ao TITULO da linha. Vai no titulo, e nao num painel de
+# texto, porque a linha pode estar recolhida -- e recolhida e' justamente
+# quando o aluno mais precisa saber o que ha' la' dentro.
+TITULO_DE_LINHA = {
+ "15983": {
+  "Receivers": "por onde a telemetria entra no collector",
+  "Processors": "o que acontece com ela entre entrar e sair",
+  "Exporters": "por onde ela sai, e a fila que a segura antes disso",
+  "Collector": "o custo do próprio processo que faz tudo isso",
+  "Signal flows": "o desenho de cada pipeline, a partir do que passa por ela",
+ },
+}
+
 # Texto inserido logo abaixo de uma linha, para explicar o que vem a seguir.
 TEXTO_DE_LINHA = {
  "15983": {
@@ -171,8 +184,7 @@ TEXTO_DE_LINHA = {
     "é o volume.\n\n"
     "São três grafos porque são três sinais independentes: **traces**, "
     "**métricas** e **logs** seguem caminhos diferentes dentro do mesmo "
-    "processo. É por isso que dá para perder log sem perder trace — e é por "
-    "isso que este dashboard tem um painel de fila para cada um.",
+    "processo.",
  },
 }
 
@@ -509,6 +521,13 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     cortados = []
     paineis = tirar_linhas_vazias(
         podar(paineis, vivas, cortados, PODAR_EXPLICITO.get(ident, frozenset())))
+
+    # Uma frase no titulo da linha, visivel mesmo com a linha recolhida.
+    for q in paineis:
+        if q.get("type") == "row":
+            frase = TITULO_DE_LINHA.get(ident, {}).get(q.get("title"))
+            if frase:
+                q["title"] = "%s \u2014 %s" % (q["title"], frase)
 
     # Texto explicativo logo abaixo da linha a que ele se refere.
     for titulo_linha, conteudo in TEXTO_DE_LINHA.get(ident, {}).items():

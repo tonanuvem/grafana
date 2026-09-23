@@ -53,7 +53,7 @@
         "h": 1
       },
       "id": 86,
-      "title": "Receivers",
+      "title": "Receivers — por onde a telemetria entra no collector",
       "type": "row"
     },
     {
@@ -379,7 +379,7 @@
         "h": 1
       },
       "id": 87,
-      "title": "Processors",
+      "title": "Processors — o que acontece com ela entre entrar e sair",
       "type": "row"
     },
     {
@@ -1137,7 +1137,7 @@
         "h": 1
       },
       "id": 88,
-      "title": "Exporters",
+      "title": "Exporters — por onde ela sai, e a fila que a segura antes disso",
       "type": "row"
     },
     {
@@ -1854,7 +1854,7 @@
         "h": 1
       },
       "id": 89,
-      "title": "Collector",
+      "title": "Collector — o custo do próprio processo que faz tudo isso",
       "type": "row"
     },
     {
@@ -2995,23 +2995,8 @@
         "h": 1
       },
       "id": 90,
-      "title": "Signal flows",
+      "title": "Signal flows — o desenho de cada pipeline, a partir do que passa por ela",
       "type": "row"
-    },
-    {
-      "type": "text",
-      "title": "",
-      "transparent": true,
-      "gridPos": {
-        "x": 0,
-        "y": 68,
-        "w": 24,
-        "h": 5
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "### O caminho que cada sinal percorre\nCada grafo abaixo é **uma pipeline do collector**, desenhada a partir do que está realmente passando por ela — não de um diagrama escrito à mão.\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, `faro`) entregam aos **processors**, que entregam aos **exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação é o volume.\n\nSão três grafos porque são três sinais independentes: **traces**, **métricas** e **logs** seguem caminhos diferentes dentro do mesmo processo."
-      }
     },
     {
       "datasource": {
@@ -3021,7 +3006,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_receiver_accepted_spans{job=\"$job\"}[$__rate_interval])\n      ) by (receiver)\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_exporter_sent_spans{job=\"$job\"}[$__rate_interval])\n      ) by (exporter)\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_spans{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            ,\"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        ,\"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_spans{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            , \"target\", \"-exp-\", \"transport\", \"exporter\"\r\n        )\r\n        , \"source\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\n```",
       "gridPos": {
         "x": 0,
-        "y": 73,
+        "y": 68,
         "w": 8,
         "h": 9
       },
@@ -3106,7 +3091,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      (sum(\n        ${metric:value}(otelcol_receiver_accepted_metric_points{job=\"$job\"}[$__rate_interval])\n      ) by (receiver))\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      (sum(\n        ${metric:value}(otelcol_exporter_sent_metric_points{job=\"$job\"}[$__rate_interval])\n      ) by (exporter))\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_metric_points{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            , \"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        , \"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor \r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_metric_points{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            , \"target\", \"-exp-\", \"transport\", \"exporter\"\r\n        )\r\n        , \"source\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\n```",
       "gridPos": {
         "x": 8,
-        "y": 73,
+        "y": 68,
         "w": 8,
         "h": 9
       },
@@ -3191,7 +3176,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_receiver_accepted_log_records{job=\"$job\"}[$__rate_interval])\n      ) by (receiver)\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_exporter_sent_log_records{job=\"$job\"}[$__rate_interval])\n      ) by (exporter)\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_log_records{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            , \"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        , \"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-edg-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor \r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_log_records{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            ,\"target\",\"-exp-\",\"transport\",\"exporter\"\r\n        )\r\n        ,\"source\",\"processor\",\"\",\"\"\r\n    )\r\n    ,\"id\",\"-edg-\",\"source\",\"target\"\r\n)\n```",
       "gridPos": {
         "x": 16,
-        "y": 73,
+        "y": 68,
         "w": 8,
         "h": 9
       },
@@ -3272,7 +3257,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 82,
+        "y": 77,
         "w": 24,
         "h": 1
       },
@@ -3283,7 +3268,7 @@
     {
       "gridPos": {
         "x": 0,
-        "y": 83,
+        "y": 78,
         "w": 24,
         "h": 3
       },

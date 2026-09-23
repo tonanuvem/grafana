@@ -6,7 +6,8 @@
 #   ./carga.sh --cenario transaction          so' a jornada de transferencia
 #   ./carga.sh --cenario extrato              so' a consulta de extrato
 #   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
-#   ./carga.sh --cenario auth --falhas        toda tentativa erra a senha antes
+#   ./carga.sh --cenario auth --falhas        toda tentativa erra a senha
+#   ./carga.sh --cenario transaction --falhas transferencias acima do saldo
 #   ./carga.sh --cenario auth --falhas 35     ou o percentual que quiser
 #   ./carga.sh --duracao 20m                  repete ate completar 20 min
 #   ./carga.sh --parar                        encerra a carga em segundo plano
@@ -62,7 +63,7 @@ while [ $# -gt 0 ]; do
                 aviso "nao ha carga em segundo plano"
             fi
             exit 0 ;;
-        -h|--help) sed -n '3,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) erro "opcao desconhecida: $1"; exit 1 ;;
     esac
 done
@@ -72,12 +73,16 @@ case "$FALHAS" in
 esac
 [ "$FALHAS" -gt 100 ] && { erro "--falhas nao pode passar de 100"; exit 1; }
 
-# --falhas so' tem efeito no cenario de autenticacao: e' o unico que tem uma
-# senha para errar. Avisar e' melhor do que aceitar em silencio -- caso
-# contrario o aluno roda `--cenario atm --falhas 30`, nao ve recusa nenhuma e
-# conclui que o lab esta quebrado.
-if [ "$FALHAS" -gt 0 ] && [ "$CENARIO" != "auth" ] && [ "$CENARIO" != "todos" ]; then
-    aviso "--falhas so' age no cenario 'auth'; em '$CENARIO' sera' ignorado."
+# --falhas age em dois cenarios, com falhas de natureza diferente:
+#   auth        -> senha errada, HTTP 400, visivel na metrica E no log
+#   transaction -> transferencia acima do saldo, HTTP 200, so' no log
+# Avisar nos outros e' melhor do que aceitar em silencio -- caso contrario o
+# aluno roda `--cenario atm --falhas 30`, nao ve recusa nenhuma e conclui que
+# o lab esta quebrado.
+if [ "$FALHAS" -gt 0 ] \
+   && [ "$CENARIO" != "auth" ] && [ "$CENARIO" != "transaction" ] \
+   && [ "$CENARIO" != "todos" ]; then
+    aviso "--falhas age em 'auth' e 'transaction'; em '$CENARIO' sera' ignorado."
 fi
 
 CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
@@ -97,7 +102,7 @@ ENVS=(
   -e VITE_ATM_URL=http://atm-locator:8001/api/atm
   -e VITE_TRANSFER_URL=http://dashboard:5000/transaction
   -e VITE_LOAN_URL=http://dashboard:5000/loan
-  -e FALHA_LOGIN_PCT="$FALHAS"
+  -e FALHA_PCT="$FALHAS"
 )
 
 arquivo_do_cenario() {
