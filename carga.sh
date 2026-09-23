@@ -4,6 +4,7 @@
 # =============================================================================
 #   ./carga.sh                                todos os cenarios, 5 usuarios, 60s cada
 #   ./carga.sh --cenario transaction          so' a jornada de transferencia
+#   ./carga.sh --cenario extrato              so' a consulta de extrato
 #   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
 #   ./carga.sh --cenario auth --falhas 20     20% dos logins com senha errada
 #   ./carga.sh --duracao 20m                  repete ate completar 20 min
@@ -43,7 +44,7 @@ while [ $# -gt 0 ]; do
                 aviso "nao ha carga em segundo plano"
             fi
             exit 0 ;;
-        -h|--help) sed -n '3,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) erro "opcao desconhecida: $1"; exit 1 ;;
     esac
 done
@@ -87,6 +88,7 @@ arquivo_do_cenario() {
         account)     echo "account_locust.py" ;;
         transaction) echo "transaction_locust.py" ;;
         loan)        echo "loan_locust.py" ;;
+        extrato)     echo "extrato_locust.py" ;;
         atm)         echo "atm_locust.py" ;;
         *) echo "" ;;
     esac
@@ -108,7 +110,7 @@ laco() {
     [ -n "$DURACAO" ] && fim=$(( $(date +%s) + $(converter "$DURACAO") ))
     while true; do
         if [ "$CENARIO" = "todos" ]; then
-            for c in auth account transaction loan atm; do
+            for c in auth account transaction extrato loan atm; do
                 echo "  [$c]"; rodar_um "$(arquivo_do_cenario "$c")"
                 [ -n "$fim" ] && [ "$(date +%s)" -ge "$fim" ] && return 0
             done
