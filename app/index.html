@@ -177,6 +177,10 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <h3 style="font-size:16px;margin:18px 0 4px">d) O que o navegador viu</h3>
     <p class="sec-sub">Role até o fim do dashboard 1, na faixa <b>RUM</b> <i>(Real User Monitoring — medir no navegador de quem usa, e não no servidor)</i>. Os painéis
     acima medem no servidor; esses medem no cliente.</p>
+    <div class="nota"><b>O <code>carga.sh</code> não aparece aqui.</b> O Locust faz requisições
+    HTTP diretas — nunca abre um navegador, nunca executa o JavaScript da página, nunca carrega
+    o agente de RUM. Toda a carga de fundo que você deixou rodando desde o item 0 é invisível
+    para esta faixa. Só entra o que <b>você mesmo</b> fizer clicando na tela agora.</div>
     <div class="olhe"><b>Olhe:</b> as suas próprias navegações aparecem em
     “Páginas abertas por minuto”, e o erro do login em “Eventos do navegador”.
     Clique num evento para abrir os detalhes.</div>

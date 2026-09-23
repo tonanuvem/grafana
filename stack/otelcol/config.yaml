@@ -93,6 +93,18 @@ processors:
     traces:
       span:
         - 'kind.string != "Server" and kind.string != "Client"'
+        # `dns.lookup` -- MEDIDO como a causa real do no' "unknown" no Service
+        # Graph, gerado pelo driver do MongoDB no Node (customer-auth,
+        # atm-locator). Ele roda sozinho, sem tráfego nenhum na aplicacao
+        # (confirmado com um dump de 40s parado). E' kind=Client, entao passa
+        # pelo filtro acima; so' carrega `peer.ipv4` -- o IP do resolvedor DNS
+        # do Docker, nem o do Mongo -- e nenhum atributo de
+        # virtual_node_peer_attributes bate. As queries de verdade (find,
+        # insert, findOne) sempre tiveram db.namespace="bank" correto; nunca
+        # foram a causa. O Tempo continua vendo estes spans normalmente --
+        # sao reais e uteis num trace especifico; so' nao entram na metrica
+        # derivada, onde so' criavam um no' fantasma.
+        - 'name == "dns.lookup"'
 
   # Da nome de servico aos logs que chegam pelo log driver do Docker.
   #
