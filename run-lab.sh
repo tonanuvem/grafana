@@ -21,7 +21,12 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 REPO_APP="${REPO_APP:-https://github.com/tonanuvem/bank-demo.git}"
-# dashboard, accounts, transactions, loan, customer-auth, atm-locator, ui
+# As imagens que existem no Docker Hub. O nginx NAO esta aqui de proposito:
+# ele constroi em segundos e nunca foi publicado. Como `docker compose pull`
+# sem argumento tenta puxar TODO servico, o nginx fazia o comando inteiro
+# falhar -- as 7 imagens vinham do registro, o nginx dava "pull access denied",
+# e o script concluia que o download nao deu certo e reconstruia tudo.
+SERVICOS_PUBLICADOS="dashboard accounts transactions loan customer-auth atm-locator ui"
 TOTAL_IMAGENS=7
 MODO_IMAGENS=auto      # auto = tenta baixar, constroi se falhar
 SUBIR_GUIA=true
@@ -106,8 +111,18 @@ if [ "$MODO_IMAGENS" = "auto" ] || [ "$MODO_IMAGENS" = "pull" ]; then
     echo "--------------------------------------------------"
     echo "   Publicadas em tonanuvem/fiap-bank-*. Baixar leva ~3 min contra"
     echo "   10-20 do build -- e nao depende do PyPI nem do npm estarem de pe'."
-    if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" pull --quiet) >/tmp/lab-pull.log 2>&1; then
-        ok "imagens baixadas"
+    if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" pull --quiet $SERVICOS_PUBLICADOS) \
+           >/tmp/lab-pull.log 2>&1; then
+        ok "$TOTAL_IMAGENS imagens baixadas"
+        # O nginx nao vem do registro. Sao alguns segundos, mas construir
+        # explicitamente e' melhor do que contar com o `up` fazer isso sozinho.
+        if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" build nginx) \
+               >>/tmp/lab-pull.log 2>&1; then
+            ok "nginx construido localmente"
+        else
+            erro "falha ao construir o nginx -- veja /tmp/lab-pull.log"
+            exit 1
+        fi
         MODO_IMAGENS=nenhum
     elif [ "$MODO_IMAGENS" = "pull" ]; then
         erro "nao consegui baixar as imagens:"
