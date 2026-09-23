@@ -57,6 +57,21 @@
       "type": "row"
     },
     {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 9
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Receiver: onde a telemetria entra\nUm receiver escuta um **protocolo** numa **porta** e transforma o que chega no modelo interno do collector. Os três deste lab:\n\n| receiver | escuta | quem fala com ele |\n|---|---|---|\n| `otlp` | gRPC 4317 e HTTP 4318 | os serviços instrumentados (`customer-auth`, `dashboard`, `transactions`…) |\n| `fluent_forward` | TCP 8006 | o **daemon do Docker**, que envia o stdout do Node e do nginx pelo log driver `fluentd` |\n| `faro` | HTTP 8027 | o **navegador do aluno** — é o único que precisa de CORS, porque a página vem de outra origem |\n\n**`accepted` contra `refused`.** Recusa não é erro de rede: é *contrapressão*. Quando a fila do exporter enche, o receiver devolve erro a quem enviou, e o SDK da aplicação descarta ou tenta de novo. Nada quebra no banco, e nenhum cliente reclama — só a telemetria some."
+      }
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
@@ -141,7 +156,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -298,7 +313,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 4,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -374,13 +389,28 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 21,
         "w": 24,
         "h": 1
       },
       "id": 87,
       "title": "Processors — o que acontece com ela entre entrar e sair",
       "type": "row"
+    },
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 9
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Processor: o que acontece no meio do caminho\nProcessors rodam **em ordem**, e a ordem está declarada na pipeline. O caminho dos traces aqui é:\n\n`transform/normaliza_http` → `transform/peer_service` → `filter/so_bordas` → `batch`\n\n- **`transform/normaliza_http`** copia `http.response.status_code` (convenção nova, usada pelo Node) para `http.status_code` (antiga, usada pelo Python). Sem ele, toda consulta deste lab precisaria de um `or`.\n- **`transform/peer_service`** extrai o destino de `http.url` e grava `peer.service`. É o que faz um serviço **morto** aparecer no Service Map: sem span do lado servidor, não há como nomear o destino.\n- **`filter/so_bordas`** descarta spans que não são `Server` nem `Client`. O Express cria um span por middleware — ótimos no trace, lixo na métrica.\n- **`batch`** agrupa antes de exportar.\n\n**`incoming` menos `outgoing` é exatamente o que o processador descartou.** No `filter/so_bordas` essa diferença é grande e *intencional*. Em qualquer outro, ela é suspeita."
+      }
     },
     {
       "datasource": {
@@ -484,7 +514,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 13,
+        "y": 31,
         "w": 12,
         "h": 8
       },
@@ -659,7 +689,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 13,
+        "y": 31,
         "w": 12,
         "h": 8
       },
@@ -755,7 +785,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 39,
         "w": 8,
         "h": 8
       },
@@ -905,7 +935,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 21,
+        "y": 39,
         "w": 8,
         "h": 8
       },
@@ -1056,7 +1086,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 21,
+        "y": 39,
         "w": 8,
         "h": 8
       },
@@ -1132,13 +1162,28 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 47,
         "w": 24,
         "h": 1
       },
       "id": 88,
       "title": "Exporters — por onde ela sai, e a fila que a segura antes disso",
       "type": "row"
+    },
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 9
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Exporter: por onde sai, e a fila que segura\nCada exporter fala o protocolo do destino:\n\n| exporter | destino | formato |\n|---|---|---|\n| `otlp_grpc/tempo` | `tempo:4317` | OTLP sobre gRPC |\n| `otlp_http/loki` | `loki:3100/otlp` | OTLP sobre HTTP |\n| `prometheus` | expõe `:8889` | **invertido** — aqui o Prometheus vem buscar, o collector não envia |\n\n**A fila (`sending_queue`) fica antes da saída.** Ela absorve uma queda curta do destino: se o Tempo reiniciar por 10 segundos, os spans esperam na fila em vez de se perderem.\n\nO encadeamento que importa: **fila cheia → exporter recusa → receiver recusa → aplicação descarta**. Por isso `Exporter Queue Usage` chegando a 100% aparece como `refused` lá no primeiro painel deste dashboard."
+      }
     },
     {
       "datasource": {
@@ -1225,7 +1270,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 57,
         "w": 12,
         "h": 9
       },
@@ -1397,7 +1442,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 30,
+        "y": 57,
         "w": 12,
         "h": 9
       },
@@ -1548,7 +1593,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 66,
         "w": 8,
         "h": 9
       },
@@ -1668,7 +1713,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 39,
+        "y": 66,
         "w": 8,
         "h": 9
       },
@@ -1788,7 +1833,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 39,
+        "y": 66,
         "w": 8,
         "h": 9
       },
@@ -1849,13 +1894,28 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 48,
+        "y": 75,
         "w": 24,
         "h": 1
       },
       "id": 89,
       "title": "Collector — o custo do próprio processo que faz tudo isso",
       "type": "row"
+    },
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 76,
+        "w": 24,
+        "h": 9
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### O processo, e o que ele guarda na memória\nEstes painéis medem o **collector em si** — não as aplicações.\n\nA memória não é constante porque há componentes com **estado**:\n\n- **`service_graph`** mantém, por 30 segundos, cada span de cliente à espera do span de servidor correspondente, para parear as duas pontas da chamada. Mais serviços conversando entre si, mais pares em memória.\n- **`span_metrics`** mantém um histograma por combinação de serviço, rota e status. Cada rota nova é uma série nova, para sempre.\n\nOs dois são **connectors**: ficam entre duas pipelines, sendo exporter de uma (`traces/metricas`) e receiver da outra (`metrics/derivadas`). É assim que trace vira métrica sem a aplicação publicar métrica alguma.\n\nObservabilidade custa CPU e memória, e é aqui que a conta aparece."
+      }
     },
     {
       "datasource": {
@@ -1992,7 +2052,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 49,
+        "y": 85,
         "w": 8,
         "h": 9
       },
@@ -2214,7 +2274,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 49,
+        "y": 85,
         "w": 8,
         "h": 9
       },
@@ -2436,7 +2496,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 49,
+        "y": 85,
         "w": 8,
         "h": 9
       },
@@ -2654,7 +2714,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 58,
+        "y": 94,
         "w": 8,
         "h": 9
       },
@@ -2807,7 +2867,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 58,
+        "y": 94,
         "w": 8,
         "h": 9
       },
@@ -2928,7 +2988,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 58,
+        "y": 94,
         "w": 8,
         "h": 9
       },
@@ -2990,13 +3050,28 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 67,
+        "y": 103,
         "w": 24,
         "h": 1
       },
       "id": 90,
       "title": "Signal flows — o desenho de cada pipeline, a partir do que passa por ela",
       "type": "row"
+    },
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 104,
+        "w": 24,
+        "h": 9
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### O caminho que cada sinal percorre\nCada grafo abaixo é **uma pipeline do collector**, desenhada a partir do que está realmente passando por ela — não de um diagrama escrito à mão.\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, `faro`) entregam aos **processors**, que entregam aos **exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação é o volume.\n\nSão três grafos porque são três sinais independentes: **traces**, **métricas** e **logs** seguem caminhos diferentes dentro do mesmo processo."
+      }
     },
     {
       "datasource": {
@@ -3006,7 +3081,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_receiver_accepted_spans{job=\"$job\"}[$__rate_interval])\n      ) by (receiver)\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_exporter_sent_spans{job=\"$job\"}[$__rate_interval])\n      ) by (exporter)\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_spans{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            ,\"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        ,\"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_spans{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            , \"target\", \"-exp-\", \"transport\", \"exporter\"\r\n        )\r\n        , \"source\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\n```",
       "gridPos": {
         "x": 0,
-        "y": 68,
+        "y": 113,
         "w": 8,
         "h": 9
       },
@@ -3091,7 +3166,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      (sum(\n        ${metric:value}(otelcol_receiver_accepted_metric_points{job=\"$job\"}[$__rate_interval])\n      ) by (receiver))\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      (sum(\n        ${metric:value}(otelcol_exporter_sent_metric_points{job=\"$job\"}[$__rate_interval])\n      ) by (exporter))\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_metric_points{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            , \"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        , \"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor \r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_metric_points{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            , \"target\", \"-exp-\", \"transport\", \"exporter\"\r\n        )\r\n        , \"source\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-\", \"source\", \"target\"\r\n)\n```",
       "gridPos": {
         "x": 8,
-        "y": 68,
+        "y": 113,
         "w": 8,
         "h": 9
       },
@@ -3176,7 +3251,7 @@
       "description": "Receivers -> Processor(s) -> Exporters (Node Graph panel is beta, so this panel may not show data correctly).\n\n---\n**De onde vem este número**\n\n*__auto*\n```\n# receivers\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_receiver_accepted_log_records{job=\"$job\"}[$__rate_interval])\n      ) by (receiver)\n      , \"id\", \"-rcv-\", \"transport\", \"receiver\"\n    )\n    , \"title\", \"\", \"transport\", \"receiver\"\n  )\n  , \"icon\", \"arrow-to-right\", \"\", \"\"\n)\n\n# dummy processor\nor\nlabel_replace(\n  label_replace(\n    label_replace(\n      (sum(rate(otelcol_process_uptime${suffix_seconds}{job=\"$job\"}[$__rate_interval])))\n      , \"id\", \"processor\", \"\", \"\"\n    )\n    , \"title\", \"Processor(s)\", \"\", \"\"\n  )\n  , \"icon\", \"arrow-random\", \"\", \"\"\n)\n\n# exporters\nor\nlabel_replace(\n  label_join(\n    label_join(\n      sum(${metric:value}(\n        otelcol_exporter_sent_log_records{job=\"$job\"}[$__rate_interval])\n      ) by (exporter)\n      , \"id\", \"-exp-\", \"transport\", \"exporter\"\n    )\n    , \"title\", \"\", \"transport\", \"exporter\"\n  )\n  , \"icon\", \"arrow-from-right\", \"\", \"\"\n)\n```\n*__auto*\n```\n# receivers -> processor\r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_receiver_accepted_log_records{job=\"$job\"}[$__rate_interval])) by (receiver))\r\n            , \"source\", \"-rcv-\", \"transport\", \"receiver\"\r\n        )\r\n        , \"target\", \"processor\", \"\", \"\"\r\n    )\r\n    , \"id\", \"-edg-\", \"source\", \"target\"\r\n)\r\n\r\n# processor -> exporters\r\nor \r\nlabel_join(\r\n    label_replace(\r\n        label_join(\r\n            (sum(rate(otelcol_exporter_sent_log_records{job=\"$job\"}[$__rate_interval])) by (exporter))\r\n            ,\"target\",\"-exp-\",\"transport\",\"exporter\"\r\n        )\r\n        ,\"source\",\"processor\",\"\",\"\"\r\n    )\r\n    ,\"id\",\"-edg-\",\"source\",\"target\"\r\n)\n```",
       "gridPos": {
         "x": 16,
-        "y": 68,
+        "y": 113,
         "w": 8,
         "h": 9
       },
@@ -3257,7 +3332,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 77,
+        "y": 122,
         "w": 24,
         "h": 1
       },
@@ -3268,7 +3343,7 @@
     {
       "gridPos": {
         "x": 0,
-        "y": 78,
+        "y": 123,
         "w": 24,
         "h": 3
       },

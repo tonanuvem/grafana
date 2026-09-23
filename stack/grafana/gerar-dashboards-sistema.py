@@ -171,17 +171,82 @@ TITULO_DE_LINHA = {
  },
 }
 
-# Texto inserido logo abaixo de uma linha, para explicar o que vem a seguir.
+# Texto inserido logo abaixo de uma linha. Os exemplos sao a configuracao REAL
+# deste laboratorio (stack/otelcol/config.yaml) -- exemplo generico o aluno
+# encontra na documentacao; o que ele nao encontra e' o proprio ambiente.
 TEXTO_DE_LINHA = {
  "15983": {
+  "Receivers":
+    "### Receiver: onde a telemetria entra\n"
+    "Um receiver escuta um **protocolo** numa **porta** e transforma o que "
+    "chega no modelo interno do collector. Os três deste lab:\n\n"
+    "| receiver | escuta | quem fala com ele |\n"
+    "|---|---|---|\n"
+    "| `otlp` | gRPC 4317 e HTTP 4318 | os serviços instrumentados "
+    "(`customer-auth`, `dashboard`, `transactions`…) |\n"
+    "| `fluent_forward` | TCP 8006 | o **daemon do Docker**, que envia o "
+    "stdout do Node e do nginx pelo log driver `fluentd` |\n"
+    "| `faro` | HTTP 8027 | o **navegador do aluno** — é o único que precisa "
+    "de CORS, porque a página vem de outra origem |\n\n"
+    "**`accepted` contra `refused`.** Recusa não é erro de rede: é "
+    "*contrapressão*. Quando a fila do exporter enche, o receiver devolve "
+    "erro a quem enviou, e o SDK da aplicação descarta ou tenta de novo. "
+    "Nada quebra no banco, e nenhum cliente reclama — só a telemetria some.",
+  "Processors":
+    "### Processor: o que acontece no meio do caminho\n"
+    "Processors rodam **em ordem**, e a ordem está declarada na pipeline. O "
+    "caminho dos traces aqui é:\n\n"
+    "`transform/normaliza_http` → `transform/peer_service` → "
+    "`filter/so_bordas` → `batch`\n\n"
+    "- **`transform/normaliza_http`** copia `http.response.status_code` "
+    "(convenção nova, usada pelo Node) para `http.status_code` (antiga, usada "
+    "pelo Python). Sem ele, toda consulta deste lab precisaria de um `or`.\n"
+    "- **`transform/peer_service`** extrai o destino de `http.url` e grava "
+    "`peer.service`. É o que faz um serviço **morto** aparecer no Service "
+    "Map: sem span do lado servidor, não há como nomear o destino.\n"
+    "- **`filter/so_bordas`** descarta spans que não são `Server` nem "
+    "`Client`. O Express cria um span por middleware — ótimos no trace, lixo "
+    "na métrica.\n"
+    "- **`batch`** agrupa antes de exportar.\n\n"
+    "**`incoming` menos `outgoing` é exatamente o que o processador "
+    "descartou.** No `filter/so_bordas` essa diferença é grande e "
+    "*intencional*. Em qualquer outro, ela é suspeita.",
+  "Exporters":
+    "### Exporter: por onde sai, e a fila que segura\n"
+    "Cada exporter fala o protocolo do destino:\n\n"
+    "| exporter | destino | formato |\n"
+    "|---|---|---|\n"
+    "| `otlp_grpc/tempo` | `tempo:4317` | OTLP sobre gRPC |\n"
+    "| `otlp_http/loki` | `loki:3100/otlp` | OTLP sobre HTTP |\n"
+    "| `prometheus` | expõe `:8889` | **invertido** — aqui o Prometheus vem "
+    "buscar, o collector não envia |\n\n"
+    "**A fila (`sending_queue`) fica antes da saída.** Ela absorve uma queda "
+    "curta do destino: se o Tempo reiniciar por 10 segundos, os spans esperam "
+    "na fila em vez de se perderem.\n\n"
+    "O encadeamento que importa: **fila cheia → exporter recusa → receiver "
+    "recusa → aplicação descarta**. Por isso `Exporter Queue Usage` chegando "
+    "a 100% aparece como `refused` lá no primeiro painel deste dashboard.",
+  "Collector":
+    "### O processo, e o que ele guarda na memória\n"
+    "Estes painéis medem o **collector em si** — não as aplicações.\n\n"
+    "A memória não é constante porque há componentes com **estado**:\n\n"
+    "- **`service_graph`** mantém, por 30 segundos, cada span de cliente à "
+    "espera do span de servidor correspondente, para parear as duas pontas da "
+    "chamada. Mais serviços conversando entre si, mais pares em memória.\n"
+    "- **`span_metrics`** mantém um histograma por combinação de serviço, "
+    "rota e status. Cada rota nova é uma série nova, para sempre.\n\n"
+    "Os dois são **connectors**: ficam entre duas pipelines, sendo exporter "
+    "de uma (`traces/metricas`) e receiver da outra (`metrics/derivadas`). "
+    "É assim que trace vira métrica sem a aplicação publicar métrica alguma."
+    "\n\nObservabilidade custa CPU e memória, e é aqui que a conta aparece.",
   "Signal flows":
     "### O caminho que cada sinal percorre\n"
     "Cada grafo abaixo é **uma pipeline do collector**, desenhada a partir do "
-    "que está realmente passando por ela — não de um diagrama escrito à mão.\n\n"
-    "Leia da esquerda para a direita: os **receivers** (`otlp`, `fluent_forward`, "
-    "`faro`) entregam aos **processors**, que entregam aos **exporters** "
-    "(`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A espessura da ligação "
-    "é o volume.\n\n"
+    "que está realmente passando por ela — não de um diagrama escrito à mão."
+    "\n\nLeia da esquerda para a direita: os **receivers** (`otlp`, "
+    "`fluent_forward`, `faro`) entregam aos **processors**, que entregam aos "
+    "**exporters** (`otlp_grpc/tempo`, `otlp_http/loki`, `prometheus`). A "
+    "espessura da ligação é o volume.\n\n"
     "São três grafos porque são três sinais independentes: **traces**, "
     "**métricas** e **logs** seguem caminhos diferentes dentro do mesmo "
     "processo.",
@@ -522,23 +587,24 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
     paineis = tirar_linhas_vazias(
         podar(paineis, vivas, cortados, PODAR_EXPLICITO.get(ident, frozenset())))
 
-    # Uma frase no titulo da linha, visivel mesmo com a linha recolhida.
-    for q in paineis:
-        if q.get("type") == "row":
-            frase = TITULO_DE_LINHA.get(ident, {}).get(q.get("title"))
-            if frase:
-                q["title"] = "%s \u2014 %s" % (q["title"], frase)
-
     # Texto explicativo logo abaixo da linha a que ele se refere.
     for titulo_linha, conteudo in TEXTO_DE_LINHA.get(ident, {}).items():
         for k, q in enumerate(paineis):
             if q.get("type") == "row" and q.get("title") == titulo_linha:
                 paineis.insert(k + 1, {
                     "type": "text", "title": "", "transparent": True,
-                    "gridPos": {"h": 5, "w": 24, "x": 0, "y": -1},
+                    "gridPos": {"h": 9, "w": 24, "x": 0, "y": -1},
                     "options": {"mode": "markdown", "content": conteudo},
                 })
                 break
+
+    # O sufixo do titulo vem DEPOIS da insercao do texto: aplicado antes,
+    # ele mudava o titulo e a busca pela linha nao casava mais.
+    for q in paineis:
+        if q.get("type") == "row":
+            frase = TITULO_DE_LINHA.get(ident, {}).get(q.get("title"))
+            if frase:
+                q["title"] = "%s \u2014 %s" % (q["title"], frase)
 
     paineis = compactar(paineis)
 
