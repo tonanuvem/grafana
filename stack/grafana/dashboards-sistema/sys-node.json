@@ -110,7 +110,7 @@
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 3,
+        "w": 4,
         "h": 4
       },
       "id": 323,
@@ -242,9 +242,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 3,
+        "x": 4,
         "y": 4,
-        "w": 3,
+        "w": 4,
         "h": 4
       },
       "id": 20,
@@ -332,9 +332,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 6,
+        "x": 8,
         "y": 4,
-        "w": 3,
+        "w": 4,
         "h": 4
       },
       "id": 155,
@@ -412,9 +412,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 9,
+        "x": 12,
         "y": 4,
-        "w": 3,
+        "w": 4,
         "h": 4
       },
       "id": 16,
@@ -452,95 +452,6 @@
         {
           "title": "Abrir no Explore",
           "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22B%22%2C%22expr%22%3A%22clamp_min%28%281%20-%20%28node_memory_MemAvailable_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%7D%20/%20node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2C%20job%3D%5C%22%24job%5C%22%7D%29%29%20%2A%20100%2C%200%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "description": "Percentage of swap space currently used by the system\n\n---\n**De onde vem este número**\n\n```\n(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} > bool 0) * ((node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"})) * 100\n```",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "rgba(50, 172, 45, 0.97)"
-              },
-              {
-                "color": "rgba(237, 129, 40, 0.89)",
-                "value": 10
-              },
-              {
-                "color": "rgba(245, 54, 54, 0.9)",
-                "value": 25
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 3,
-        "h": 4
-      },
-      "id": 21,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "11.6.1",
-      "targets": [
-        {
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} > bool 0) * ((node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"})) * 100",
-          "instant": true,
-          "range": false,
-          "refId": "A",
-          "step": 240
-        }
-      ],
-      "title": "SWAP Used",
-      "type": "gauge",
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20%3E%20bool%200%29%20%2A%20%28%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%20-%20node_memory_SwapFree_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%20/%20%28node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%29%29%20%2A%20100%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]
@@ -591,9 +502,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 15,
+        "x": 16,
         "y": 4,
-        "w": 3,
+        "w": 4,
         "h": 4
       },
       "id": 154,
@@ -670,7 +581,7 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 18,
+        "x": 20,
         "y": 4,
         "w": 2,
         "h": 2
@@ -756,7 +667,7 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 20,
+        "x": 22,
         "y": 4,
         "w": 2,
         "h": 2
@@ -798,92 +709,6 @@
         {
           "title": "Abrir no Explore",
           "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_memory_MemTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "description": "\n\n---\n**De onde vem este número**\n\n```\nnode_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"}\n```",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 22,
-        "y": 4,
-        "w": 2,
-        "h": 2
-      },
-      "id": 18,
-      "maxDataPoints": 100,
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.6.1",
-      "targets": [
-        {
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"}",
-          "instant": true,
-          "range": false,
-          "refId": "A",
-          "step": 240
-        }
-      ],
-      "title": "SWAP Total",
-      "type": "stat",
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22node_memory_SwapTotal_bytes%7Binstance%3D%5C%22%24node%5C%22%2Cjob%3D%5C%22%24job%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]

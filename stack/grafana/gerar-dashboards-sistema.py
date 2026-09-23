@@ -259,28 +259,36 @@ def resolver_marcadores(o):
     return o
 
 
-# Paineis que NUNCA terao dado nesta montagem, por como as pipelines do
-# collector estao desenhadas -- e nao por falta de trafego. A poda por metrica
-# nao os pega: a familia `otelcol_processor_incoming_items` existe, so' nao ha
-# serie com otel.signal="metrics", porque a pipeline `metrics/derivadas` nao
-# tem processador nenhum (os receivers dela sao connectors).
+# Paineis podados por decisao, e nao por falta de metrica. A poda automatica
+# nao os pega -- em ambos os casos a familia da metrica EXISTE.
 #
-# Tentei resolver na origem, acrescentando um `batch` aquela pipeline. Nao
-# resolve: MEDIDO, o batch publica apenas otelcol_processor_batch_*, e nunca
-# incoming/outgoing items. Entao o painel sai.
-SEMPRE_VAZIOS = {
+#   15983 / "Metric Points": a familia otelcol_processor_incoming_items existe,
+#   mas nao ha serie com otel.signal="metrics". A pipeline `metrics/derivadas`
+#   nao tem processador nenhum, porque os receivers dela sao connectors.
+#   Tentei resolver na origem, acrescentando um `batch` aquela pipeline: nao
+#   resolve. MEDIDO -- o batch publica apenas otelcol_processor_batch_* e nunca
+#   incoming/outgoing items.
+#
+#   1860 / SWAP: a EC2 do laboratorio nao tem swap, entao os dois medidores
+#   ficam em N/A, um deles em VERMELHO. Nao ha nada errado ali -- e' so' um
+#   alarme falso permanente na primeira tela que o aluno abre.
+#   A poda e' incondicional de proposito: se dependesse do valor medido, o
+#   JSON versionado mudaria conforme a maquina onde o gerador rodou (esta,
+#   por exemplo, tem 1 GiB de swap).
+PODAR_EXPLICITO = {
     "15983": {"Metric Points ${metric:text}"},
+    "1860": {"SWAP Used", "SWAP Total"},
 }
 
 
-def podar(paineis, vivas, cortados, sempre_vazios=frozenset()):
+def podar(paineis, vivas, cortados, podar_tambem=frozenset()):
     saida = []
     for p in paineis:
         if p.get("type") == "row":
             if p.get("panels"):
-                p["panels"] = podar(p["panels"], vivas, cortados, sempre_vazios)
+                p["panels"] = podar(p["panels"], vivas, cortados, podar_tambem)
             saida.append(p)
-        elif p.get("title") in sempre_vazios:
+        elif p.get("title") in podar_tambem:
             cortados.append(p.get("title"))
         elif tem_dado(p, vivas):
             saida.append(p)
@@ -352,11 +360,19 @@ def compactar(paineis):
             total = sum(larguras)
             alvo = min(24, max(int(linha[0].get("_alvo_linha", 24)), total))
             if total < alvo:
-                # Distribui o que sobrou mantendo a proporcao entre os paineis.
-                sobra = alvo - total
-                for k in range(len(larguras)):
-                    larguras[k] += round(sobra * larguras[k] / total)
-                larguras[-1] += alvo - sum(larguras)
+                # Reparte proporcionalmente e entrega as colunas que sobram do
+                # arredondamento uma a uma, para quem tem a maior fracao
+                # pendente. Arredondar cada uma e jogar a diferenca no ultimo
+                # painel deixava o ultimo com largura 1 -- ilegivel.
+                exatos = [w * alvo / total for w in larguras]
+                larguras = [max(1, int(e)) for e in exatos]
+                resto = sorted(range(len(exatos)),
+                               key=lambda k: exatos[k] - int(exatos[k]),
+                               reverse=True)
+                k = 0
+                while sum(larguras) < alvo:
+                    larguras[resto[k % len(resto)]] += 1
+                    k += 1
             # Linha intacta: so' o `y` muda. Mexer no `x` de uma linha que nao
             # perdeu nada seria redesenhar o que o autor ja' tinha arranjado.
             intacta = total == alvo
@@ -423,7 +439,7 @@ def preparar(ident, uid, titulo, tags, vivas, manter_rows=None):
 
     cortados = []
     paineis = tirar_linhas_vazias(
-        podar(paineis, vivas, cortados, SEMPRE_VAZIOS.get(ident, frozenset())))
+        podar(paineis, vivas, cortados, PODAR_EXPLICITO.get(ident, frozenset())))
 
     paineis.insert(0, {
         "type": "text", "title": "", "transparent": True,
