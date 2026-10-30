@@ -55,7 +55,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Saúde de sistema não é saúde de negócio\nEsta pasta mostra a infraestrutura. Guarde o horário do incidente da **Fase 2** e volte aqui: enquanto clientes não conseguiam entrar no banco, **tudo nestes painéis ficou verde**. Nenhum destes números teria aberto um chamado — e nenhum deles estava errado."
+        "content": "### Saúde de sistema não é saúde de negócio\nEsta pasta mostra a infraestrutura. Durante nosso LAB, iremos PROVOCAR UMA FALHA. Guarde o horário do incidente e volte aqui: enquanto clientes não conseguiam entrar no banco, **tudo nestes painéis ficou verde**. Nenhum destes números teria aberto um chamado — e nenhum deles estava errado."
       }
     },
     {
