@@ -366,19 +366,6 @@ if [ "${LOGIN_OK:-false}" = "true" ]; then
 else
     echo "LOGIN DE TESTE: indisponivel -- use 'Abra sua conta' na tela"
 fi
-echo
-# echo "  Guia do aluno  http://$H:8031"
-echo
-echo "=================================================="
-echo " GRAFANA INICIADO (OBSERVABILIDADE)"
-echo "=================================================="
-echo
-echo "  Grafana        http://$H:3001"
-echo
-echo "  Prometheus     http://$H:9090"
-echo
-echo "  Alertmanager   http://$H:9093"
-echo
 [ -n "$PORTA_DASH" ] && [ "$PORTA_DASH" != "5000" ] && echo "  Dashboard/BFF  http://$H:$PORTA_DASH  (5000 estava ocupada)"
 echo
 if [ "$COM_CARGA" != "true" ]; then
