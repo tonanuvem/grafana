@@ -375,9 +375,9 @@ fi
 [ -n "$PORTA_DASH" ] && [ "$PORTA_DASH" != "5000" ] && echo "  Dashboard/BFF  http://$H:$PORTA_DASH  (5000 estava ocupada)"
 echo
 if [ "$COM_CARGA" != "true" ]; then
-    echo "  Sem carga os paineis ficam vazios. Uma passada em todas as operações de negócio:"
+    echo "  Sem carga os paineis ficam vazios. Navegue pelas páginas com operações de negócio."
     #echo "  jornadas leva ~5 min e enche o dashboard 1:"
-    echo "    bash carga.sh --cenario todos --usuarios 5 --tempo 45s"
+    #echo "    bash carga.sh --cenario todos --usuarios 5 --tempo 45s"
     echo
     #echo "  Depois disso, cada exercicio do guia dispara a carga de que precisa."
     #echo
