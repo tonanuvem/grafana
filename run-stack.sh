@@ -173,9 +173,9 @@ docker compose -p "$PROJETO" -f "$STACK/docker-compose.yml" \
 declare_porta() { case "$1" in
     obs-prometheus) echo 9090 ;; obs-loki) echo 3100 ;; obs-tempo) echo 3200 ;;
     obs-grafana) echo 3000 ;; obs-alertmanager) echo 9093 ;;
-    obs-pushgateway) echo 9091 ;; obs-otelcol) echo 8006 ;; esac; }
+    obs-pushgateway) echo 9091 ;; obs-sonda) echo 9115 ;; obs-otelcol) echo 8006 ;; esac; }
 
-for C in obs-otelcol obs-prometheus obs-loki obs-tempo obs-grafana obs-alertmanager obs-pushgateway; do
+for C in obs-otelcol obs-prometheus obs-loki obs-tempo obs-grafana obs-alertmanager obs-pushgateway obs-sonda; do
     P=$(declare_porta "$C")
     if ! docker ps --format '{{.Names}}' | grep -qx "$C"; then
         aviso "$C nao subiu -- recriando"

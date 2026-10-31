@@ -135,15 +135,16 @@ services:
   # Sondagem sintetica: bate nas jornadas de fora, no intervalo do scrape,
   # com ou sem aluno usando o banco. E' o unico sinal do lab que existe as 3h
   # da manha -- o RUM, por definicao, nao.
-  blackbox:
+  sonda:
     image: prom/blackbox-exporter:v0.28.0
-    container_name: obs-blackbox
+    container_name: obs-sonda
     # Ver run-stack.sh: sem isto uma mudanca no arquivo de config nao
     # recria o container, e a config antiga fica no ar em silencio.
     environment: { CONF_HASH: "${CONF_BLACKBOX:-0}" }
     command: ["--config.file=/etc/blackbox/blackbox.yml"]
     volumes:
       - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    ports: ["9115:9115"]
     restart: unless-stopped
 
   # Atras de um profile: os dois sockets abaixo NAO existem no Docker Desktop

@@ -78,6 +78,8 @@ while [ $# -gt 0 ]; do
                 done < "$PIDS"
                 rm -f "$PIDS"
             fi
+            CT_STOP=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
+            [ -n "$CT_STOP" ] && docker exec "$CT_STOP" pkill -f locust >/dev/null 2>&1 || true
             if [ "$N" -gt 0 ]; then
                 ok "$N carga(s) encerrada(s)"
             else
@@ -119,13 +121,21 @@ fi
 # anterior.
 #
 # Com cache o build leva segundos; so' refaz a camada quando um .py mudou.
-echo "Preparando o container do locust (profile 'load')..."
+[ -t 1 ] && printf "  Preparando o container do locust (profile 'load')...\r"
 (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" --profile load up -d --build locust) \
     >/tmp/lab-locust.log 2>&1 \
-    || { erro "falha ao preparar o locust -- veja /tmp/lab-locust.log"; exit 1; }
-sleep 3
-CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
+    || { [ -t 1 ] && echo; erro "falha ao preparar o locust -- veja /tmp/lab-locust.log"; exit 1; }
+[ -t 1 ] && printf "%-60s\r" " "
+for _ in 1 2 3; do
+    CT=$(docker ps --format '{{.Names}}' | grep -E 'otel-hg-locust' | head -1)
+    [ -n "$CT" ] && break
+    sleep 1
+done
 [ -z "$CT" ] && { erro "o container do locust nao subiu -- veja /tmp/lab-locust.log"; exit 1; }
+
+# Rampa proporcional para atingir todos os usuarios em ~5s (minimo 1/s).
+RAMPA=$(( (USUARIOS + 4) / 5 ))
+[ "$RAMPA" -lt 1 ] && RAMPA=1
 
 # Na variante bridge os destinos sao os NOMES dos servicos, resolvidos pelo
 # DNS interno do Docker -- nao localhost.
@@ -142,11 +152,9 @@ converter() { case "$1" in *h) echo $(( ${1%h} * 3600 ));; *m) echo $(( ${1%m} *
 
 # Estimativa em minutos e segundos. Sao ~3s de partida do locust por cenario,
 # mais ~6s de preparacao do container -- MEDIDOS: um cenario de 10s leva 19s no
-# total, um de 20s leva 27s.
+# total, um de 20s leva 27s. Com "todos" em paralelo, todos rodam juntos.
 estimativa() {
-    local n=1
-    [ "$CENARIO" = "todos" ] && n=$(echo $CENARIOS | wc -w)
-    local seg=$(( n * ($(converter "$TEMPO") + 3) + 6 ))
+    local seg=$(( $(converter "$TEMPO") + 6 ))
     if [ -n "$DURACAO" ]; then
         echo "~$(( $(converter "$DURACAO") / 60 ))min (repete ate completar)"
     elif [ "$seg" -lt 60 ]; then
@@ -213,11 +221,73 @@ arquivo_do_cenario() {
 
 rodar_um() {
     local arq="$1"
+    local tmp="/tmp/locust-$$.out"
+    local total
+    total=$(converter "$TEMPO")
+
     docker exec "${ENVS[@]}" "$CT" \
-        locust -f "/service/$arq" --headless -u "$USUARIOS" -r 1 \
-               --run-time "$TEMPO" --only-summary 2>&1 \
-    | grep -E "^[[:space:]]*Aggregated" | head -1 \
-    | awk '{printf "   %s req · %s falhas · %s req/s · med %sms\n", $2, $3, $10, $8}'
+        locust -f "/service/$arq" --headless -u "$USUARIOS" -r "$RAMPA" \
+               --run-time "$TEMPO" --only-summary >"$tmp" 2>&1 &
+    local pid=$!
+
+    local seg=0
+    while kill -0 "$pid" 2>/dev/null; do
+        if [ -t 1 ]; then
+            printf "\r   rodando... %2ds/%ds (%d usuarios) " "$seg" "$total" "$USUARIOS"
+        fi
+        sleep 1
+        seg=$((seg + 1))
+    done
+    wait "$pid"
+    [ -t 1 ] && printf "\r%-50s\r" " "
+
+    grep -E "^[[:space:]]*Aggregated" "$tmp" | head -1 \
+        | awk '{printf "   %s req · %s falhas · %s req/s · med %sms\n", $2, $3, $10, $8}'
+    rm -f "$tmp"
+}
+
+rodar_todos_paralelo() {
+    local total
+    total=$(converter "$TEMPO")
+    local pids=()
+    local c arq tmp
+
+    for c in $CENARIOS; do
+        arq=$(arquivo_do_cenario "$c")
+        tmp="/tmp/locust-$$-$c.out"
+        docker exec "${ENVS[@]}" "$CT" \
+            locust -f "/service/$arq" --headless -u "$USUARIOS" -r "$RAMPA" \
+                   --run-time "$TEMPO" --only-summary >"$tmp" 2>&1 &
+        pids+=("$!")
+    done
+
+    local seg=0
+    while true; do
+        local vivos=0
+        for p in "${pids[@]}"; do
+            kill -0 "$p" 2>/dev/null && vivos=$((vivos + 1))
+        done
+        [ "$vivos" -eq 0 ] && break
+        if [ -t 1 ]; then
+            printf "\r   rodando %d cenarios em paralelo... %2ds/%ds (%d usuarios cada) " \
+                "$vivos" "$seg" "$total" "$USUARIOS"
+        fi
+        sleep 1
+        seg=$((seg + 1))
+    done
+
+    for p in "${pids[@]}"; do
+        wait "$p" 2>/dev/null
+    done
+    [ -t 1 ] && printf "\r%-70s\r" " "
+
+    for c in $CENARIOS; do
+        tmp="/tmp/locust-$$-$c.out"
+        echo "  [$c]"
+        grep -E "^[[:space:]]*Aggregated" "$tmp" 2>/dev/null | head -1 \
+            | awk '{printf "   %s req · %s falhas · %s req/s · med %sms\n", $2, $3, $10, $8}'
+        rm -f "$tmp"
+    done
 }
 
 laco() {
@@ -225,10 +295,7 @@ laco() {
     [ -n "$DURACAO" ] && fim=$(( $(date +%s) + $(converter "$DURACAO") ))
     while true; do
         if [ "$CENARIO" = "todos" ]; then
-            for c in $CENARIOS; do
-                echo "  [$c]"; rodar_um "$(arquivo_do_cenario "$c")"
-                [ -n "$fim" ] && [ "$(date +%s)" -ge "$fim" ] && return 0
-            done
+            rodar_todos_paralelo
         else
             local arq; arq=$(arquivo_do_cenario "$CENARIO")
             [ -z "$arq" ] && { erro "cenario invalido: $CENARIO"; exit 1; }
@@ -256,7 +323,7 @@ TITULO_FALHAS=""
 [ "$FALHAS" -gt 0 ] && TITULO_FALHAS=" · ${FALHAS}% com falha"
 titulo "CARGA -- cenario: $CENARIO · $USUARIOS usuarios${TITULO_FALHAS}"
 if [ "$CENARIO" = "todos" ]; then
-    echo "  $(echo $CENARIOS | wc -w | tr -d ' ') cenarios de $TEMPO cada · duracao total $(estimativa)"
+    echo "  $(echo $CENARIOS | wc -w | tr -d ' ') cenarios em paralelo ($TEMPO) · duracao total $(estimativa)"
 else
     echo "  $TEMPO de carga · duracao total $(estimativa)"
 fi

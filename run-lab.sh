@@ -123,6 +123,12 @@ if [ "$MODO_IMAGENS" = "auto" ] || [ "$MODO_IMAGENS" = "pull" ]; then
             erro "falha ao construir o nginx -- veja /tmp/lab-pull.log"
             exit 1
         fi
+        if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" --profile load build locust) \
+               >>/tmp/lab-pull.log 2>&1; then
+            ok "locust construido localmente"
+        else
+            aviso "nao foi possivel pre-construir o locust (o carga.sh tentara novamente)"
+        fi
         MODO_IMAGENS=nenhum
     elif [ "$MODO_IMAGENS" = "pull" ]; then
         erro "nao consegui baixar as imagens:"
@@ -219,7 +225,7 @@ echo "--------------------------------------------------"
 # o exportador OTel tenta, falha e repete ate o collector subir no passo 6.
 ajustar_porta_dashboard
 FS=(); while IFS= read -r linha; do FS+=("$linha"); done < <(compose_app)
-if (cd "$BASE_APP" && docker compose "${FS[@]}" up -d) >/tmp/lab-up.log 2>&1; then
+if (cd "$BASE_APP" && docker compose "${FS[@]}" --profile load up -d) >/tmp/lab-up.log 2>&1; then
     ok "aplicacao no ar"
 else
     erro "falha ao subir a aplicacao:"

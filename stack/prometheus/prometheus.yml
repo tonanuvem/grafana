@@ -64,4 +64,4 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: alvo
       - target_label: __address__
-        replacement: blackbox:9115
+        replacement: sonda:9115
