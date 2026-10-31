@@ -26,7 +26,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Saúde do Negócio — o que o cliente conseguiu fazer\n\nNenhum painel aqui mostra CPU, memória ou latência de serviço. Todos respondem\nà mesma pergunta: **quantas pessoas conseguiram concluir o que vieram fazer?**\n\nCompare a linha vermelha de recusas com a taxa de erro técnica ao lado.\nAs duas discordam — e a de negócio é a que está certa."
+        "content": "### Saúde do Negócio — o que o cliente conseguiu fazer\n\nNenhum painel aqui mostra CPU, memória ou latência de serviço. \nTodos respondem\nà mesma pergunta: **quantos clientes conseguiram concluir suas operações?**\n\nCompare a linha vermelha de recusas com a taxa de erro técnica ao lado.\nAs duas discordam — e a de negócio é a que está certa."
       }
     },
     {
