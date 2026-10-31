@@ -3,16 +3,16 @@
 # LAB GRAFANA -- gerador de carga (locust)
 # =============================================================================
 #   ./carga.sh                                todos os cenarios, 5 usuarios, 60s cada
-#   ./carga.sh --cenario transaction          so' a jornada de transferencia
-#   ./carga.sh --cenario extrato              so' a consulta de extrato
-#   ./carga.sh --cenario auth --usuarios 20   mais carga na autenticacao
-#   ./carga.sh --cenario auth --falhas        toda tentativa erra a senha
-#   ./carga.sh --cenario transaction --falhas transferencias acima do saldo
-#   ./carga.sh --cenario loan --falhas        credito negado
-#   ./carga.sh --cenario auth --falhas 35     ou o percentual que quiser
-#   ./carga.sh --duracao 20m                  repete ate completar 20 min
+#   ./carga.sh --cenario auth --usuarios 20   carga na autenticacao, podendo definir quantos usuários
+#   ./carga.sh --cenario auth --falhas        tentativas de login com erros de senha
+#   ./carga.sh --cenario auth --falhas 35     percentual de login com erros (ex: 35%) e restante login com sucesso
+#   ./carga.sh --cenario transaction          somente a jornada de transferencia
+#   ./carga.sh --cenario transaction --falhas tentativas de transferências acima do saldo
+#   ./carga.sh --cenario extrato              somente a consulta de extrato
+#   ./carga.sh --cenario loan --falhas        tentativas de emprestimo com crédito negado
+#   ./carga.sh --duracao 20m                  dispara todos os testes ate completar 20 min
+#   ./carga.sh --duracao 45m --fundo          dispara todos os testesroda em segundo plano
 #   ./carga.sh --parar                        encerra a carga em segundo plano
-#   ./carga.sh --fundo --duracao 60m          roda em segundo plano
 #
 # SEM CARGA OS PAINEIS FICAM VAZIOS. As metricas do lab nascem dos traces:
 # sem requisicao nao ha trace, sem trace nao ha metrica. E a deteccao de
