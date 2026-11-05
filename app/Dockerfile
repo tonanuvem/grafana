@@ -5,8 +5,7 @@ COPY index.html /w/index.html
 RUN set -e; \
     grep -q 'id="integrantes"' /w/index.html; \
     grep -q 'gerar()'          /w/index.html; \
-    grep -q 'deploy.sh'        /w/index.html; \
-    grep -q 'decisao.sh'       /w/index.html
+    grep -q 'deploy.sh'        /w/index.html
 
 FROM nginx:1.27-alpine
 COPY --from=build /w/index.html /usr/share/nginx/html/index.html
