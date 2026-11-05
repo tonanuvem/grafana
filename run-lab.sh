@@ -351,6 +351,46 @@ else
     LOGIN_OK=false
 fi
 
+# ------------------------------------------- 10. assistente de IA (opcional)
+#
+# Registra o servidor MCP do Grafana no agy, para o aluno poder perguntar
+# sobre a propria telemetria em linguagem natural.
+#
+# Tudo aqui e' opcional e nao-fatal: numa maquina sem `agy` (o Mac do
+# professor, por exemplo) a etapa e' pulada e o lab sobe igual.
+#
+# O `docker pull` fica AQUI, na preparacao, e nao na aula: sao 160 MB, e sem
+# isso o primeiro prompt do aluno travaria baixando a imagem na hora da
+# demonstracao.
+#
+# Em stdio quem sobe o servidor e' o proprio agy, a cada chamada de
+# ferramenta -- por isso nao ha servico no docker-compose para isto.
+echo
+echo "10. ASSISTENTE DE IA (OPCIONAL)"
+echo "--------------------------------------------------"
+if command -v agy >/dev/null 2>&1; then
+    # A rede e' a do bank-demo: dentro do container, `localhost` seria o
+    # proprio container, e `host.docker.internal` so' existe no Docker
+    # Desktop. Pelo nome do servico funciona nos dois sistemas.
+    REDE_MCP=$(docker network ls --format '{{.Name}}' \
+        | grep -E '(fiapbank|martianbank)-otel-hg_bankapp-network' | head -1)
+    if [ -n "$REDE_MCP" ] \
+       && docker pull -q mcp/grafana >/dev/null 2>&1 \
+       && agy mcp add grafana docker \
+              run -i --rm --network "$REDE_MCP" \
+              --entrypoint /app/mcp-grafana \
+              -e GRAFANA_URL=http://obs-grafana:3000 \
+              mcp/grafana --transport stdio >/dev/null 2>&1; then
+        ok "MCP do Grafana registrado no agy"
+        echo "       Falta so' o login:  agy login"
+        echo "       Depois rode 'agy' e pergunte: quais datasources existem?"
+    else
+        aviso "nao consegui registrar o MCP -- o lab funciona sem ele"
+    fi
+else
+    aviso "agy nao encontrado -- etapa pulada (o lab nao depende dela)"
+fi
+
 # ------------------------------------------------------------- resumo
 IP=$(curl -s --max-time 4 checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
 H="${IP:-localhost}"

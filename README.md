@@ -93,9 +93,7 @@ run-lab.sh                  porta de entrada: sobe tudo, na ordem certa
 remove-lab.sh               tira tudo do ar
 run-stack.sh                só o stack (o run-lab.sh chama este)
 carga.sh                    gerador de carga (locust)
-deploy.sh                   publica versões guiadas / caos / diagnosticar / rollback
-decisao.sh                  (opcional, fora do roteiro) registra a decisão com os números
-slo.sh                      alvo do SLO e valor por transferência
+deploy.sh                   publica as versões guiadas (v1.1 → v1.4) e faz rollback
 lib.sh                      funções comuns aos scripts
 app/                        o guia do aluno (nginx) -- bash app/guia.sh
 docs/                       roteiro e gabarito
@@ -107,6 +105,11 @@ stack/
   loki/ tempo/ grafana/     configs e provisionamento
 env/
   grafana.env               o que o LAB GRAFANA muda no bank-demo -- só variáveis
+
+Fora do roteiro (opcionais, não citados no fluxo guiado):
+decisao.sh                  registra a decisão de rollback/seguir com os números
+slo.sh                      muda o alvo do SLO e o valor por transferência
+deploy.sh caos              versão às cegas, para diagnosticar se sobrar tempo
 ```
 
 ---

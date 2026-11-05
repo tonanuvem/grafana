@@ -53,7 +53,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### Error Budget — Transferência entre contas\n\nJanela do lab: **6 horas** (em produção seriam 30 dias). Com alvo de 99% isso dá\n**3,6 minutos** de orçamento de erro.\n\nO seletor **Alvo do SLO** acima recalcula o orçamento na hora — é para explorar.\nComprometer-se custa um comando: `./slo.sh alvo 99.5`, que é o que muda o alerta.",
+        "content": "### Error Budget — Transferência entre contas\n\nJanela do lab: **6 horas** (em produção seriam 30 dias). Com alvo de 99% isso dá\n**3,6 minutos** de orçamento de erro.\n\nO seletor **Alvo do SLO** acima recalcula o orçamento na hora, só para explorar.",
         "mode": "markdown"
       },
       "pluginVersion": "12.2.0",
@@ -486,7 +486,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Quebrar por versão é o que transforma 'está lento' em 'foi o deploy das 14:32'.\n\n---\n**De onde vem este número**\n\n```\nhistogram_quantile(0.9, sum by (service_version, le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))\n```",
+      "description": "p90 = percentil 90. Se o p90 está em 1,5s, então 9 de cada 10 transferências terminaram em menos de 1,5s e 1 demorou mais.\n\n**Não é média**: a média de 100 transferências rápidas com 10 lentíssimas continua parecendo boa — o percentil não deixa a cauda se esconder.\n\nQuebrar por versão é o que transforma “está lento” em “foi o deploy das 14:32”.\n\n---\n**De onde vem este número**\n\n```\nhistogram_quantile(0.9, sum by (service_version, le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -583,7 +583,7 @@
           "refId": "A"
         }
       ],
-      "title": "p90 por VERSÃO — a evidência de que foi a mudança",
+      "title": "Tempo de resposta por versão — 9 de cada 10 transferências (p90)",
       "type": "timeseries"
     },
     {
@@ -718,7 +718,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### O 3º Pilar da Investigação — Evidência nos Logs (`transactions`)\n\nA **Métrica** (Burn Rate) acusa o sintoma, o **Trace** (`p90 por VERSÃO` e `Service Graph`) aponta qual versão degradou, e o **Log** abaixo revela a mensagem exata emitida pelo serviço em produção.",
+        "content": "### O 3º pilar da investigação — a evidência nos logs (`transactions`)\n\nA **métrica** (orçamento restante) acusa o sintoma, o **traço** (`Tempo de resposta por versão` e o `Service Graph`) aponta qual versão degradou, e o **log** abaixo mostra a mensagem que o serviço emitiu em produção.\n\nSe o painel estiver vazio, isso também é resposta: o serviço pode estar lento sem falhar.",
         "mode": "markdown"
       },
       "pluginVersion": "12.2.0",
@@ -730,7 +730,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Exibe em tempo real os eventos de erro e inicialização de regressão do serviço transactions.\n\n---\n**Query no Loki**\n\n```\n{service_name=\"transactions\"} |= \"regressao simulada\"\n```",
+      "description": "Mostra apenas as requisições que a versão em produção recusou de propósito. Painel vazio é resultado, não falta de dado: na v1.2.0 o serviço está lento e **não** há nenhuma linha aqui — é o pilar de log provando que lentidão não gera erro. Na v1.3.0 as linhas aparecem.",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -767,11 +767,11 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"transactions\"} |= \"regressao simulada\"",
+          "expr": "{service_name=\"transactions\"} |= \"regressao simulada: falhando\"",
           "refId": "A"
         }
       ],
-      "title": "Logs de erro e regressão — serviço transactions (Loki)",
+      "title": "Erros do serviço transactions (Loki)",
       "type": "logs"
     }
   ],
@@ -789,7 +789,7 @@
           "text": "99",
           "value": "99"
         },
-        "description": "Recalcula o orçamento na hora, sem mexer em nada. Para COMPROMETER-SE com um alvo (e mudar o alerta), use ./slo.sh alvo <n>.",
+        "description": "Recalcula o orçamento na hora, sem mexer em nada. Serve para explorar o efeito de um alvo mais rígido.",
         "label": "Alvo do SLO (explorar)",
         "name": "alvo",
         "options": [

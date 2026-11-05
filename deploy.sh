@@ -4,10 +4,12 @@
 # =============================================================================
 #   ./deploy.sh                    mostra a versao no ar, a jornada e o CFR
 #   ./deploy.sh nova-versao        avanca na sequencia guiada (v1.1 -> v1.4)
-#   ./deploy.sh caos               ativa o Desafio Final as cegas (v2.0.0-caos)
-#   ./deploy.sh diagnosticar A|B|C valida o diagnostico do Modo Caos
 #   ./deploy.sh rollback           reverte para a ultima versao estavel (v1.4.0)
 #   ./deploy.sh --reset            volta a v1.0.0 e limpa o historico
+#
+#   Fora do roteiro (opcional, nao citado no fluxo guiado):
+#     ./deploy.sh caos               versao as cegas para diagnostico
+#     ./deploy.sh diagnosticar A|B|C confere o diagnostico do Modo Caos
 # =============================================================================
 
 set -uo pipefail
@@ -112,74 +114,71 @@ orientar_versao() {
     case "$v" in
       v1.1.0)
         cat <<'EOF'
-  ETAPA 1 DE 4 -- O DEPLOY DE CONTROLE (GRUPO DE CONTROLE)
-  --------------------------------------------------------
-  O que observar no Grafana (aguarde ~60s):
-    1. Abra: Dashboards > 2 · Error Budget (e 3 · Deploys e CFR)
-    2. Localize a linha vertical tracejada ROXA (anotacao do deploy v1.1.0).
-    3. Pergunta: alguma curva de latencia, erro ou Burn Rate se moveu?
+  Etapa 1 de 4 — um deploy que não muda nada
+  ------------------------------------------
+  A v1.1.0 subiu sem alterar latência nem taxa de erro.
 
-  Licao: nem todo deploy causa incidente. Sem conhecer o comportamento
-         de um deploy saudavel, qualquer oscilacao vira culpa no deploy.
+  Aguarde 60s e abra o dashboard "2 · Error Budget":
+    1. a linha roxa tracejada marca o momento do deploy;
+    2. nenhuma curva se move depois dela.
 
-  Proximo passo (quando conferir no painel):
-    ./deploy.sh nova-versao
+  Guarde esta imagem: é a aparência de um deploy saudável. Sem essa
+  referência, qualquer oscilação parece culpa do deploy.
+
+  Próximo:  ./deploy.sh nova-versao
 EOF
         ;;
       v1.2.0)
         cat <<'EOF'
-  ETAPA 2 DE 4 -- O ASSASSINO SILENCIOSO (MAPA VERDE, NEGOCIO CAINDO)
-  -------------------------------------------------------------------
-  O que observar no Grafana (aguarde ~60s):
-    1. Drilldown > Traces > Service Graph:
-       - Qual e' a cor do no' `transactions`? (Continua 100% VERDE!)
-       - A taxa de erro HTTP 500 e o Burn Rate continuam em ZERO.
-    2. Dashboards > 2 · Error Budget:
-       - Olhe "p90 por VERSAO": a serie v1.2.0 saltou para > 1,5s!
-       - Olhe "SLI de latencia (% abaixo de 1,5s)": despencou!
-    3. Dashboards > 1 · Saude do Negocio:
-       - Olhe "Transferencias concluidas por minuto": o volume caiu so'
-         porque ficou lento, sem nenhum erro 500!
+  Etapa 2 de 4 — ficou lento, e nada acusou
+  -----------------------------------------
+  A v1.2.0 somou 1,1s por requisição. Nenhuma requisição falha.
 
-  Proximo passo (apos investigar a lentidao nos paineis):
-    ./deploy.sh nova-versao
+  Aguarde 60s e confira, nesta ordem:
+    1. Explore → Tempo → aba "Service Graph": o nó transactions está verde?
+    2. Dashboard 2, "Tempo de resposta por versão": a v1.2.0 passou de 1,5s?
+    3. Dashboard 1, "Transferências concluídas por minuto": o volume caiu?
+
+  Mapa verde e negócio em queda ao mesmo tempo: é isso que um
+  monitoramento baseado só em erro deixa passar.
+
+  Próximo:  ./deploy.sh nova-versao
 EOF
         ;;
       v1.3.0)
         cat <<'EOF'
-  ETAPA 3 DE 4 -- O INCENDIO NO CORE (OS 3 PILARES EM ACAO)
-  ---------------------------------------------------------
-  O incidente escalou! Percorra os 3 pilares no Grafana (aguarde ~60s):
-    1. METRICAS (Dashboards > 2 · Error Budget):
-       - Veja o "Burn rate (5 min)" explodir (> 7,2x) e o "Orcamento restante"
-         derreter rapidamente.
-    2. TRACES (Drilldown > Traces > Service Graph):
-       - O no' `transactions` ficou VERMELHO!
-       - No Explore > Tempo, filtre por `status = error` e veja o span
-         POST /transfer falhando com HTTP 500 na `service.version = 1.3.0`.
-    3. LOGS (No rodape' do Dashboard "2 · Error Budget" ou Explore > Loki):
-       - Veja as linhas de ERROR confessando a falha na v1.3.0!
+  Etapa 3 de 4 — agora também falha
+  ---------------------------------
+  A v1.3.0 manteve a lentidão e passou a devolver erro 500 em 15%
+  das requisições.
 
-  Proximo passo (aplicar o Hotfix / Fix-Forward para corrigir o bug):
-    ./deploy.sh nova-versao
+  Aguarde 60s e percorra os três sinais:
+    1. Métrica — Dashboard 2: o orçamento restante começa a derreter.
+    2. Traço — Explore → Tempo → aba "Service Graph": o nó transactions
+       ficou vermelho. Na aba "Search", filtre status = error e abra um
+       span da versão 1.3.0.
+    3. Log — Dashboard 2, "Erros do serviço transactions": as linhas aparecem.
+
+  Compare com a etapa anterior: lá o painel de log estava vazio.
+
+  Próximo:  ./deploy.sh nova-versao
 EOF
         ;;
       v1.4.0)
         cat <<'EOF'
-  ETAPA 4 DE 4 -- O HOTFIX / FIX-FORWARD (ESTANCANDO O SANGRAMENTO)
-  -----------------------------------------------------------------
-  A correcao (v1.4.0) entrou no ar! Confira nos paineis (aguarde ~60s):
-    1. Dashboards > 2 · Error Budget:
-       - Os erros por minuto caem a zero e o "p90 por VERSAO" da v1.4.0
-         volta para ~250ms.
-       - ATENCAO AO GAUGE "Orcamento restante": ele parou de cair, mas
-         NAO voltou para 100%! Corrigir (ou reverter) estanca o sangramento,
-         mas nao repoe o orcamento gasto -- so' o tempo repoe.
+  Etapa 4 de 4 — a correção
+  -------------------------
+  A v1.4.0 removeu a lentidão e o erro.
 
-  PRONTO PARA O DESAFIO FINAL?
-    Dispare uma versao misteriosa e tente descobrir o que ela tem olhando
-    apenas para os dashboards:
-      ./deploy.sh caos
+  Aguarde 60s e confira no dashboard "2 · Error Budget":
+    1. os erros por minuto voltam a zero;
+    2. o p90 da v1.4.0 volta para cerca de 250ms;
+    3. o orçamento restante parou de cair — e não voltou a 100%.
+
+  O terceiro item é o que importa: corrigir estanca o consumo, mas o
+  orçamento gasto só se recompõe com o tempo.
+
+  Trilha concluída.
 EOF
         ;;
     esac
@@ -189,7 +188,7 @@ mostrar_status() {
     local v; v=$(versao_atual)
     titulo "DEPLOYS -- servico transactions"
     echo
-    echo "  Trilha: v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.3.0 -> v1.4.0 -> [caos] -> [rollback]"
+    echo "  Trilha: v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.3.0 -> v1.4.0"
     echo "  Versao no ar agora:  $v"
     if [ -f "$HIST" ] && [ "$(wc -l < "$HIST")" -gt 1 ]; then
         echo
@@ -240,9 +239,8 @@ case "$ACAO" in
           PROX=$((IDX+1))
       fi
       if [ "$PROX" -ge "${#VERSOES[@]}" ]; then
-          aviso "voce ja concluiu as 4 versoes guiadas (esta na v1.4.0)."
-          echo "       Agora encare o Desafio Final rodando:"
-          echo "         ./deploy.sh caos"
+          ok "trilha concluída: as 4 versões guiadas já passaram pela produção."
+          echo "       Para reconstruir o incidente do zero: ./deploy.sh --reset"
           exit 0
       fi
       NOVA=$(campo "$PROX" 1); ATRASO=$(campo "$PROX" 2); FALHA=$(campo "$PROX" 3)
@@ -353,7 +351,7 @@ EOF
             A)
               echo "  Por que os paineis provaram a Opcao [A]:"
               echo "    - No Service Graph e em 'Erro por versao', a v2.0.0-caos teve 0 erros 500."
-              echo "    - Mas em 'p90 por VERSAO' a latencia subiu para ~2s e o SLI de latencia caiu!"
+              echo "    - Mas em 'Tempo de resposta por versao' a latencia subiu para ~2s e o SLI de latencia caiu!"
               ;;
             B)
               echo "  Por que os paineis provaram a Opcao [B]:"
@@ -379,9 +377,9 @@ EOF
           aviso "Os paineis do Grafana mostram outro padrao para a v2.0.0-caos!"
           echo
           echo "  Dica de investigacao (olhe no dashboard '2 · Error Budget'):"
-          echo "    1. Olhe o painel 'Transferencias por minuto x erros' e o 'Burn rate (5 min)':"
+          echo "    1. Olhe 'Transferencias por minuto (negocio) x erros (tecnico)':"
           echo "       - Ha erros HTTP 500 subindo agora? (Se NAO ha erros, so' pode ser [A])."
-          echo "    2. Se HA erros HTTP 500 subindo, olhe o grafico 'p90 por VERSAO' da v2.0.0-caos:"
+          echo "    2. Se HA erros HTTP 500 subindo, olhe o grafico 'Tempo de resposta por versao' da v2.0.0-caos:"
           echo "       - O p90 da v2.0.0-caos esta ALTO (> 2s) -> Opcao [B]"
           echo "       - O p90 da v2.0.0-caos esta BAIXO (~250ms) -> Opcao [C]"
           echo
@@ -441,5 +439,5 @@ EOF
       exit 0 ;;
 
   *) erro "acao desconhecida: $ACAO"
-     echo "       use: status | nova-versao | caos | diagnosticar <A|B|C> | rollback | --reset"; exit 1 ;;
+     echo "       use: status | nova-versao | rollback | --reset"; exit 1 ;;
 esac

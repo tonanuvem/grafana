@@ -207,7 +207,7 @@ o aluno **não** vai ver acontecer. Não ver é a lição. Vale para o fix-forwa
 ## Fase 3b — Modo Caos, o que vale ponto
 
 - **Diagnóstico com dois sinais.** A resposta precisa citar erro (burn rate ou
-  "Erro por versão") **e** latência ("p90 por VERSÃO") da série `v2.0.0-caos`.
+  "Erro por versão") **e** latência ("Tempo de resposta por versão") da série `v2.0.0-caos`.
   Acertar a letra sem citar os dois painéis é chute.
 - **A pegadinha é a C (Fast-Fail).** Quem só olha latência conclui "está tudo
   bem"; quem só olha erro confunde com a B. Falhar rápido não gasta tempo — o
