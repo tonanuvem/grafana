@@ -200,7 +200,7 @@ terceiro rosto do mesmo tema do Encontro 1.
 ### Depois do hotfix (e do rollback do caos)
 
 Latência e erro voltam em 1–2 min. **O orçamento restante não volta.** Ele só
-se recupera conforme os minutos ruins saem da janela de 6h — o que, numa aula,
+se recupera conforme os minutos ruins saem da janela mensal — o que, numa aula,
 o aluno **não** vai ver acontecer. Não ver é a lição. Vale para o fix-forward
 (v1.4.0) e para o rollback (v2.0.0-caos → v1.4.0): os dois estancam, nenhum repõe.
 

@@ -35,7 +35,7 @@
     {
       "type": "stat",
       "title": "Change Failure Rate",
-      "description": "Acima de 15% a literatura do DORA considera baixo desempenho. Com N pequeno, não conclua nada.\n\n---\n**De onde vem este número**\n\n```\n(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100\n```",
+      "description": "Percentual das mudanças que exigiram remediação — rollback **ou** hotfix (fix-forward). É a definição do DORA: falhou o que precisou ser consertado, não só o que foi revertido.\n\nAcima de 15% a literatura do DORA considera baixo desempenho. Com N pequeno, não conclua nada.\n\n---\n**De onde vem este número**\n\n```\n(lab_falhas_total / clamp_min(lab_deploys_total, 1)) * 100\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
@@ -49,7 +49,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(lab_rollbacks_total / clamp_min(lab_deploys_total, 1)) * 100",
+          "expr": "(lab_falhas_total / clamp_min(lab_deploys_total, 1)) * 100",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
@@ -170,8 +170,8 @@
     },
     {
       "type": "stat",
-      "title": "Revertidos",
-      "description": "\n\n---\n**De onde vem este número**\n\n```\nlab_rollbacks_total\n```",
+      "title": "Falhas (rollback ou hotfix)",
+      "description": "Mudanças que exigiram remediação. O hotfix da v1.4.0 conta: a v1.3.0 falhou em produção e precisou ser corrigida.\n\n---\n**De onde vem este número**\n\n```\nlab_falhas_total\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
@@ -185,7 +185,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "lab_rollbacks_total",
+          "expr": "lab_falhas_total",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"

@@ -53,7 +53,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### Error Budget — Transferência entre contas\n\nJanela do lab: **6 horas** (em produção seriam 30 dias). Com alvo de 99% isso dá\n**3,6 minutos** de orçamento de erro.\n\nO seletor **Alvo do SLO** acima recalcula o orçamento na hora, só para explorar.",
+        "content": "### Error Budget — Transferência entre contas\n\nO compromisso é **mensal**, como em produção. Com alvo de 99% isso dá **7,2 horas** de indisponibilidade permitida no mês; a 99,5%, 3,6 horas.\n\nO seletor **Alvo do SLO** acima recalcula o orçamento na hora, só para explorar.",
         "mode": "markdown"
       },
       "pluginVersion": "12.2.0",
@@ -65,7 +65,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Rollback ESTANCA o consumo, não repõe. Só o tempo repõe, conforme os minutos ruins saem da janela de 6h.\n\n---\n**De onde vem este número**\n\n```\njornada:error_budget_restante:ratio * 100\n```",
+      "description": "Rollback ESTANCA o consumo, não repõe. Só o tempo repõe, conforme os minutos ruins saem da janela mensal.\n\n---\n**De onde vem este número**\n\n```\njornada:error_budget_restante:ratio * 100\n```",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -146,7 +146,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Quanto tempo de falha total o compromisso permite em 6h. Cada nove a mais custa plantão.\n\n---\n**De onde vem este número**\n\n```\n(1 - $alvo/100) * 6 * 60\n```",
+      "description": "Quanto tempo de falha total o compromisso permite em um mês. Cada nove a mais custa plantão: 99% são 7,2 h, 99,9% são 43 min.\n\n---\n**De onde vem este número**\n\n```\n(1 - $alvo/100) * 30 * 24\n```",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -163,7 +163,7 @@
               }
             ]
           },
-          "unit": "m"
+          "unit": "h"
         },
         "overrides": []
       },
@@ -205,12 +205,12 @@
             "type": "prometheus",
             "uid": "prom"
           },
-          "expr": "(1 - $alvo/100) * 6 * 60",
+          "expr": "(1 - $alvo/100) * 30 * 24",
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Minutos de orçamento na janela",
+      "title": "Horas de indisponibilidade permitidas no mês",
       "type": "stat"
     },
     {

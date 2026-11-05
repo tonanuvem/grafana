@@ -165,9 +165,9 @@ groups:
             sum(rate(traces_span_metrics_calls_total{
               service_name=~"dashboard|transactions",
               span_name=~"POST /transaction/|POST /transfer",
-              status_code="STATUS_CODE_ERROR"}[6h])) or vector(0)
+              status_code="STATUS_CODE_ERROR"}[30d])) or vector(0)
           ) / sum(rate(traces_span_metrics_calls_total{
-              service_name="dashboard", span_name="POST /transaction/"}[6h]))
+              service_name="dashboard", span_name="POST /transaction/"}[30d]))
         labels: { jornada: transferencia }
 
       - record: jornada:error_budget_consumido:ratio
@@ -177,7 +177,7 @@ groups:
         expr: clamp(1 - jornada:error_budget_consumido:ratio, 0, 1)
 
       # Velocidade de consumo. 1 = gasta o orcamento exatamente no fim da
-      # janela. 7,2 = esgota em ~50 min de uma janela de 6h.
+      # janela. 7,2 = consome em ~4 dias o orcamento de um mes inteiro.
       - record: jornada:burn_rate:5m
         expr: |
           (jornada:errors:rate5m / jornada:requests:rate5m) / (1 - jornada:slo_objetivo)

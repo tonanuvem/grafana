@@ -7,7 +7,7 @@
 groups:
   - name: alvos
     rules:
-      # Janela do lab: 6h (em producao seriam 30 dias).
+      # Janela do SLO: 30 dias, como em producao.
       - record: jornada:slo_objetivo
         expr: vector(0.99)
         labels: { jornada: transferencia }

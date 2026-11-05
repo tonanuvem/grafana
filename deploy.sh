@@ -89,14 +89,21 @@ registrar() {
 
 publicar_metricas() {
     local deploys rollbacks codigo corpo
-    deploys=$(grep -c ',deploy,'   "$HIST" 2>/dev/null); deploys=${deploys:-0}
+    # O hotfix tambem e' um deploy, entao conta no denominador.
+    deploys=$(grep -cE ',(deploy|hotfix),' "$HIST" 2>/dev/null); deploys=${deploys:-0}
     rollbacks=$(grep -c ',rollback,' "$HIST" 2>/dev/null); rollbacks=${rollbacks:-0}
+    local hotfixes falhas
+    hotfixes=$(grep -c ',hotfix,' "$HIST" 2>/dev/null); hotfixes=${hotfixes:-0}
+    # Falha, no DORA, e' a mudanca que exigiu remediacao: reverter ou corrigir.
+    falhas=$((rollbacks + hotfixes))
 
     corpo=$(printf '%s\n' \
         "# TYPE lab_deploys_total gauge" \
         "lab_deploys_total $deploys" \
         "# TYPE lab_rollbacks_total gauge" \
         "lab_rollbacks_total $rollbacks" \
+        "# TYPE lab_falhas_total gauge" \
+        "lab_falhas_total $falhas" \
         "# TYPE lab_deploy_timestamp_seconds gauge" \
         "lab_deploy_timestamp_seconds $(date +%s)")
 
@@ -172,7 +179,7 @@ EOF
 
   Aguarde 60s e confira no dashboard "2 · Error Budget":
     1. os erros por minuto voltam a zero;
-    2. o p90 da v1.4.0 volta para cerca de 250ms;
+    2. o tempo de resposta da v1.4.0 volta para cerca de 90ms;
     3. o orçamento restante parou de cair — e não voltou a 100%.
 
   O terceiro item é o que importa: corrigir estanca o consumo, mas o
@@ -247,7 +254,14 @@ case "$ACAO" in
       titulo "PUBLICANDO $NOVA"
       echo
       aplicar "$NOVA" "$ATRASO" "$FALHA"
-      registrar "$NOVA" "deploy" "em-observacao"
+      # O CFR do DORA conta como falha a mudanca que exigiu remediacao --
+      # rollback OU fix-forward. A v1.4.0 e' o hotfix: registrar como
+      # "deploy" deixava o CFR em zero numa trilha que teve um incidente.
+      if [ "$NOVA" = "v1.4.0" ]; then
+          registrar "$NOVA" "hotfix" "corrigiu-$ATUAL"
+      else
+          registrar "$NOVA" "deploy" "em-observacao"
+      fi
       ok "$NOVA no ar (anterior: $ATUAL)"
       echo
       orientar_versao "$NOVA"
