@@ -12,3 +12,44 @@ storage:
     backend: local
     wal:   { path: /var/tempo/wal }
     local: { path: /var/tempo/blocks }
+
+# -----------------------------------------------------------------------------
+# metrics-generator com APENAS o processador local-blocks.
+#
+# Sem ele, qualquer consulta TraceQL de metrica sobre dados recentes falha com
+# "error finding generators: empty ring" -- e e' disso que vivem as abas
+# Breakdown, Service structure e Comparison do Traces Drilldown. A aba Traces
+# funcionava; o resto da tela nao.
+#
+# A causa e' que os processadores do generator nascem DESABILITADOS: o bloco
+# `metrics_generator` existe com os padroes, mas `overrides` sem `processors`
+# deixa o generator fora do ring. MEDIDO nos dois sentidos, com Tempo 2.9.0 e os
+# mesmos spans: com esta config a consulta devolve series; sem ela, devolve o
+# erro acima, identico ao da tela.
+#
+# So' `local-blocks`, e NAO `span-metrics`/`service-graphs`, de proposito: estas
+# duas ja' sao produzidas pelos conectores do OTel Collector. Liga-las aqui
+# criaria uma segunda fonte para o mesmo numero, e o aluno nao saberia de qual
+# dos dois caminhos veio o valor do painel.
+#
+# `remote_write` fica vazio: o generator NAO escreve no Prometheus, so' guarda
+# spans recentes para conseguir calcular metrica sobre eles. Custo MEDIDO:
+# 58 MiB -> 177 MiB de memoria no container.
+#
+# ATENCAO ao nome: `local_blocks` com sublinhado no bloco `processor`, e
+# `local-blocks` com hifen na lista de `processors`. O Tempo aceita so' assim.
+# -----------------------------------------------------------------------------
+metrics_generator:
+  storage:
+    path: /var/tempo/generator/wal
+  traces_storage:
+    path: /var/tempo/generator/traces
+  processor:
+    local_blocks:
+      filter_server_spans: false
+      flush_to_storage: true
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [local-blocks]
