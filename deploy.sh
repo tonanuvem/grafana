@@ -23,10 +23,10 @@ ARQ_CAOS="$ESTADO/caos.env"
 #
 #   Passo 1 (v1.1.0): Controle (0ms, 0% erro) -- prova que nem todo deploy
 #                     quebra producao; cria a linha vertical roxa sem mover curvas.
-#   Passo 2 (v1.2.0): Degradacao silenciosa (+1100ms, 0% erro) -- Service Graph
+#   Passo 2 (v1.2.0): Degradacao silenciosa (+1400ms, 0% erro) -- Service Graph
 #                     continua VERDE e erro tecnico em 0%, mas p90 sobe, SLI de
 #                     latencia cai e o volume de negocio (transferencias/min) cai.
-#   Passo 3 (v1.3.0): Incidente severo (+1100ms, 15% HTTP 500) -- Service Graph
+#   Passo 3 (v1.3.0): Incidente severo (+1400ms, 15% HTTP 500) -- Service Graph
 #                     fica VERMELHO, Burn Rate dispara derretendo o Error Budget,
 #                     traces com erro surgem no Tempo e logs ERROR no Loki.
 #   Passo 4 (v1.4.0): Hotfix / Fix-Forward (0ms, 0% erro) -- limpa a lentidao e
@@ -40,8 +40,8 @@ ARQ_CAOS="$ESTADO/caos.env"
 VERSOES=(
   "v1.0.0|0|0|linha de base"
   "v1.1.0|0|0|deploy saudavel -- o controle: nenhuma metrica reage"
-  "v1.2.0|1100|0|lentidao silenciosa: +1,1s por requisicao, responde 200, mapa VERDE"
-  "v1.3.0|1100|15|o incidente escala: +1,1s e 15% devolvem 500, mapa VERMELHO"
+  "v1.2.0|1400|0|lentidao silenciosa: +1,4s por requisicao, responde 200, mapa VERDE"
+  "v1.3.0|1400|15|o incidente escala: +1,4s e 15% devolvem 500, mapa VERMELHO"
   "v1.4.0|0|0|hotfix (fix-forward): remove a lentidao e o erro"
 )
 
@@ -139,7 +139,7 @@ EOF
         cat <<'EOF'
   Etapa 2 de 4 — ficou lento, e nada acusou
   -----------------------------------------
-  A v1.2.0 somou 1,1s por requisição. Nenhuma requisição falha.
+  A v1.2.0 somou 1,4s por requisição. Nenhuma requisição falha.
 
   Aguarde 60s e confira, nesta ordem:
     1. Explore → Tempo → aba "Service Graph": o nó transactions está verde?

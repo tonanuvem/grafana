@@ -216,7 +216,11 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <p class="sec-sub">Esta fase inteira depende de tráfego vivo: você vai publicar, esperar o
     sinal aparecer e percorrer cinco telas. Deixe a carga rodando <b>em segundo plano</b> antes
     de começar, e só a encerre no fim da fase.</p>
-    <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 45m</code><button onclick="cp(this)">copiar</button></div>
+    <div class="nota"><b>Ligue a carga e espere ~15 minutos antes do primeiro deploy.</b>
+    O orçamento de erro é uma fração do volume: com pouco tráfego acumulado, até o
+    reinício de um container na publicação consome uma fatia grande dele. Quanto mais
+    tráfego na janela, mais o orçamento reflete o incidente e não a mecânica do deploy.</div>
+    <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 30 --duracao 45m</code><button onclick="cp(this)">copiar</button></div>
     <p class="sec-sub">Abra <a class="ir" data-ir="dash-budget" href="#">2 · Error Budget</a>. Confira o ponto de partida:
     orçamento restante, SLI de latência e volume. A partir daqui você vai publicar <b>quatro versões</b>,
     sempre para frente, e o próprio terminal diz o que procurar em cada uma.</p>

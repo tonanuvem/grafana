@@ -65,7 +65,7 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "Rollback ESTANCA o consumo, não repõe. Só o tempo repõe, conforme os minutos ruins saem da janela mensal.\n\n---\n**De onde vem este número**\n\n```\njornada:error_budget_restante:ratio * 100\n```",
+      "description": "Segue o seletor **Alvo do SLO** acima: mude o alvo e o orçamento recalcula na hora.\n\nRollback ESTANCA o consumo, não repõe — só o tempo repõe, conforme os minutos ruins saem da janela mensal.\n\n**Atenção:** os alertas continuam usando o alvo comprometido no `alvos.yml`, não este seletor. Aqui é para explorar.\n\n---\n**De onde vem este número**\n\n```\nclamp(( 1 - (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - $alvo/100) ) * 100, 0, 100)\n```",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -99,7 +99,7 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 7,
+        "w": 9,
         "x": 0,
         "y": 4
       },
@@ -133,7 +133,7 @@
             "type": "prometheus",
             "uid": "prom"
           },
-          "expr": "jornada:error_budget_restante:ratio * 100",
+          "expr": "clamp(( 1 - (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - $alvo/100) ) * 100, 0, 100)",
           "instant": true,
           "refId": "A"
         }
@@ -169,8 +169,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 7,
+        "w": 7,
+        "x": 9,
         "y": 4
       },
       "id": 5,
@@ -218,88 +218,6 @@
         "type": "prometheus",
         "uid": "prom"
       },
-      "description": "O mesmo incidente, medido contra outro compromisso. Mude o seletor e veja o mesmo dado virar outra decisão. (limitado a 0-100%: orçamento estourado é zero, não número negativo)\n\n---\n**De onde vem este número**\n\n```\nclamp(( 1 - (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - $alvo/100) ) * 100, 0, 100)\n```",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 25
-              },
-              {
-                "color": "green",
-                "value": 75
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 5,
-        "x": 13,
-        "y": 4
-      },
-      "id": 4,
-      "links": [
-        {
-          "targetBlank": true,
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22clamp%28%28%201%20-%20%281%20-%20jornada%3Asli_disponibilidade%3Aratio_janela%29%20/%20%281%20-%20%24alvo/100%29%20%29%20%2A%20100%2C%200%2C%20100%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D"
-        }
-      ],
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.2.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          },
-          "expr": "clamp(( 1 - (1 - jornada:sli_disponibilidade:ratio_janela) / (1 - $alvo/100) ) * 100, 0, 100)",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Orçamento com o alvo de $alvo%",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
       "description": "Volume perdido em relação ao normal, multiplicado pelo valor por transferência. É o custo de falha em linguagem de negócio. Nota: o valor por transferência entra com scalar() porque não compartilha labels com a série de volume.\n\n---\n**De onde vem este número**\n\n```\nclamp_min(max_over_time(negocio:transferencias_por_min[6h]) - negocio:transferencias_por_min, 0) * scalar(negocio:valor_por_transferencia_brl)\n```",
       "fieldConfig": {
         "defaults": {
@@ -331,8 +249,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 18,
+        "w": 8,
+        "x": 16,
         "y": 4
       },
       "id": 6,
