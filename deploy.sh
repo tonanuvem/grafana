@@ -19,13 +19,45 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 HIST="$ESTADO/deploys.csv"
 
-# ---- a sequencia. Duas saudaveis e uma degradada, nesta ordem. -------------
-#   versao   | cpus  | descricao (nao aparece para o aluno antes da hora)
+# ---- a sequencia -----------------------------------------------------------
+#   versao | atraso_ms | falha_% | descricao (nao aparece para o aluno)
+#
+# O incidente ESCALA, em vez de acontecer de uma vez -- e' como incidente real
+# se comporta, e e' o que permite ensinar as duas naturezas de falha na mesma
+# investigacao:
+#
+#   v1.2.0  lentidao     responde 200, so' demora. Nenhuma ferramenta TECNICA
+#                        acusa: Service Map verde, trace sem erro, taxa de erro
+#                        em zero. So' o painel de NEGOCIO cai.
+#   v1.3.0  + erro 500   mantem a lentidao e acrescenta 15% de 500. O span sai
+#                        com `Status code: Error` -- MEDIDO com a imagem
+#                        publicada -- entao o Service Map acende em VERMELHO, o
+#                        trace fica filtravel por erro e os alertas disparam.
+#
+# A pergunta que fecha a fase: qual dos dois estagios custou mais ao cliente?
+# A resposta e' o PRIMEIRO, que nenhuma ferramenta acusou.
+#
+# A v1.1.0 e' identica a v1.0.0 DE PROPOSITO. E' o controle: sem um deploy que
+# comprovadamente nao move nada, o aluno aprende "deploy = incidente", que e'
+# falso e e' justamente a crenca que paralisa times. Ela tambem aparece como
+# marcacao no dashboard, entao o aluno ve a linha do deploy sem nenhuma metrica
+# reagindo. E sem ela o CFR daria 100%, o que tornaria o indicador inutil.
+#
+# A falha de 15% atinge TODAS as rotas do `transactions`, nao so' a de
+# transferencia: o `before_request` da aplicacao e' global. MEDIDO -- transfer,
+# zelle e transaction-history devolvem 500 juntos. Mantido assim: um deploy
+# ruim derrubar o servico inteiro e' realista, e da' ao aluno a nocao de raio
+# de alcance, com tres jornadas caindo ao mesmo tempo no dashboard.
+#
+# ATENCAO ao rollback: de v1.3.0 ele volta para v1.2.0, que AINDA esta lenta.
+# O erro para, a lentidao continua. E' proposital, e e' a licao mais dura da
+# fase -- rollback desfaz o ultimo deploy, nao o incidente.
 VERSOES=(
   "v1.0.0|0|0|linha de base"
-  "v1.1.0|0|0|deploy saudavel -- mostra que deploy normal nao move nada"
-  "v1.2.0|1400|0|regressao de performance: +1,4s (com jitter) por transferencia"
-  "v1.3.0|0|0|hotfix"
+  "v1.1.0|0|0|deploy saudavel -- o controle: nenhuma metrica reage"
+  "v1.2.0|1400|0|lentidao: +1,4s por requisicao, responde 200, mapa VERDE"
+  "v1.3.0|1400|15|o incidente escala: 15% devolvem 500, mapa VERMELHO"
+  "v1.4.0|0|0|hotfix: remove a lentidao e o erro"
 )
 
 # O segundo estagio do incidente, que o instrutor dispara com ./deploy.sh piorar.
@@ -177,7 +209,9 @@ case "$ACAO" in
       ok "$ANT no ar"
       echo
       echo "  Confira no painel, nesta ordem:"
-      echo "    - latencia e erro voltam em 1-2 min"
+      echo "    - o que a versao revertida causava para em 1-2 min"
+      echo "    - o que veio ANTES dela continua: rollback desfaz um deploy,"
+      echo "      nao o incidente. Confira se o painel voltou mesmo ao normal."
       echo "    - o ORCAMENTO RESTANTE nao volta: fica onde parou."
       echo "      Rollback estanca, nao repoe. So' o tempo repoe."
       echo
