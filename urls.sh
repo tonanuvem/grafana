@@ -12,5 +12,5 @@ echo "  Grafana        http://$H:3001"
 echo
 echo "  Prometheus     http://$H:9090"
 echo
-echo "  Alertmanager   http://$H:9093"
+#echo "  Alertmanager   http://$H:9093"
 echo
