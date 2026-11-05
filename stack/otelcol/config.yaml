@@ -136,7 +136,7 @@ connectors:
         # Os buckets SAO os alvos de SLO do Encontro 1. Sem o bucket certo,
         # o SLI de latencia nao e' calculavel -- e nenhuma query conserta
         # depois. O SLO decide a instrumentacao, nao o contrario.
-        buckets: [100ms, 250ms, 500ms, 800ms, 1s, 1500ms, 2s, 3s]
+        buckets: [100ms, 250ms, 500ms, 800ms, 1s, 1500ms, 2s, 3s, 5s, 8s]
     dimensions:
       - name: http.status_code
       - name: http.route

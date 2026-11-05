@@ -218,31 +218,32 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     de começar, e só a encerre no fim da fase.</p>
     <div class="cmd"><code>bash carga.sh --fundo --cenario transaction --usuarios 10 --duracao 45m</code><button onclick="cp(this)">copiar</button></div>
     <p class="sec-sub">Abra <a class="ir" data-ir="dash-budget" href="#">2 · Error Budget</a>. Confira o ponto de partida:
-    orçamento, burn rate e latência. Depois publique — <b>sem saber</b> se a versão é boa.</p>
-    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
-    <div class="nota"><b>Espere.</b> O sinal leva cerca de um minuto para aparecer: as janelas
-    de taxa são de 5 minutos. Esse atraso entre <i>quebrou</i> e <i>soubemos</i> é conteúdo,
-    não defeito.</div>
-    <p class="sec-sub">Publique de novo. Uma das versões tem uma regressão.</p>
-    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+    orçamento, burn rate e latência. A partir daqui você vai publicar <b>quatro versões</b>,
+    sempre para frente, e o próprio terminal diz o que procurar em cada uma.</p>
+    <div class="nota"><b>Espere ~60 s depois de cada deploy.</b> As janelas de taxa são de
+    5 minutos. Esse atraso entre <i>quebrou</i> e <i>soubemos</i> é conteúdo, não defeito.</div>
 
+    <h3 style="font-size:16px;margin:18px 0 4px">a) v1.1.0 — o deploy de controle</h3>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Olhe:</b> a linha roxa do deploy aparece nos gráficos — e nenhuma curva se mexe.
+    Sem saber como é um deploy saudável, qualquer oscilação vira “culpa do deploy”.</div>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">b) v1.2.0 — o assassino silencioso</h3>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
     <div class="olhe"><b>Percorra, nesta ordem:</b><br>
-    1. “p90 por VERSÃO” — foi a mudança?<br>
-    2. <b>Explore → Tempo</b>, abra um trace lento — <i>onde</i> o tempo é gasto?<br>
-    3. No span, clique em <b>Ver trace no Tempo</b> a partir do log, ou vá do trace ao log.<br>
-    4. “Transferências por minuto” — o negócio caiu antes de qualquer erro aparecer.<br>
-    5. A tela <code>/transfer</code> do banco — o que o cliente vive?</div>
+    1. <a class="ir" data-ir="service-graph" href="#">Service Graph</a> — qual a cor do <code>transactions</code>?<br>
+    2. “p90 por VERSÃO” — a série v1.2.0 passou de 1,5 s?<br>
+    3. “SLI de latência” e “Transferências por minuto” — o negócio caiu sem nenhum erro técnico.<br>
+    4. A tela <code>/transfer</code> do banco — o que o cliente vive?</div>
 
-    <div class="ia"><b>AIOps —</b> com o incidente em curso, role o dashboard 2 até
-    a faixa de <b>ruído de alerta</b> e compare três números: alertas disparando,
-    ativos no Alertmanager e silenciados. Depois abra o
-    <a class="ir" data-ir="alertmanager" href="#">Alertmanager</a> e conte os
-    <b>grupos</b> — é o que chegaria a uma pessoa.</div>
-    <label>Quantos alertas dispararam, e quantas notificações sairiam? O que faz a diferença?</label>
-    <textarea id="f_alertas" placeholder="O agrupamento é por jornada de negócio; a supressão tira a queima lenta enquanto a rápida está ativa. Nenhum modelo, nenhum aprendizado de máquina."></textarea>
+    <h3 style="font-size:16px;margin:18px 0 4px">c) v1.3.0 — o incêndio (os 3 pilares)</h3>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Métrica:</b> “Burn rate (5 min)” acima de 7,2x e o orçamento derretendo.<br>
+    <b>Trace:</b> o Service Graph fica vermelho; no Tempo, filtre <code>status = error</code> e abra um span da v1.3.0.<br>
+    <b>Log:</b> no rodapé do dashboard 2, o painel de logs do <code>transactions</code> mostra a falha.</div>
 
     <div class="grid3">
-      <div><label>Horário do alerta</label><input type="text" id="f_t_alerta" placeholder="14:32"></div>
+      <div><label>Horário do deploy</label><input type="text" id="f_t_alerta" placeholder="14:32"></div>
       <div><label>Horário em que você entendeu</label><input type="text" id="f_t_entendeu" placeholder="14:36"></div>
       <div><label>% de orçamento restante</label><input type="text" id="f_orcamento" placeholder="63%"></div>
     </div>
@@ -252,22 +253,40 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
       <div><label>R$ por minuto não transacionado</label><input type="text" id="f_custo" placeholder="R$ 4.200"></div>
     </div>
 
-    <label>Decisão — e ela precisa citar os números acima</label>
+    <h3 style="font-size:16px;margin:18px 0 4px">d) v1.4.0 — o hotfix (fix-forward)</h3>
+    <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
+    <div class="nota"><b>Olhe o gauge “Orçamento restante”.</b> Latência e erro voltam em dois minutos.
+    O orçamento <b>não volta</b>: corrigir estanca a queima, só o tempo repõe.</div>
+    <label>O que você esperava que acontecesse com o orçamento após o hotfix — e o que aconteceu?</label>
+    <textarea id="f_pos_rollback"></textarea>
+
+    <h3 style="font-size:16px;margin:18px 0 4px">e) Desafio final — Modo Caos</h3>
+    <p class="sec-sub">Uma versão misteriosa entra no ar e o terminal <b>não revela</b> o que ela faz.
+    Descubra só pelos dashboards qual das opções A, B ou C foi sorteada.</p>
+    <div class="cmd"><code>bash deploy.sh caos</code><button onclick="cp(this)">copiar</button></div>
+    <div class="cmd"><code>bash deploy.sh diagnosticar A</code><button onclick="cp(this)">copiar</button></div>
+    <div class="ia"><b>Dica —</b> compare dois sinais da série <code>v2.0.0-caos</code>:
+    há erro 500 (“Burn rate”, “Erro por versão”)? E o “p90 por VERSÃO” subiu? A combinação dos dois
+    separa as três opções. Um detector olhando um sinal só erraria.</div>
+    <label>Qual opção era, e quais dois painéis provaram?</label>
+    <textarea id="f_alertas" placeholder="Ex.: opção C — Burn rate em 20x mas p90 em 250 ms: falha rápida, sem lentidão."></textarea>
+
+    <p class="sec-sub">Diagnóstico certo? Estanque o incidente voltando à última versão estável:</p>
+    <div class="cmd"><code>bash deploy.sh rollback</code><button onclick="cp(this)">copiar</button></div>
+    <div class="olhe"><b>Olhe:</b> <a class="ir" data-ir="dash-cfr" href="#">3 · Deploys e CFR</a> — 5 deploys, 1 revertido,
+    CFR 20%, e “Versão em produção” de volta para v1.4.0.</div>
+
+    <label>Na v1.3.0, com os números que você anotou: você teria revertido ou seguido? (cite os números)</label>
     <div class="grid2">
       <select id="f_decisao">
         <option value="">escolha…</option>
         <option>rollback</option>
+        <option>hotfix (fix-forward)</option>
         <option>seguir com monitoramento intensificado</option>
       </select>
       <input type="text" id="f_checkpoint" placeholder="Checkpoint: se em X min o burn rate não cair, revertemos">
     </div>
     <textarea id="f_justificativa" placeholder="Ex.: orçamento em 63%, burn 7,2x — esgota em ~40 min. Reverter agora custa menos que descobrir daqui a meia hora."></textarea>
-    <div class="cmd"><code>bash decisao.sh rollback "sua justificativa com números"</code><button onclick="cp(this)">copiar</button></div>
-    <div class="cmd"><code>bash deploy.sh rollback</code><button onclick="cp(this)">copiar</button></div>
-    <div class="nota"><b>Depois do rollback, olhe o gauge.</b> A latência volta em dois minutos.
-    O orçamento restante <b>não volta</b>. Rollback estanca; só o tempo repõe.</div>
-    <label>O que você esperava que acontecesse com o orçamento após o rollback — e o que aconteceu?</label>
-    <textarea id="f_pos_rollback"></textarea>
   </section>
 
   <section>
@@ -287,8 +306,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
 
   <section>
     <div class="sec-h"><span class="sec-n">5</span><h2>A mesma falha, três audiências</h2></div>
-    <p class="sec-sub">O <code>decisao.sh</code> já gerou um rascunho com os seus números em
-    <code>estado/comunicacao-*.md</code>. Escreva o texto.</p>
+    <p class="sec-sub">Use os números que você anotou na v1.3.0 e no Modo Caos. Escreva o texto.</p>
     <label>Time técnico — o que fazer agora</label>
     <textarea id="f_com_tec"></textarea>
     <label>Gestão — o que está em risco, e até quando</label>
@@ -433,11 +451,11 @@ const R = [
  ["Integrantes","integrantes"],["Service Graph x Service Map","f_servicemap"],
  ["Por que o erro tecnico fica em zero","f_400"],["Metrica ou log","f_metrica_log"],
  ["Padroes de log (AIOps)","f_patterns"],["O que so' o RUM viu","f_rum"],
- ["Ruido de alerta","f_alertas"],["Horario do alerta","f_t_alerta"],
+ ["Diagnostico do Modo Caos","f_alertas"],["Horario do deploy","f_t_alerta"],
  ["Horario em que entendeu","f_t_entendeu"],["Orcamento restante","f_orcamento"],
  ["Burn rate","f_burn"],["% abaixo de 1,5s","f_lat"],["R$/min nao transacionado","f_custo"],
  ["Decisao","f_decisao"],["Checkpoint","f_checkpoint"],["Justificativa","f_justificativa"],
- ["Orcamento apos o rollback","f_pos_rollback"],["Politica 25-50%","f_pol_50"],
+ ["Orcamento apos o hotfix","f_pos_rollback"],["Politica 25-50%","f_pol_50"],
  ["Politica <25%","f_pol_25"],["Politica 0%","f_pol_0"],
  ["Quem suspende a congelacao","f_autoridade"],["CFR","f_cfr"]];
 const C = [["Time tecnico","f_com_tec"],["Gestao","f_com_gestao"],

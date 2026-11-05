@@ -239,7 +239,7 @@
     {
       "type": "stat",
       "title": "Versão em produção",
-      "description": "Qual versão está de fato atendendo. Vem do atributo service.version dos traces — a aplicação declara quem ela é.\n\n---\n**De onde vem este número**\n\n```\ntopk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))\n```",
+      "description": "Qual versão está de fato atendendo agora. Vem do atributo service.version dos traces — a aplicação declara quem ela é.\n\n---\n**De onde vem este número**\n\n```\ntopk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[1m])))\n```",
       "datasource": {
         "type": "prometheus",
         "uid": "prom"
@@ -253,7 +253,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[5m])))",
+          "expr": "topk(1, sum by (service_version) (rate(traces_span_metrics_calls_total{service_name=\"transactions\", span_name=\"POST /transfer\"}[1m])))",
+          "legendFormat": "v{{service_version}}",
           "datasource": {
             "type": "prometheus",
             "uid": "prom"
@@ -282,8 +283,8 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "auto",
+        "graphMode": "none",
+        "textMode": "name",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -295,7 +296,7 @@
       "links": [
         {
           "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22topk%281%2C%20sum%20by%20%28service_version%29%20%28rate%28traces_span_metrics_calls_total%7Bservice_name%3D%5C%22transactions%5C%22%2C%20span_name%3D%5C%22POST%20/transfer%5C%22%7D%5B5m%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22topk%281%2C%20sum%20by%20%28service_version%29%20%28rate%28traces_span_metrics_calls_total%7Bservice_name%3D%5C%22transactions%5C%22%2C%20span_name%3D%5C%22POST%20/transfer%5C%22%7D%5B1m%5D%29%29%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]

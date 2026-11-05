@@ -689,274 +689,51 @@
         "x": 0,
         "y": 27,
         "w": 24,
-        "h": 4
+        "h": 3
       },
       "options": {
         "mode": "markdown",
-        "content": "### Ruído de alerta — a camada mais útil de AIOps, e a menos glamourosa\n\nDurante o incidente vários alertas disparam. O que deveria chegar a uma pessoa é **um**.\nCompare o número à esquerda com a tela do **Alertmanager** (porta 9093): lá eles aparecem\nagrupados por jornada de negócio, e a queima lenta é **suprimida** enquanto a rápida está ativa.\n\nNada disso é modelo nem aprendizado de máquina — é `group_by` e `inhibit_rules` em um arquivo YAML."
+        "content": "### O 3º Pilar da Investigação — Evidência nos Logs (`transactions`)\n\nA **Métrica** (Burn Rate) acusa o sintoma, o **Trace** (`p90 por VERSÃO` e `Service Graph`) aponta qual versão degradou, e o **Log** abaixo revela a mensagem exata emitida pelo serviço em produção."
       }
     },
     {
-      "type": "stat",
-      "title": "Alertas disparando",
-      "description": "Quantas regras estão em firing agora, no Prometheus. É o número ANTES de qualquer correlação.\n\n---\n**De onde vem este número**\n\n```\nsum(ALERTS{alertstate=\"firing\"})\n```",
+      "type": "logs",
+      "title": "Logs de erro e regressão — serviço transactions (Loki)",
+      "description": "Exibe em tempo real os eventos de erro e inicialização de regressão do serviço transactions.\n\n---\n**Query no Loki**\n\n```\n{service_name=\"transactions\"} |= \"regressao simulada\"\n```",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "x": 0,
-        "y": 31,
-        "w": 5,
-        "h": 6
+        "y": 30,
+        "w": 24,
+        "h": 8
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(ALERTS{alertstate=\"firing\"})",
+          "expr": "{service_name=\"transactions\"} |= \"regressao simulada\"",
           "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          },
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "noValue": "0",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28ALERTS%7Balertstate%3D%5C%22firing%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "No Alertmanager",
-      "description": "Quantos chegaram ao Alertmanager. A diferença para o painel ao lado é o que a supressão tirou do caminho.\n\n---\n**De onde vem este número**\n\n```\nsum(alertmanager_alerts{state=\"active\"})\n```",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "gridPos": {
-        "x": 5,
-        "y": 31,
-        "w": 5,
-        "h": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(alertmanager_alerts{state=\"active\"})",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          },
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "noValue": "0",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28alertmanager_alerts%7Bstate%3D%5C%22active%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "Silenciados",
-      "description": "Alertas suprimidos por inhibit_rules: a queima lenta some enquanto a rápida está ativa. Não some informação — some repetição.\n\n---\n**De onde vem este número**\n\n```\nsum(alertmanager_alerts{state=\"suppressed\"})\n```",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "gridPos": {
-        "x": 10,
-        "y": 31,
-        "w": 5,
-        "h": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(alertmanager_alerts{state=\"suppressed\"})",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
-          },
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "noValue": "0",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text",
-                "value": null
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "links": [
-        {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22sum%28alertmanager_alerts%7Bstate%3D%5C%22suppressed%5C%22%7D%29%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
-          "targetBlank": true
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Alertas ao longo do incidente",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prom"
-      },
-      "description": "Vale olhar a ordem: a janela curta dispara primeiro, a longa confirma. O alerta exige as duas.\n\n---\n**De onde vem este número**\n\n```\nALERTS{alertstate=\"firing\"}\n```",
-      "gridPos": {
-        "x": 15,
-        "y": 31,
-        "w": 9,
-        "h": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "ALERTS{alertstate=\"firing\"}",
-          "legendFormat": "{{alertname}}",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prom"
+            "type": "loki",
+            "uid": "loki"
           }
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "showPoints": "never"
-          },
-          "max": 1.2
-        },
-        "overrides": []
-      },
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
       },
       "links": [
         {
-          "title": "Abrir no Explore",
-          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22prom%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22ALERTS%7Balertstate%3D%5C%22firing%5C%22%7D%22%2C%22datasource%22%3A%7B%22type%22%3A%22prometheus%22%2C%22uid%22%3A%22prom%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "title": "Abrir no Explore (Loki)",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%7Bservice_name%3D%5C%22transactions%5C%22%7D%20%7C%3D%20%5C%22regressao%20simulada%5C%22%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
           "targetBlank": true
         }
       ]

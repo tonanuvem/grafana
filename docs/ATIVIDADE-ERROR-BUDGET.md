@@ -89,34 +89,40 @@ ninguém; o RUM só existe quando há gente.
 
 ### Fase 3 — O incidente (45 min)
 
-```bash
-bash deploy.sh nova-versao     # v1.1.0 — saudável, nada muda
-bash deploy.sh nova-versao     # v1.2.0 — a regressão
-bash decisao.sh rollback "..." # registra com os números do momento
-bash deploy.sh rollback
-```
-
-O instrutor pode piorar o quadro **depois** que o aluno decidiu:
+Sempre para frente; o próprio `deploy.sh` diz, a cada versão, qual painel olhar.
 
 ```bash
-bash deploy.sh piorar          # 2,5s de atraso + 25% de falha
+bash deploy.sh nova-versao     # v1.1.0 — controle: a linha roxa aparece, nada muda
+bash deploy.sh nova-versao     # v1.2.0 — lentidão silenciosa: mapa VERDE, negócio caindo
+bash deploy.sh nova-versao     # v1.3.0 — +15% de HTTP 500: mapa VERMELHO, burn rate dispara
+bash deploy.sh nova-versao     # v1.4.0 — hotfix (fix-forward): o orçamento NÃO volta
 ```
 
-### Fase 3b — Ruído de alerta (5 min)
+### Fase 3b — Desafio final: Modo Caos (10 min)
 
-Com o incidente em curso, compare três números no dashboard 2: **alertas
-disparando** no Prometheus, **alertas ativos** no Alertmanager e
-**silenciados**. Depois abra a tela do Alertmanager (porta 9093) e conte os
-GRUPOS — é o que chegaria a uma pessoa.
+```bash
+bash deploy.sh caos            # v2.0.0-caos — sorteia A, B ou C sem revelar
+bash deploy.sh diagnosticar B  # valida; se errar, recebe uma dica de onde olhar
+bash deploy.sh rollback        # volta à v1.4.0 e fecha o CFR (5 deploys, 1 revertido = 20%)
+```
 
-A regra que faz isso é `group_by: [jornada_negocio]` mais um `inhibit_rules`
-que suprime a queima lenta enquanto a rápida está ativa. Nenhum modelo,
-nenhum aprendizado de máquina: um arquivo YAML.
+| Opção | Injetado | Burn rate | p90 da v2.0.0-caos | Service Graph |
+|---|---|---|---|---|
+| A — tipo v1.2.0 | 1500 ms, 0% erro | 0 | > 1,5 s | verde |
+| B — tipo v1.3.0 | 2000 ms, 25% erro | explode | > 2 s | vermelho |
+| C — Fast-Fail | 0 ms, 20% erro | explode | ~250 ms | vermelho |
+
+A lição: **nenhum sinal sozinho separa as três opções.** Só a combinação de erro
+e latência por versão fecha o diagnóstico — e é isso que um detector de anomalia
+olhando uma única série não faria.
+
+O instrutor pode piorar o quadro de qualquer versão com `bash deploy.sh piorar`
+(2,5 s de atraso + 25% de falha).
 
 ### Fase 4 — Comunicação (25 min)
 
-O `decisao.sh` gera `estado/comunicacao-*.md` já com os números. O aluno escreve
-os três textos e o postmortem.
+Com os números anotados na v1.3.0 e no Modo Caos, o aluno escreve os três
+textos e o postmortem.
 
 ---
 ---
@@ -159,9 +165,13 @@ de uma pessoa é normal; 500 por minuto é *credential stuffing*.
 
 | Versão | p90 de `POST /transfer` | % abaixo de 1,5s | erros |
 |---|---|---|---|
-| v1.0.0 / v1.1.0 | **90 ms** | ~99,7% | ~0 |
-| v1.2.0 | **1886 ms** | cai para ~55% | ~0 |
-| v1.2.0 + `piorar` | ~2900 ms | **0%** | 4,5% |
+| v1.0.0 / v1.1.0 / v1.4.0 | **90 ms** | ~99,7% | ~0 |
+| v1.2.0 (+1100 ms ±300) | ~1,6–1,8 s | cai para ~50–60% | ~0 |
+| v1.3.0 (+1100 ms, 15% 500) | ~1,6–1,8 s | ~50–60% | **15%** |
+
+> Valores de v1.2.0/v1.3.0 recalibrados (antes 1400 ms) para não encostar no
+> último bucket do histograma; os buckets agora vão até 8 s. Remedir no
+> ambiente de referência.
 
 **O que o aluno tem de perceber, em ordem:**
 
@@ -187,39 +197,27 @@ disponibilidade** com 25% das transferências falhando.
 (`service_name=~"dashboard|transactions"`), e não só no ponto de entrada. É o
 terceiro rosto do mesmo tema do Encontro 1.
 
-### Depois do rollback
+### Depois do hotfix (e do rollback do caos)
 
 Latência e erro voltam em 1–2 min. **O orçamento restante não volta.** Ele só
 se recupera conforme os minutos ruins saem da janela de 6h — o que, numa aula,
-o aluno **não** vai ver acontecer. Não ver é a lição.
+o aluno **não** vai ver acontecer. Não ver é a lição. Vale para o fix-forward
+(v1.4.0) e para o rollback (v2.0.0-caos → v1.4.0): os dois estancam, nenhum repõe.
 
-## Fase 3b — ruído de alerta, número a número
+## Fase 3b — Modo Caos, o que vale ponto
 
-Medido durante o incidente, com os dois alertas em `firing`:
-
-| | |
-|---|---|
-| Alertas disparando no Prometheus | **2** |
-| Alertas ativos no Alertmanager | **1** |
-| Silenciados | **1** — a queima lenta, `inhibitedBy` a rápida |
-| Grupos | **1** — `jornada_negocio="Transferencia entre contas"` |
-
-**Dois alertas, uma notificação.** É o número que sustenta a conversa: não se
-perdeu informação nenhuma — o alerta suprimido continua visível para quem
-investiga — mas quem está de plantão é interrompido uma vez, não duas.
-
-**O tempo importa para planejar a aula.** O alerta rápido chega em cerca de
-2 minutos (`for: 2m`). O lento tem `for: 10m` por definição — é o que o torna
-lento —, então a **supressão só é observável depois de uns 10 minutos de
-incidente sustentado**. Medido aqui: o estado `suppressed` apareceu 7min42s
-depois de o rápido já estar em `firing`. Numa passada rápida o instrutor
-mostra o agrupamento e não chega na supressão.
-
-**A pergunta de fechamento:** nada disso é modelo nem aprendizado de máquina —
-é `group_by` e `inhibit_rules` num arquivo YAML. E um detector de anomalia
-treinado na taxa de erro técnica não veria absolutamente nada na Fase 2, onde
-o sinal fica em zero o tempo todo. AIOps herda o ponto cego do sinal que
-recebe.
+- **Diagnóstico com dois sinais.** A resposta precisa citar erro (burn rate ou
+  "Erro por versão") **e** latência ("p90 por VERSÃO") da série `v2.0.0-caos`.
+  Acertar a letra sem citar os dois painéis é chute.
+- **A pegadinha é a C (Fast-Fail).** Quem só olha latência conclui "está tudo
+  bem"; quem só olha erro confunde com a B. Falhar rápido não gasta tempo — o
+  p90 fica baixo enquanto o orçamento derrete.
+- **O rollback fecha o CFR:** 5 deploys, 1 revertido = **20%**, acima do limite
+  de 15% que o DORA associa a baixo desempenho. Com N tão pequeno, a conclusão
+  certa é "ainda não significa nada".
+- **Ponto extra:** perceber que um detector de anomalia treinado numa única
+  série (só erro, ou só latência) erraria pelo menos uma das três opções. AIOps
+  herda o ponto cego do sinal que recebe.
 
 ## O que vale ponto na decisão
 

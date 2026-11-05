@@ -93,8 +93,8 @@ run-lab.sh                  porta de entrada: sobe tudo, na ordem certa
 remove-lab.sh               tira tudo do ar
 run-stack.sh                só o stack (o run-lab.sh chama este)
 carga.sh                    gerador de carga (locust)
-deploy.sh                   publica versões / rollback / piorar
-decisao.sh                  registra a decisão com os números do momento
+deploy.sh                   publica versões guiadas / caos / diagnosticar / rollback
+decisao.sh                  (opcional, fora do roteiro) registra a decisão com os números
 slo.sh                      alvo do SLO e valor por transferência
 lib.sh                      funções comuns aos scripts
 app/                        o guia do aluno (nginx) -- bash app/guia.sh
