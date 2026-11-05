@@ -157,7 +157,6 @@ case "$ACAO" in
       echo "  O que fazer agora:"
       echo "    1. NAO olhe o codigo. Olhe o painel."
       echo "    2. Grafana > LAB GRAFANA - Business Health > 2 · Error Budget"
-      echo "    3. Se algo piorar, decida:  ./decisao.sh"
       echo
       echo "  Leva ~60s ate o sinal aparecer: as janelas de rate sao de 5 min."
       echo
