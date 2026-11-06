@@ -94,7 +94,7 @@ Sempre para frente; o próprio `deploy.sh` diz, a cada versão, qual painel olha
 ```bash
 bash deploy.sh nova-versao     # v1.1.0 — controle: a linha roxa aparece, nada muda
 bash deploy.sh nova-versao     # v1.2.0 — lentidão silenciosa: mapa VERDE, negócio caindo
-bash deploy.sh nova-versao     # v1.3.0 — +15% de HTTP 500: mapa VERMELHO, burn rate dispara
+bash deploy.sh nova-versao     # v1.3.0 — +15% de HTTP 500: fatia vermelha no mapa, orçamento derrete
 bash deploy.sh nova-versao     # v1.4.0 — hotfix (fix-forward): o orçamento NÃO volta
 ```
 
@@ -106,11 +106,11 @@ bash deploy.sh diagnosticar B  # valida; se errar, recebe uma dica de onde olhar
 bash deploy.sh rollback        # volta à v1.4.0 e fecha o CFR (5 deploys, 1 revertido = 20%)
 ```
 
-| Opção | Injetado | Burn rate | p90 da v2.0.0-caos | Service Graph |
+| Opção | Injetado | Erros/min | p90 da v2.0.0-caos | Service Graph (janela de 5 min) |
 |---|---|---|---|---|
-| A — tipo v1.2.0 | 1500 ms, 0% erro | 0 | > 1,5 s | verde |
-| B — tipo v1.3.0 | 2000 ms, 25% erro | explode | > 2 s | vermelho |
-| C — Fast-Fail | 0 ms, 20% erro | explode | ~250 ms | vermelho |
+| A — tipo v1.2.0 | 1500 ms, 0% erro | 0 | > 1,5 s | anel todo verde |
+| B — tipo v1.3.0 | 2000 ms, 25% erro | sobem | > 2 s | fatia vermelha |
+| C — Fast-Fail | 0 ms, 20% erro | sobem | ~250 ms | fatia vermelha |
 
 A lição: **nenhum sinal sozinho separa as três opções.** Só a combinação de erro
 e latência por versão fecha o diagnóstico — e é isso que um detector de anomalia

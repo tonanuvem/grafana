@@ -292,7 +292,7 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <h3 style="font-size:16px;margin:18px 0 4px">b) v1.2.0 — ficou lento, e nada acusou</h3>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
     <div class="olhe"><b>Percorra, nesta ordem:</b><br>
-    1. <a class="ir" data-ir="service-graph" href="#">Service Graph</a> — qual a cor do <code>transactions</code>?<br>
+    1. <a class="ir" data-ir="service-graph" href="#">Service Graph</a> (abre em 5 min) — o anel do <code>transactions</code> está todo verde?<br>
     2. “Tempo de resposta por versão” — a série v1.2.0 passou de 1,5 s?<br>
     3. “SLI de latência” e “Transferências por minuto” — o negócio caiu sem nenhum erro técnico.<br>
     4. A tela <code>/transfer</code> do banco — o que o cliente vive?</div>
@@ -304,8 +304,8 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     <h3 style="font-size:16px;margin:18px 0 4px">c) v1.3.0 — agora também falha</h3>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
     <div class="olhe"><b>Métrica:</b> o “Orçamento restante” começa a derreter.<br>
-    <b>Traço:</b> o Service Graph fica vermelho; em <code>Explore → Tempo → Search</code>, filtre
-    <code>status = error</code> e abra um span da v1.3.0.<br>
+    <b>Traço:</b> abra o <a class="ir" data-ir="service-graph" href="#">Service Graph</a> —
+    que cor tem o anel do <code>transactions</code> agora?<br>
     <b>Log:</b> no rodapé do dashboard 2, “Erros do serviço transactions” — compare com a etapa
     anterior, onde este painel estava <b>vazio</b>.</div>
     <div class="ia"><b>Pergunte ao <code>agy</code>:</b><br>
@@ -425,7 +425,7 @@ function montarLinks(){
   const destinos = {
     "service-graph": urlGrafana("/explore", panes({a:{datasource:"tempo",
       queries:[{refId:"A",datasource:{type:"tempo",uid:"tempo"},queryType:"serviceMap"}],
-      range:{from:"now-1h",to:"now"}}})),
+      range:{from:"now-5m",to:"now"}}})),
     "dash-negocio": urlGrafana("/d/lab-negocio/", "from=now-30m&to=now"),
     "dash-budget":  urlGrafana("/d/lab-budget/",  "from=now-30m&to=now"),
     "dash-cfr":     urlGrafana("/d/lab-cfr/",     "from=now-1h&to=now"),

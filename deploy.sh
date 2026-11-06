@@ -26,9 +26,11 @@ ARQ_CAOS="$ESTADO/caos.env"
 #   Passo 2 (v1.2.0): Degradacao silenciosa (+1400ms, 0% erro) -- Service Graph
 #                     continua VERDE e erro tecnico em 0%, mas p90 sobe, SLI de
 #                     latencia cai e o volume de negocio (transferencias/min) cai.
-#   Passo 3 (v1.3.0): Incidente severo (+1400ms, 15% HTTP 500) -- Service Graph
-#                     fica VERMELHO, Burn Rate dispara derretendo o Error Budget,
-#                     traces com erro surgem no Tempo e logs ERROR no Loki.
+#   Passo 3 (v1.3.0): Incidente severo (+1400ms, 15% HTTP 500) -- aparece uma
+#                     fatia vermelha no anel do no' transactions (so' visivel com
+#                     a janela em 5 min: o anel mostra PROPORCAO, e em 1h os 15%
+#                     recentes viram menos de 1% do total), o Error Budget
+#                     derrete e surgem logs ERROR no Loki.
 #   Passo 4 (v1.4.0): Hotfix / Fix-Forward (0ms, 0% erro) -- limpa a lentidao e
 #                     os erros 500; mostra que corrigir estanca a queima, mas o
 #                     Error Budget consumido NAO volta para 100%.
@@ -41,7 +43,7 @@ VERSOES=(
   "v1.0.0|0|0|linha de base"
   "v1.1.0|0|0|deploy saudavel -- o controle: nenhuma metrica reage"
   "v1.2.0|1400|0|lentidao silenciosa: +1,4s por requisicao, responde 200, mapa VERDE"
-  "v1.3.0|1400|15|o incidente escala: +1,4s e 15% devolvem 500, mapa VERMELHO"
+  "v1.3.0|1400|15|o incidente escala: +1,4s e 15% devolvem 500, fatia vermelha no mapa"
   "v1.4.0|0|0|hotfix (fix-forward): remove a lentidao e o erro"
 )
 
@@ -142,7 +144,8 @@ EOF
   A v1.2.0 somou 1,4s por requisição. Nenhuma requisição falha.
 
   Aguarde 60s e confira, nesta ordem:
-    1. Explore → Tempo → aba "Service Graph": o nó transactions está verde?
+    1. Explore → Tempo → aba "Service Graph", com o intervalo em
+       "Last 5 minutes": o anel do nó transactions está todo verde?
     2. Dashboard 2, "Tempo de resposta por versão": a v1.2.0 passou de 1,5s?
     3. Dashboard 1, "Transferências concluídas por minuto": o volume caiu?
 
@@ -161,10 +164,13 @@ EOF
 
   Aguarde 60s e percorra os três sinais:
     1. Métrica — Dashboard 2: o orçamento restante começa a derreter.
-    2. Traço — Explore → Tempo → aba "Service Graph": o nó transactions
-       ficou vermelho. Na aba "Search", filtre status = error e abra um
-       span da versão 1.3.0.
+    2. Traço — Explore → Tempo → aba "Service Graph", com o intervalo em
+       "Last 5 minutes": que cor tem o anel do nó transactions agora?
     3. Log — Dashboard 2, "Erros do serviço transactions": as linhas aparecem.
+
+  O anel mostra a PROPORÇÃO de falhas na janela escolhida, não a presença
+  delas. Troque o intervalo para "Last 1 hour" e olhe de novo: para onde
+  foi o vermelho? O incidente não mudou — a janela mudou.
 
   Compare com a etapa anterior: lá o painel de log estava vazio.
 
@@ -321,11 +327,11 @@ EOF
         - Latencia p90 da v2.0.0-caos sobe (> 1,5s) e SLI de Latencia cai
 
     [B] Comportamento tipo v1.3.0 (Colapso: Lentidao + Erro HTTP 500)
-        - Service Graph fica VERMELHO, Burn Rate explode e logs mostram ERROR
+        - Fatia vermelha no Service Graph (janela de 5 min) e logs com ERROR
         - Latencia p90 da v2.0.0-caos TAMBEM sobe (> 2,0s)
 
     [C] Comportamento Inedito: "Fast-Fail" (Erro HTTP 500 SEM Lentidao!)
-        - Service Graph fica VERMELHO, Burn Rate explode e logs mostram ERROR
+        - Fatia vermelha no Service Graph (janela de 5 min) e logs com ERROR
         - MAS a Latencia p90 da v2.0.0-caos continua baixa (~250ms) e o
           SLI de Latencia fica perto de 100%!
 
@@ -375,7 +381,7 @@ EOF
             C)
               echo "  Por que os paineis provaram a Opcao [C]:"
               echo "    - Pegadinha classica: o servico falhou rapido (Fast-Fail com 20% de HTTP 500)!"
-              echo "    - O Burn Rate explodiu e o Service Graph ficou vermelho, mas o p90 da"
+              echo "    - Apareceu fatia vermelha no Service Graph, mas o p90 da"
               echo "      v2.0.0-caos continuou baixinho (~250ms) porque abortar nao gasta tempo."
               ;;
           esac
