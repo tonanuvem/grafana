@@ -62,7 +62,7 @@ h2{font-size:21px}
 
 .cmd{position:relative;background:var(--surface-2);border:1px solid var(--line);
   border-radius:9px;padding:12px 44px 12px 14px;margin:12px 0;overflow-x:auto}
-.cmd code{white-space:pre;display:block;color:var(--ink)}
+.cmd code{white-space:pre-wrap;overflow-wrap:anywhere;display:block;color:var(--ink);padding-right:56px}
 .cmd button{position:absolute;top:8px;right:8px;border:1px solid var(--line-strong);
   background:var(--surface);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer}
 .cmd button:hover{border-color:var(--accent);color:var(--accent)}
@@ -226,6 +226,61 @@ footer{max-width:940px;margin:0 auto;padding:0 20px 60px;color:var(--ink-faint);
     sempre para frente, e o próprio terminal diz o que procurar em cada uma.</p>
     <div class="nota"><b>Espere ~60 s depois de cada deploy.</b> As janelas de taxa são de
     5 minutos. Esse atraso entre <i>quebrou</i> e <i>soubemos</i> é conteúdo, não defeito.</div>
+
+    <h3 style="font-size:16px;margin:22px 0 4px">O assistente que consulta a sua telemetria</h3>
+    <p class="sec-sub">Em cada etapa abaixo há um bloco <b>“Pergunte ao <code>agy</code>”</b>. O
+    <code>agy</code> é um assistente de IA de linha de comando, e aqui ele não responde de memória:
+    ele <b>executa consultas de verdade</b> no <i>seu</i> Grafana e responde com o <i>seu</i> dado.
+    Vale entender como, porque a diferença entre um agente que consulta e um que adivinha é
+    justamente o que você vai aprender a checar.</p>
+
+    <p class="sec-sub">A ponte entre os dois chama-se <b>MCP</b> (Model Context Protocol). É um
+    protocolo que padroniza como um agente descobre e chama ferramentas externas: o servidor MCP
+    publica uma lista do que sabe fazer, o agente lê essa lista, escolhe uma ferramenta, recebe o
+    resultado e segue raciocinando. No nosso lab o servidor é o <code>mcp-grafana</code>, oficial
+    da Grafana, e ele oferece <b>65 ferramentas</b> — entre elas <code>query_prometheus</code>,
+    <code>query_loki_logs</code>, <code>find_slow_requests</code> e
+    <code>find_error_pattern_logs</code>.</p>
+
+    <div class="nota"><b>O caminho que a sua pergunta faz:</b><br>
+    você digita no <code>agy</code> → ele decide qual ferramenta usar → chama o
+    <code>mcp-grafana</code> → que consulta a <b>API do Grafana</b> → que por sua vez lê o
+    Prometheus, o Loki ou o Tempo → e o resultado volta para o agente montar a resposta.<br><br>
+    O detalhe que mais importa está no meio dessa cadeia: o <code>mcp-grafana</code>
+    <b>não fala com o Prometheus diretamente</b>. Ele fala com o Grafana, e por isso herda de
+    graça <i>todos</i> os datasources que você já provisionou — sem configurar nenhum deles de
+    novo. É também por isso que ele funciona nesta versão do Grafana sem nenhum upgrade: usa a
+    API HTTP, não o sistema de plugins.</div>
+
+    <p class="sec-sub">Você não precisa configurar nada: o <code>run-lab.sh</code> já registrou o
+    servidor ao subir o ambiente. O comando que ele rodou foi este — vale ler, porque cada parte
+    resolve um problema concreto:</p>
+    <div class="cmd"><code>agy mcp add grafana docker \
+  run -i --rm --network $REDE \
+  --entrypoint /app/mcp-grafana \
+  -e GRAFANA_URL=http://obs-grafana:3000 \
+  mcp/grafana --transport stdio</code><button onclick="cp(this)">copiar</button></div>
+    <p class="sec-sub">
+    <code>--transport stdio</code> — o servidor conversa por entrada e saída padrão, e quem o
+    inicia é o próprio <code>agy</code>, a cada chamada de ferramenta. Não há processo ligado o
+    tempo todo esperando conexão; por isso o MCP não aparece no <code>docker-compose</code>.<br>
+    <code>--network $REDE</code> e <code>obs-grafana:3000</code> — dentro de um container,
+    <code>localhost</code> é o próprio container. Para enxergar o Grafana, o servidor entra na
+    rede do lab e o chama pelo <b>nome do serviço</b>, na porta interna 3000 (e não na 3001, que
+    é a publicada para você no navegador).<br>
+    <b>Sem token</b> — repare que não há credencial nenhuma. Funciona porque o Grafana deste lab
+    roda com acesso anônimo e papel de administrador, já que cada aluno tem o próprio ambiente.</p>
+
+    <div class="nota"><b>Isto é um atalho de laboratório, não um padrão.</b> Em produção você
+    jamais exporia o Grafana sem autenticação a um agente: criaria uma <i>service account</i> com
+    papel <b>Viewer</b> — leitura apenas — e passaria o token por variável de ambiente. O
+    <code>mcp-grafana</code> inclui ferramentas de escrita, como criar regras de alerta; quem
+    decide o que o agente pode fazer é o papel do token, não o agente.</div>
+
+    <div class="ia"><b>Desconfie do agente.</b> Ele erra, e erra com confiança. Depois de cada
+    resposta, peça <i>“me mostre a query exata que você usou para responder isso”</i> e confira o
+    número no painel. Repare também em <b>qual ferramenta</b> ele escolheu: perguntas parecidas
+    levam a caminhos diferentes, e entender a escolha é metade do valor do exercício.</div>
 
     <h3 style="font-size:16px;margin:18px 0 4px">a) v1.1.0 — um deploy que não muda nada</h3>
     <div class="cmd"><code>bash deploy.sh nova-versao</code><button onclick="cp(this)">copiar</button></div>
