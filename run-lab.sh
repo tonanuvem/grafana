@@ -109,8 +109,7 @@ if [ "$MODO_IMAGENS" = "auto" ] || [ "$MODO_IMAGENS" = "pull" ]; then
     echo
     echo "4. BAIXANDO AS IMAGENS"
     echo "--------------------------------------------------"
-    echo "   Publicadas em tonanuvem/fiap-bank-*. Baixar leva ~3 min contra"
-    echo "   10-20 do build -- e nao depende do PyPI nem do npm estarem de pe'."
+    echo "   Publicadas em tonanuvem/fiap-bank-*. Baixar leva ~3 min."
     if (cd "$BASE_APP" && docker compose -f "$COMPOSE_APP" pull --quiet $SERVICOS_PUBLICADOS) \
            >/tmp/lab-pull.log 2>&1; then
         ok "$TOTAL_IMAGENS imagens baixadas"
